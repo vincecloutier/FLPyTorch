@@ -6,7 +6,6 @@ import numpy as np
 from tqdm import tqdm
 
 import torch
-from tensorboardX import SummaryWriter
 
 from options import args_parser
 from update import LocalUpdate, test_inference
@@ -39,14 +38,14 @@ if __name__ == '__main__':
     else:
         exit('Error: unrecognized dataset') 
 
-    # Set the model to train and send it to device.
+    # set the model to train and send it to device.
     global_model.to(device)
     global_model.train()
 
     # copy weights
     global_weights = global_model.state_dict()
 
-    # Training
+    # training
     train_loss, train_accuracy = [], []
     val_acc_list, net_list = [], []
     cv_loss, cv_acc = [], []
@@ -92,7 +91,7 @@ if __name__ == '__main__':
             print(f'Training Loss : {np.mean(np.array(train_loss))}')
             print('Train Accuracy: {:.2f}% \n'.format(100*train_accuracy[-1]))
 
-    # Test inference after completion of training
+    # test inference after completion of training
     test_acc, test_loss = test_inference(args, global_model, test_dataset)
 
     print(f' \n Results after {args.epochs} global rounds of training:')
