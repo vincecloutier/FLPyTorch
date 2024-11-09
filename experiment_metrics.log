@@ -1,0 +1,8 @@
+2024-11-09 13:10:37,989 INFO Results after 25 global rounds of training model resnet:
+2024-11-09 13:10:37,989 INFO Avg Train Accuracy: 70.0%
+2024-11-09 13:10:37,989 INFO Test Accuracy: 68.97999999999999%
+2024-11-09 13:10:37,989 INFO Total Run Time: 1999.9920530319214
+2024-11-09 13:16:44,262 INFO Results after 1 global rounds of training model resnet:
+2024-11-09 13:16:44,263 INFO Avg Train Accuracy: 48.0%
+2024-11-09 13:16:44,263 INFO Test Accuracy: 39.589999999999996%
+2024-11-09 13:16:44,263 INFO Total Run Time: 84.64792919158936
