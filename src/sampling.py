@@ -101,7 +101,7 @@ def noniid(dataset, dataset_name, num_users, noniid_prop, num_cat):
     return dict_users
 
 
-def mislabeled(dataset, dict_users, client_proportion=0.3, mislabel_proportion=0.4):
+def mislabeled(dataset, dict_users, client_proportion, mislabel_proportion):
     """Randomly select a proportion of clients and mislabel a proportion of their samples."""
     client_ids = list(dict_users.keys())
     clients_to_modify = np.random.choice(client_ids, int(client_proportion * len(client_ids)), replace=False)

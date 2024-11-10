@@ -1,7 +1,7 @@
 import copy
 import torch
 from torchvision import datasets, transforms
-from sampling import iid, noniid
+from sampling import iid, noniid, mislabeled
 import logging
 
 def get_dataset(args):
@@ -21,11 +21,16 @@ def get_dataset(args):
         test_dataset = datasets.MNIST(data_dir, train=False, download=True, transform=apply_transform)
  
     # sample training data amongst users
-    if args.iid:
-        user_groups = iid(train_dataset, args.num_users)
-    else:
-        user_groups = noniid(train_dataset, args.dataset, args.num_users, 0.4, 4)
-
+    
+    match args.setting:
+        case 0:
+            user_groups = iid(train_dataset, args.num_users)
+        case 1:
+            user_groups = noniid(train_dataset, args.dataset, args.num_users, args.badclient_prop, args.num_categories_per_client)
+        case 2:
+            user_groups = mislabeled(train_dataset, args.dataset, args.num_users, args.badclient_prop, args.mislabel_proportion)
+        case _  :
+            raise ValueError("Invalid value for --iid. Please use 0 or 1.")
     return train_dataset, test_dataset, user_groups
 
 
@@ -47,7 +52,7 @@ def exp_details(args):
     print(f'    Global Rounds   : {args.epochs}\n')
 
     print('    Federated parameters:')
-    if args.iid:
+    if args.setting:
         print('    IID')
     else:
         print('    Non-IID')

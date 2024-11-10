@@ -102,7 +102,14 @@ if __name__ == '__main__':
     print("|---- Test Accuracy: {:.2f}%".format(100*test_acc))
     print('\n Total Run Time: {0:0.4f}'.format(time.time()-start_time))
 
-    logger.info(f'Results after {args.epochs} global rounds of training model {args.dataset} in {args.iid} setting:')
+    match args.setting:
+        case 0:
+            setting_str = "IID"
+        case 1:
+            setting_str = "non-iid" + f" with {args.num_categories_per_client} categories per client" + f" and {args.badclient_prop} bad clients"
+        case 2:
+            setting_str = "mislabeled" + f" with {args.mislabel_proportion} mislabeled samples per client" + f" and {args.badclient_prop} bad clients"
+    logger.info(f'Results after {args.epochs} global rounds of training model {args.dataset} in {setting_str}:')
     logger.info(f'Avg Train Accuracy: {100*train_accuracy[-1]}%')
     logger.info(f'Test Accuracy: {100*test_acc}%')
     logger.info(f'Total Run Time: {time.time()-start_time}')
