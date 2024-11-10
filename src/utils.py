@@ -9,12 +9,12 @@ def get_dataset(args):
     the keys are the user index and the values are the corresponding data for
     each of those users.
     """
-    if args.dataset == 'cifar' or 'resnet':
+    if args.dataset == 'cifar' or args.dataset == 'resnet':
         data_dir = './data/cifar/'
         apply_transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
         train_dataset = datasets.CIFAR10(data_dir, train=True, download=True, transform=apply_transform)
         test_dataset = datasets.CIFAR10(data_dir, train=False, download=True, transform=apply_transform)
-    elif args.dataset == 'mnist' or 'fmnist':
+    elif args.dataset == 'mnist' or args.dataset == 'fmnist':
         data_dir = './data/mnist/' if args.dataset == 'mnist' else './data/fmnist/'
         apply_transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
         train_dataset = datasets.MNIST(data_dir, train=True, download=True, transform=apply_transform)
@@ -55,7 +55,6 @@ def exp_details(args):
     print(f'    Local Batch size   : {args.local_bs}')
     print(f'    Local Epochs       : {args.local_ep}\n')
     return
-
 
 
 def setup_logger(strategy_name: str) -> logging.Logger:
