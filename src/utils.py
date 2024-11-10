@@ -1,7 +1,7 @@
 import copy
 import torch
 from torchvision import datasets, transforms
-from sampling import iid, noniid, mislabeled
+from sampling import iid, noniid, mislabeled, get_bad_client_indexes
 import logging
 
 def get_dataset(args):
@@ -71,3 +71,26 @@ def setup_logger(strategy_name: str) -> logging.Logger:
     if not logger.handlers:
         logger.addHandler(fh)
     return logger
+
+def get_device():
+    if torch.cuda.is_available():
+        return 'cuda'
+    else:
+        return 'mps'
+
+def identify_bad_clients(approx_banzhaf_values: dict, threshold: float = 1.5) -> list[int]:
+    if not approx_banzhaf_values:
+        return []
+    banzhaf_tensor = torch.tensor(list(approx_banzhaf_values.values()))
+    median_banzhaf = torch.median(banzhaf_tensor)    
+    bad_clients = [cid for cid, banzhaf in approx_banzhaf_values.items() if banzhaf < median_banzhaf / threshold]
+    return bad_clients
+
+def measure_bad_client_accuracy(num_clients, bad_clients, badclient_prop):
+    true_bad_clients = set(get_bad_client_indexes(badclient_prop, num_clients))
+    identified_bad_clients = set(bad_clients)
+    TP = len(identified_bad_clients & true_bad_clients)
+    FP = len(identified_bad_clients - true_bad_clients)
+    FN = len(true_bad_clients - identified_bad_clients)
+    TN = num_clients - (TP + FP + FN)
+    return (TP + TN) / num_clients if num_clients > 0 else 0.0
