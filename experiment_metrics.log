@@ -10,3 +10,6 @@
 2024-11-10 11:04:17,381 INFO Avg Train Accuracy: 72.0%
 2024-11-10 11:04:17,381 INFO Test Accuracy: 76.51%
 2024-11-10 11:04:17,381 INFO Total Run Time: 262.7168071269989
+2024-11-10 12:04:13,956 INFO Results after 10 global rounds of training model mnist in mislabeled with 1 mislabeled sample proportion per client and 0.5 bad clients proportion:
+2024-11-10 12:04:13,957 INFO Test Accuracy: 44.91%
+2024-11-10 12:04:13,957 INFO Total Run Time: 309.73111724853516

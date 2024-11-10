@@ -2,7 +2,7 @@ import numpy as np
 
 def iid(dataset, num_users):
     """Sample iid client data."""
-    num_items = int(len(dataset)/num_users)
+    num_items = int(len(dataset) / num_users)
     dict_users, all_idxs = {}, [i for i in range(len(dataset))]
     for i in range(num_users):
         dict_users[i] = set(np.random.choice(all_idxs, num_items, replace=False))
@@ -101,21 +101,20 @@ def noniid(dataset, dataset_name, num_users, noniid_prop, num_cat):
     return dict_users
 
 
-def mislabeled(dataset, dict_users, client_proportion, mislabel_proportion):
+def mislabeled(dataset, dict_users, client_prop, mislabel_prop):
     """Randomly select a proportion of clients and mislabel a proportion of their samples."""
     client_ids = list(dict_users.keys())
-    clients_to_modify = np.random.choice(client_ids, int(client_proportion * len(client_ids)), replace=False)
-    labels = dataset.train_labels.numpy()
+    clients_to_modify = np.random.choice(client_ids, int(client_prop * len(client_ids)), replace=False)
+    labels = dataset.targets.clone()
     for client_id in clients_to_modify:
-        client_indices = dict_users[client_id].astype(int)
+        client_indices = np.array(list(dict_users[client_id]), dtype=int)
         num_samples = len(client_indices)
-        num_samples_to_mislabel = int(mislabel_proportion * num_samples)
-        indices_to_mislabel = np.random.choice(client_indices, num_samples_to_mislabel, replace=False)
+        indices_to_mislabel = np.random.choice(client_indices, int(mislabel_prop * num_samples), replace=False)
         for idx in indices_to_mislabel:
-            correct_label = labels[idx]
+            correct_label = labels[idx].item()
             incorrect_labels = list(range(10))
             incorrect_labels.remove(correct_label)
             new_label = np.random.choice(incorrect_labels)
             labels[idx] = new_label
-    dataset.train_labels = labels
-    return dataset
+    dataset.targets = labels
+    return dict_users

@@ -19,16 +19,15 @@ def get_dataset(args):
         apply_transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
         train_dataset = datasets.MNIST(data_dir, train=True, download=True, transform=apply_transform)
         test_dataset = datasets.MNIST(data_dir, train=False, download=True, transform=apply_transform)
- 
-    # sample training data amongst users
-    
+     
     match args.setting:
         case 0:
             user_groups = iid(train_dataset, args.num_users)
         case 1:
             user_groups = noniid(train_dataset, args.dataset, args.num_users, args.badclient_prop, args.num_categories_per_client)
         case 2:
-            user_groups = mislabeled(train_dataset, args.dataset, args.num_users, args.badclient_prop, args.mislabel_proportion)
+            iid_user_groups = iid(train_dataset, args.num_users)
+            user_groups = mislabeled(train_dataset, iid_user_groups, args.badclient_prop, args.mislabel_proportion)
         case _  :
             raise ValueError("Invalid value for --iid. Please use 0 or 1.")
     return train_dataset, test_dataset, user_groups

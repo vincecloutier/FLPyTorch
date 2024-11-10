@@ -53,7 +53,7 @@ if __name__ == '__main__':
     val_loss_pre, counter = 0, 0
 
     for epoch in tqdm(range(args.epochs)):
-        local_weights, local_losses = [], []
+        local_weights, local_losses, banzhaf_values = [], [], []
         print(f'\n | Global Training Round : {epoch+1} |\n')
 
         global_model.train()
@@ -65,12 +65,11 @@ if __name__ == '__main__':
             w, loss = local_model.update_weights(model=copy.deepcopy(global_model), global_round=epoch)
             local_weights.append(copy.deepcopy(w))
             local_losses.append(copy.deepcopy(loss))
+            b = local_model.compute_banzhaf(model=copy.deepcopy(global_model))
+            banzhaf_values.append(copy.deepcopy(b))
 
         # update global weights
         global_weights = average_weights(local_weights)
-
-        # compute banzhaf values
-        # banzhaf_values = compute_banzhaf(global_weights, train_dataset, args.num_users)
 
         # update global weights
         global_model.load_state_dict(global_weights)
@@ -106,10 +105,9 @@ if __name__ == '__main__':
         case 0:
             setting_str = "IID"
         case 1:
-            setting_str = "non-iid" + f" with {args.num_categories_per_client} categories per client" + f" and {args.badclient_prop} bad clients"
+            setting_str = "non-iid" + f" with {args.num_categories_per_client} categories per client" + f" and {args.badclient_prop} bad clients proportion"
         case 2:
-            setting_str = "mislabeled" + f" with {args.mislabel_proportion} mislabeled samples per client" + f" and {args.badclient_prop} bad clients"
+            setting_str = "mislabeled" + f" with {args.mislabel_proportion} mislabeled sample proportion per client" + f" and {args.badclient_prop} bad clients proportion"
     logger.info(f'Results after {args.epochs} global rounds of training model {args.dataset} in {setting_str}:')
-    logger.info(f'Avg Train Accuracy: {100*train_accuracy[-1]}%')
     logger.info(f'Test Accuracy: {100*test_acc}%')
     logger.info(f'Total Run Time: {time.time()-start_time}')
