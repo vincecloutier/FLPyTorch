@@ -1,17 +1,86 @@
-import os
 import copy
 import time
-import pickle
+import torch
 import numpy as np
 from tqdm import tqdm
-
-import torch
-
+from collections import defaultdict
 from options import args_parser
-from update import LocalUpdate, test_inference
+from update import LocalUpdate, test_inference, test_gradient
 from models import CNNMnist, CNNFashion_Mnist, CNNCifar, ResNet9
-from utils import get_dataset, average_weights, exp_details, setup_logger
+from utils import get_dataset, average_weights, exp_details, setup_logger, get_device, identify_bad_clients, measure_bad_client_accuracy
 
+def initialize_model(args):
+    model_dict = {
+        'mnist': CNNMnist,
+        'fmnist': CNNFashion_Mnist,
+        'cifar': CNNCifar,
+        'resnet': ResNet9
+    }
+    if args.dataset in model_dict:
+        return model_dict[args.dataset](args=args)
+    else:
+        exit('Error: unrecognized dataset')
+
+def train_global_model(args, model, train_dataset, test_dataset, user_groups, device, bad_clients=None):
+    global_weights = model.state_dict()
+    train_loss, train_accuracy = [], []
+    approx_banzhaf_values = defaultdict(float)
+    
+    for epoch in tqdm(range(args.epochs)):
+        local_weights, local_losses = [], []
+        print(f'\n | Global Training Round : {epoch+1} |\n')
+
+        model.train()
+        gradient = test_gradient(model, test_dataset)
+        for key in gradient:
+            gradient[key] = gradient[key].detach().to(device)
+        
+        if bad_clients is not None:
+            good_clients = [i for i in range(args.num_users) if i not in bad_clients]
+            m = max(int(args.frac * len(good_clients)), 1)
+            idxs_users = np.random.choice(good_clients, m, replace=False)
+        else:
+            m = max(int(args.frac * args.num_users), 1)
+            idxs_users = np.random.choice(range(args.num_users), m, replace=False)
+
+        for idx in idxs_users:
+            local_model = LocalUpdate(args=args, dataset=train_dataset, idxs=user_groups[idx])
+            w, loss = local_model.update_weights(model=copy.deepcopy(model), global_round=epoch)
+            local_weights.append(copy.deepcopy(w))
+            local_losses.append(copy.deepcopy(loss))
+            
+            # compute Banzhaf value estimate
+            delta_weights = {key: (w[key] - global_weights[key]).to(device) for key in w.keys()}
+            b_value = sum((-torch.dot(gradient[key].flatten(), delta_weights[key].flatten()) for key in gradient.keys()))
+            approx_banzhaf_values[idx] += b_value.item()
+
+        # update global weights and model
+        global_weights = average_weights(local_weights)
+        model.load_state_dict(global_weights)
+        
+        # calculate average loss
+        loss_avg = sum(local_losses) / len(local_losses)
+        train_loss.append(loss_avg)
+
+        # calculate average training accuracy
+        acc = evaluate_model(args, model, train_dataset, user_groups)
+        train_accuracy.append(acc)
+        
+        if (epoch + 1) % 2 == 0:
+            print(f'\nAvg Training Stats after {epoch + 1} global rounds:')
+            print(f'Training Loss: {np.mean(train_loss)}')
+            print(f'Train Accuracy: {100 * acc:.2f}% \n')
+
+    return model, approx_banzhaf_values
+
+def evaluate_model(args, model, train_dataset, user_groups):
+    model.eval()
+    list_acc = []
+    for c in range(args.num_users):
+        local_model = LocalUpdate(args=args, dataset=train_dataset, idxs=user_groups[c])
+        acc, _ = local_model.inference(model=model)
+        list_acc.append(acc)
+    return sum(list_acc) / len(list_acc)
 
 if __name__ == '__main__':
     start_time = time.time()
@@ -19,88 +88,28 @@ if __name__ == '__main__':
     args = args_parser()
     exp_details(args)
 
-    if torch.cuda.is_available():
-        device = 'cuda'
-    else:
-        device = 'mps'
-
-    # load dataset and user groups
+    device = get_device()
     train_dataset, test_dataset, user_groups = get_dataset(args)
-
-    if args.dataset == 'mnist':
-        global_model = CNNMnist(args=args)
-    elif args.dataset == 'fmnist':
-        global_model = CNNFashion_Mnist(args=args)
-    elif args.dataset == 'cifar':
-        global_model = CNNCifar(args=args)
-    elif args.dataset == 'resnet':
-        global_model = ResNet9(args=args)
-    else:
-        exit('Error: unrecognized dataset') 
-
-    # set the model to train and send it to device.
+    
+    # train the global model
+    global_model = initialize_model(args)
     global_model.to(device)
     global_model.train()
-
-    # copy weights
-    global_weights = global_model.state_dict()
-
-    # training
-    train_loss, train_accuracy = [], []
-    val_acc_list, net_list = [], []
-    cv_loss, cv_acc = [], []
-    print_every = 2
-    val_loss_pre, counter = 0, 0
-
-    for epoch in tqdm(range(args.epochs)):
-        local_weights, local_losses, banzhaf_values = [], [], []
-        print(f'\n | Global Training Round : {epoch+1} |\n')
-
-        global_model.train()
-        m = max(int(args.frac * args.num_users), 1)
-        idxs_users = np.random.choice(range(args.num_users), m, replace=False)
-
-        for idx in idxs_users:
-            local_model = LocalUpdate(args=args, dataset=train_dataset, idxs=user_groups[idx])
-            w, loss = local_model.update_weights(model=copy.deepcopy(global_model), global_round=epoch)
-            local_weights.append(copy.deepcopy(w))
-            local_losses.append(copy.deepcopy(loss))
-            b = local_model.compute_banzhaf(model=copy.deepcopy(global_model))
-            banzhaf_values.append(copy.deepcopy(b))
-
-        # update global weights
-        global_weights = average_weights(local_weights)
-
-        # update global weights
-        global_model.load_state_dict(global_weights)
-
-        loss_avg = sum(local_losses) / len(local_losses)
-        train_loss.append(loss_avg)
-
-        # calculate avg training accuracy over all users at every epoch
-        list_acc, list_loss = [], []
-        global_model.eval()
-        for c in range(args.num_users):
-            local_model = LocalUpdate(args=args, dataset=train_dataset, idxs=user_groups[idx])
-            acc, loss = local_model.inference(model=global_model)
-            list_acc.append(acc)
-            list_loss.append(loss)
-        train_accuracy.append(sum(list_acc)/len(list_acc))
-
-        # print global training loss after every 'i' rounds
-        if (epoch+1) % print_every == 0:
-            print(f' \nAvg Training Stats after {epoch+1} global rounds:')
-            print(f'Training Loss : {np.mean(np.array(train_loss))}')
-            print('Train Accuracy: {:.2f}% \n'.format(100*train_accuracy[-1]))
-
-    # test inference after completion of training
+    global_model, approx_banzhaf_values = train_global_model(args, global_model, train_dataset, test_dataset, user_groups, device)
     test_acc, test_loss = test_inference(args, global_model, test_dataset)
 
-    print(f' \n Results after {args.epochs} global rounds of training:')
-    print("|---- Avg Train Accuracy: {:.2f}%".format(100*train_accuracy[-1]))
-    print("|---- Test Accuracy: {:.2f}%".format(100*test_acc))
-    print('\n Total Run Time: {0:0.4f}'.format(time.time()-start_time))
+    # identify bad clients and retrain
+    bad_clients = identify_bad_clients(approx_banzhaf_values)
+    bad_client_accuracy = measure_bad_client_accuracy(args.num_users, bad_clients, args.badclient_prop) 
 
+    # retrain global model without bad clients
+    global_model = initialize_model(args)
+    global_model.to(device)
+    global_model.train()
+    retrained_model, _ = train_global_model(args, global_model, train_dataset, test_dataset, user_groups, device, bad_clients)
+    retrain_test_acc, retrain_test_loss = test_inference(args, retrained_model, test_dataset)
+
+    # log results
     match args.setting:
         case 0:
             setting_str = "IID"
@@ -109,5 +118,7 @@ if __name__ == '__main__':
         case 2:
             setting_str = "mislabeled" + f" with {args.mislabel_proportion} mislabeled sample proportion per client" + f" and {args.badclient_prop} bad clients proportion"
     logger.info(f'Results after {args.epochs} global rounds of training model {args.dataset} in {setting_str}:')
-    logger.info(f'Test Accuracy: {100*test_acc}%')
+    logger.info(f'Test Accuracy before retraining: {100*test_acc}% and after retraining: {100*retrain_test_acc}%')
+    logger.info(f'Test loss before retraining: {test_loss} and after retraining: {retrain_test_loss}')
+    logger.info(f'Bad client accuracy: {bad_client_accuracy}')
     logger.info(f'Total Run Time: {time.time()-start_time}')
