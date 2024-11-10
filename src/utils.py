@@ -24,7 +24,7 @@ def get_dataset(args):
     if args.iid:
         user_groups = iid(train_dataset, args.num_users)
     else:
-        user_groups = noniid(train_dataset, args.dataset, args.num_users)
+        user_groups = noniid(train_dataset, args.dataset, args.num_users, 0.4, 4)
 
     return train_dataset, test_dataset, user_groups
 

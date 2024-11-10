@@ -69,6 +69,9 @@ if __name__ == '__main__':
         # update global weights
         global_weights = average_weights(local_weights)
 
+        # compute banzhaf values
+        # banzhaf_values = compute_banzhaf(global_weights, train_dataset, args.num_users)
+
         # update global weights
         global_model.load_state_dict(global_weights)
 
@@ -99,7 +102,7 @@ if __name__ == '__main__':
     print("|---- Test Accuracy: {:.2f}%".format(100*test_acc))
     print('\n Total Run Time: {0:0.4f}'.format(time.time()-start_time))
 
-    logger.info(f'Results after {args.epochs} global rounds of training model {args.dataset}:')
+    logger.info(f'Results after {args.epochs} global rounds of training model {args.dataset} in {args.iid} setting:')
     logger.info(f'Avg Train Accuracy: {100*train_accuracy[-1]}%')
     logger.info(f'Test Accuracy: {100*test_acc}%')
     logger.info(f'Total Run Time: {time.time()-start_time}')
