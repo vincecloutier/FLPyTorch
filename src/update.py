@@ -1,6 +1,7 @@
 import torch
 from torch import nn
 from torch.utils.data import DataLoader, Dataset
+from utils import get_device
 
 
 class DatasetSplit(Dataset):
@@ -21,11 +22,7 @@ class LocalUpdate(object):
     def __init__(self, args, dataset, idxs):
         self.args = args
         self.trainloader, self.validloader, self.testloader = self.train_val_test(dataset, list(idxs))
-        if torch.cuda.is_available():
-            self.device = 'cuda'
-        else:
-            self.device = 'mps'
-        # default criterion set to NLL loss function
+        self.device = get_device()
         self.criterion = nn.NLLLoss().to(self.device)
 
     def train_val_test(self, dataset, idxs):
@@ -106,10 +103,7 @@ def test_inference(args, model, test_dataset):
     model.eval()
     loss, total, correct = 0.0, 0.0, 0.0
 
-    if torch.cuda.is_available():
-        device = 'cuda'
-    else:
-        device = 'mps'
+    device = get_device()
 
     criterion = nn.NLLLoss().to(device)
     testloader = DataLoader(test_dataset, batch_size=128, shuffle=False)
@@ -130,3 +124,38 @@ def test_inference(args, model, test_dataset):
 
     accuracy = correct/total
     return accuracy, loss
+
+
+def test_gradient(model, test_dataset):
+    """Returns the gradient of the loss with respect to the model parameters on the test dataset."""
+    
+    model.eval()
+    for param in model.parameters():
+        if param.grad is not None:
+            param.grad.zero_()
+
+    device = get_device()
+
+    criterion = nn.NLLLoss().to(device)
+    testloader = DataLoader(test_dataset, batch_size=128, shuffle=False)
+    
+    for batch_idx, (images, labels) in enumerate(testloader):
+        images, labels = images.to(device), labels.to(device)
+
+        # forward pass
+        outputs = model(images)
+        loss = criterion(outputs, labels)
+
+        # backward pass to compute gradients
+        loss.backward()
+
+        # for now we only compute gradients for one batch (average over all batches if required)
+        break
+
+    # collect gradients
+    gradients = {}
+    for name, param in model.named_parameters():
+        if param.requires_grad:
+            gradients[name] = param.grad.clone().detach() if param.grad is not None else None
+
+    return gradients
