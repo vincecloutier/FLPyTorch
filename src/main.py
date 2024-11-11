@@ -8,6 +8,7 @@ from options import args_parser
 from update import LocalUpdate, test_inference, test_gradient
 from models import CNNMnist, CNNFashion_Mnist, CNNCifar, ResNet9
 from utils import get_dataset, average_weights, exp_details, setup_logger, get_device, identify_bad_clients, measure_bad_client_accuracy
+from sampling import get_bad_client_indexes
 
 def initialize_model(args):
     model_dict = {
@@ -101,6 +102,7 @@ if __name__ == '__main__':
     # identify bad clients and retrain
     bad_clients = identify_bad_clients(approx_banzhaf_values)
     bad_client_accuracy = measure_bad_client_accuracy(args.num_users, bad_clients, args.badclient_prop) 
+    actual_bad_clients = get_bad_client_indexes(args.badclient_prop, args.num_users)    
 
     # retrain global model without bad clients
     global_model = initialize_model(args)
@@ -114,11 +116,14 @@ if __name__ == '__main__':
         case 0:
             setting_str = "IID"
         case 1:
-            setting_str = "non-iid" + f" with {args.num_categories_per_client} categories per client" + f" and {args.badclient_prop} bad clients proportion"
+            setting_str = f"{len(actual_bad_clients)} Bad Clients" + f" with {args.num_categories_per_client} Categories Per Bad Client"
         case 2:
-            setting_str = "mislabeled" + f" with {args.mislabel_proportion} mislabeled sample proportion per client" + f" and {args.badclient_prop} bad clients proportion"
-    logger.info(f'Results after {args.epochs} global rounds of training model {args.dataset} in {setting_str}:')
-    logger.info(f'Test Accuracy before retraining: {100*test_acc}% and after retraining: {100*retrain_test_acc}%')
-    logger.info(f'Test loss before retraining: {test_loss} and after retraining: {retrain_test_loss}')
-    logger.info(f'Bad client accuracy: {bad_client_accuracy}')
+            setting_str = f"{len(actual_bad_clients)} Bad Clients" + f" with {100*args.mislabel_proportion}% Mislabeled Samples Per Bad Client"
+    logger.info(f'Number Of Clients: {args.num_users}, Fraction Of Clients Per Round: {args.frac}, Number Of Rounds: {args.epochs}, Local Epochs: {args.local_ep}')
+    logger.info(f'Dataset: {args.dataset}, Setting: {setting_str}')
+    logger.info(f'Test Accuracy Before Retraining: {100*test_acc}%')
+    logger.info(f'Test Accuracy After Retraining: {100*retrain_test_acc}%')
+    logger.info(f'Bad Client Accuracy: {bad_client_accuracy}')
+    logger.info(f'Banzhaf Values: {approx_banzhaf_values}')
+    logger.info(f'Predicted Bad Clients: {bad_clients} vs. Actual Bad Clients: {actual_bad_clients}')
     logger.info(f'Total Run Time: {time.time()-start_time}')

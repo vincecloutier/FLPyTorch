@@ -58,8 +58,8 @@ class LocalUpdate(object):
                 loss = self.criterion(log_probs, labels)
                 loss.backward()
 
-                # if self.args.dataset == 'resnet':
-                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+                if self.args.dataset == 'resnet':
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
 
                 optimizer.step()
 
@@ -125,9 +125,8 @@ def test_inference(args, model, test_dataset):
     accuracy = correct/total
     return accuracy, loss
 
-
 def test_gradient(model, test_dataset):
-    """Returns the gradient of the loss with respect to the model parameters on the test dataset."""
+    """Returns the average gradient of the loss with respect to the model parameters on the test dataset."""
     
     model.eval()
     for param in model.parameters():
@@ -139,20 +138,19 @@ def test_gradient(model, test_dataset):
     criterion = nn.NLLLoss().to(device)
     testloader = DataLoader(test_dataset, batch_size=128, shuffle=False)
     
+    total_batches = len(testloader)
+    
     for batch_idx, (images, labels) in enumerate(testloader):
         images, labels = images.to(device), labels.to(device)
 
         # forward pass
         outputs = model(images)
-        loss = criterion(outputs, labels)
+        loss = criterion(outputs, labels) / total_batches
 
         # backward pass to compute gradients
         loss.backward()
 
-        # for now we only compute gradients for one batch (average over all batches if required)
-        break
-
-    # collect gradients
+    # collect average gradients
     gradients = {}
     for name, param in model.named_parameters():
         if param.requires_grad:
