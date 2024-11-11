@@ -49,3 +49,9 @@
 2024-11-11 10:20:04,081 INFO Dataset: resnet, Setting: IID
 2024-11-11 10:20:04,081 INFO Test Accuracy Before Retraining: 75.12%
 2024-11-11 10:20:04,081 INFO Total Run Time: 3716.1198070049286
+2024-11-11 13:44:57,456 INFO Number Of Clients: 50, Fraction Of Clients Per Round: 0.6, Number Of Rounds: 25, Local Epochs: 3
+2024-11-11 13:44:57,456 INFO Dataset: resnet, Setting: 15 Bad Clients with 40.0% Mislabeled Samples Per Bad Client
+2024-11-11 13:44:57,456 INFO Test Accuracy Before Retraining: 63.77%
+2024-11-11 13:44:57,456 INFO Test Accuracy After Retraining: 68.82000000000001%
+2024-11-11 13:44:57,456 INFO Bad Client Accuracy: 0.8
+2024-11-11 13:44:57,456 INFO Total Run Time: 3135.3584599494934
