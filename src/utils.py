@@ -1,7 +1,7 @@
 import copy
 import torch
 from torchvision import datasets, transforms
-from sampling import iid, noniid, mislabeled, get_bad_client_indexes
+from sampling import iid, noniid, mislabeled
 import logging
 
 def get_dataset(args):
@@ -23,14 +23,16 @@ def get_dataset(args):
     match args.setting:
         case 0:
             user_groups = iid(train_dataset, args.num_users)
+            return train_dataset, test_dataset, user_groups, None, None, None
         case 1:
-            user_groups = noniid(train_dataset, args.dataset, args.num_users, args.badclient_prop, args.num_categories_per_client)
+            user_groups, non_iid_clients = noniid(train_dataset, args.dataset, args.num_users, args.badclient_prop, args.num_categories_per_client)
+            return train_dataset, test_dataset, user_groups, non_iid_clients, None, None
         case 2:
             iid_user_groups = iid(train_dataset, args.num_users)
-            user_groups = mislabeled(train_dataset, args.dataset, iid_user_groups, args.badclient_prop, args.mislabel_proportion)
+            user_groups, bad_clients, bad_samples = mislabeled(train_dataset, args.dataset, iid_user_groups, args.badclient_prop, args.mislabel_proportion)
+            return train_dataset, test_dataset, user_groups, None, bad_clients, bad_samples
         case _  :
             raise ValueError("Invalid value for --iid. Please use 0 or 1.")
-    return train_dataset, test_dataset, user_groups
 
 
 def average_weights(w):
@@ -78,19 +80,25 @@ def get_device():
     else:
         return 'mps'
 
-def identify_bad_clients(approx_banzhaf_values: dict, threshold: float = 1.5) -> list[int]:
+def identify_bad_idxs(approx_banzhaf_values: dict, threshold: float = 1.5) -> list[int]:
     if not approx_banzhaf_values:
         return []
     banzhaf_tensor = torch.tensor(list(approx_banzhaf_values.values()))
     median_banzhaf = torch.median(banzhaf_tensor)    
-    bad_clients = [cid for cid, banzhaf in approx_banzhaf_values.items() if banzhaf < median_banzhaf / threshold]
-    return bad_clients
+    bad_idxs = [key for key, banzhaf in approx_banzhaf_values.items() if banzhaf < median_banzhaf / threshold]
+    return bad_idxs
 
-def measure_bad_client_accuracy(num_clients, bad_clients, badclient_prop):
-    true_bad_clients = set(get_bad_client_indexes(badclient_prop, num_clients))
-    identified_bad_clients = set(bad_clients)
-    TP = len(identified_bad_clients & true_bad_clients)
-    FP = len(identified_bad_clients - true_bad_clients)
-    FN = len(true_bad_clients - identified_bad_clients)
-    TN = num_clients - (TP + FP + FN)
-    return (TP + TN) / num_clients if num_clients > 0 else 0.0
+def measure_accuracy(targets, predictions):
+    targets, predictions = set(targets), set(predictions)
+    TP = len(predictions & targets)
+    FP = len(predictions - targets)
+    FN = len(targets - predictions)
+    TN = len(targets) - (TP + FP + FN)
+    return (TP + TN) / len(targets) if len(targets) > 0 else 0.0
+
+def remove_bad_samples(user_groups, bad_samples):
+    updated_user_groups = {}
+    for client_idx, data_idxs in user_groups.items():
+        updated_data_idxs = [idx for idx in data_idxs if idx not in bad_samples]
+        updated_user_groups[client_idx] = updated_data_idxs
+    return updated_user_groups

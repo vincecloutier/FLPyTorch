@@ -1,4 +1,5 @@
 import numpy as np
+from collections import defaultdict
 
 def iid(dataset, num_users):
     """Sample iid client data."""
@@ -70,19 +71,21 @@ def noniid(dataset, dataset_name, num_users, badclient_prop, num_cat):
     num_non_iid_clients = int(badclient_prop * num_users)
     num_iid_clients = num_users - num_non_iid_clients
     shards_per_client = shard_id // num_users
-
+    iid_clients = np.random.choice(range(num_users), num_iid_clients, replace=False)
+    non_iid_clients = [i for i in range(num_users) if i not in iid_clients]
+    
     if shard_id < num_users * shards_per_client:
         raise ValueError("Not enough shards to assign to all clients")
 
     # assign shards to iid clients
     assigned_shard_ids = set()
-    for i in range(num_iid_clients):
+    for i in iid_clients:
         client_shard_ids = all_shard_ids[i * shards_per_client: (i + 1) * shards_per_client]
         dict_users[i] = np.concatenate([shard_id_to_indices[sid] for sid in client_shard_ids])
         assigned_shard_ids.update(client_shard_ids)
 
     # assign shards to non iid clients
-    for i in range(num_iid_clients, num_users):
+    for i in non_iid_clients:
         # select k random categories
         categories = np.random.choice(num_classes, num_cat, replace=False)
         available_shards = []
@@ -97,7 +100,7 @@ def noniid(dataset, dataset_name, num_users, badclient_prop, num_cat):
         dict_users[i] = np.concatenate([shard_id_to_indices[sid] for sid in client_shard_ids])
         assigned_shard_ids.update(client_shard_ids)
 
-    return dict_users
+    return dict_users, non_iid_clients
 
 
 def mislabeled(dataset, dataset_name, dict_users, badclient_prop, mislabel_prop):
@@ -106,10 +109,13 @@ def mislabeled(dataset, dataset_name, dict_users, badclient_prop, mislabel_prop)
         labels = dataset.targets.clone()
     elif dataset_name in ['cifar', 'resnet']:
         labels = dataset.targets
-    for client_id in get_bad_client_indexes(badclient_prop, len(dict_users)):
+    clients_to_mislabel = np.random.choice(range(len(dict_users)), int(badclient_prop * len(dict_users)), replace=False)
+    bad_samples = []
+    for client_id in clients_to_mislabel:
         client_indices = np.array(list(dict_users[client_id]), dtype=int)
         num_samples = len(client_indices)
         indices_to_mislabel = np.random.choice(client_indices, int(mislabel_prop * num_samples), replace=False)
+        bad_samples.extend(indices_to_mislabel)
         for idx in indices_to_mislabel:
             if dataset_name in ['mnist', 'fmnist']:
                 correct_label = labels[idx].item()
@@ -120,10 +126,4 @@ def mislabeled(dataset, dataset_name, dict_users, badclient_prop, mislabel_prop)
             new_label = np.random.choice(incorrect_labels)
             labels[idx] = new_label
     dataset.targets = labels
-    return dict_users
-
-
-def get_bad_client_indexes(bad_client_prop, num_users):
-    """Returns the indexes of all non-IID (or bad) clients."""
-    bad_client_indexes = list(range(num_users - int(bad_client_prop * num_users), num_users))
-    return bad_client_indexes
+    return dict_users, clients_to_mislabel, bad_samples
