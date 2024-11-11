@@ -27,7 +27,7 @@ def get_dataset(args):
             user_groups = noniid(train_dataset, args.dataset, args.num_users, args.badclient_prop, args.num_categories_per_client)
         case 2:
             iid_user_groups = iid(train_dataset, args.num_users)
-            user_groups = mislabeled(train_dataset, iid_user_groups, args.badclient_prop, args.mislabel_proportion)
+            user_groups = mislabeled(train_dataset, args.dataset, iid_user_groups, args.badclient_prop, args.mislabel_proportion)
         case _  :
             raise ValueError("Invalid value for --iid. Please use 0 or 1.")
     return train_dataset, test_dataset, user_groups

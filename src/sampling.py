@@ -100,15 +100,21 @@ def noniid(dataset, dataset_name, num_users, badclient_prop, num_cat):
     return dict_users
 
 
-def mislabeled(dataset, dict_users, badclient_prop, mislabel_prop):
+def mislabeled(dataset, dataset_name, dict_users, badclient_prop, mislabel_prop):
     """Randomly select a proportion of clients and mislabel a proportion of their samples."""
-    labels = dataset.targets.clone()
+    if dataset_name in ['mnist', 'fmnist']:
+        labels = dataset.targets.clone()
+    elif dataset_name in ['cifar', 'resnet']:
+        labels = dataset.targets
     for client_id in get_bad_client_indexes(badclient_prop, len(dict_users)):
         client_indices = np.array(list(dict_users[client_id]), dtype=int)
         num_samples = len(client_indices)
         indices_to_mislabel = np.random.choice(client_indices, int(mislabel_prop * num_samples), replace=False)
         for idx in indices_to_mislabel:
-            correct_label = labels[idx].item()
+            if dataset_name in ['mnist', 'fmnist']:
+                correct_label = labels[idx].item()
+            elif dataset_name in ['cifar', 'resnet']:
+                correct_label = labels[idx]
             incorrect_labels = list(range(10))
             incorrect_labels.remove(correct_label)
             new_label = np.random.choice(incorrect_labels)
