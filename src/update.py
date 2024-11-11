@@ -152,4 +152,7 @@ def test_gradient(model, test_dataset):
         if param.requires_grad:
             gradients[name] = param.grad.clone().detach() if param.grad is not None else None
 
+    for key in gradients:
+        gradients[key] = gradients[key].detach().to(device)
+
     return gradients

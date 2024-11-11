@@ -5,7 +5,7 @@ import numpy as np
 from tqdm import tqdm
 from collections import defaultdict
 from options import args_parser
-from update import LocalUpdate, test_inference, test_gradient, compute_sample_banzhaf_values
+from update import LocalUpdate, test_inference, test_gradient
 from models import CNNMnist, CNNFashion_Mnist, CNNCifar, ResNet9
 from utils import get_dataset, average_weights, exp_details, setup_logger, get_device, identify_bad_idxs, measure_accuracy, remove_bad_samples
 
@@ -24,6 +24,7 @@ def initialize_model(args):
 def train_global_model(args, model, train_dataset, test_dataset, user_groups, device, bad_clients=None):
     global_weights = model.state_dict()
     train_loss, train_accuracy = [], []
+    best_test_acc, best_test_loss = 0, float('inf')
     approx_banzhaf_values = defaultdict(float)
     selection_probabilities = np.full(args.num_users, 1 / args.num_users)
 
@@ -121,22 +122,11 @@ if __name__ == '__main__':
     predicted_bad_clients = identify_bad_idxs(approx_banzhaf_values)
     bad_client_accuracy = measure_accuracy(actual_bad_clients, predicted_bad_clients)
 
-    # predict bad samples and measure accuracy
-    # sample_banzhaf_values = {}
-    # for client in predicted_bad_clients:
-    #     local_model = LocalUpdate(args=args, dataset=train_dataset, idxs=user_groups[client])
-    #     client_banzhaf_values = local_model.estimate_banzhaf_values(model=copy.deepcopy(global_model))
-    #     sample_banzhaf_values.update(client_banzhaf_values)
-
-    # predicted_bad_samples = identify_bad_idxs(sample_banzhaf_values) 
-    # bad_sample_accuracy = measure_accuracy(actual_bad_samples, predicted_bad_samples)
-
-    # retrain the model w/o bad samples 
-    # updated_user_groups = remove_bad_samples(user_groups, predicted_bad_samples)
+    # retrain the model w/o bad clients 
     global_model = initialize_model(args)
     global_model.to(device)
     global_model.train()
-    retrained_model, _ = train_global_model(args, global_model, train_dataset, test_dataset, user_groups, device, predicted_bad_clients)
+    retrained_model, _, second_convergence_round = train_global_model(args, global_model, train_dataset, test_dataset, user_groups, device, predicted_bad_clients)
     retrain_test_acc, retrain_test_loss = test_inference(args, retrained_model, test_dataset)
 
     # log results
@@ -147,10 +137,10 @@ if __name__ == '__main__':
             setting_str = f"{len(actual_bad_clients)} Bad Clients" + f" with {args.num_categories_per_client} Categories Per Bad Client"
         case 2:
             setting_str = f"{len(actual_bad_clients)} Bad Clients" + f" with {100*args.mislabel_proportion}% Mislabeled Samples Per Bad Client"
-    logger.info(f'Number Of Clients: {args.num_users}, Client Selection Fraction: {args.frac}, Number Of Rounds: {args.epochs}, Convergence Round: {convergence_round}, Local Epochs: {args.local_ep}')
+    logger.info(f'Number Of Clients: {args.num_users}, Client Selection Fraction: {args.frac}, Local Epochs: {args.local_ep}')
+    logger.info(f'Convergence Round: {convergence_round}, Retraining Convergence Round: {second_convergence_round}, Number Of Rounds: {args.epochs}')
     logger.info(f'Dataset: {args.dataset}, Setting: {setting_str}')
     logger.info(f'Test Accuracy Before Retraining: {100*test_acc}%')
     logger.info(f'Test Accuracy After Retraining: {100*retrain_test_acc}%')
     logger.info(f'Bad Client Accuracy: {bad_client_accuracy}')
-    # logger.info(f'Bad Sample Accuracy: {bad_sample_accuracy}')
     logger.info(f'Total Run Time: {time.time()-start_time}')
