@@ -5,10 +5,9 @@ import numpy as np
 from tqdm import tqdm
 from collections import defaultdict
 from options import args_parser
-from update import LocalUpdate, test_inference, test_gradient
+from update import LocalUpdate, test_inference, test_gradient, compute_sample_banzhaf_values
 from models import CNNMnist, CNNFashion_Mnist, CNNCifar, ResNet9
-from utils import get_dataset, average_weights, exp_details, setup_logger, get_device, identify_bad_clients, measure_bad_client_accuracy
-from sampling import get_bad_client_indexes
+from utils import get_dataset, average_weights, exp_details, setup_logger, get_device, identify_bad_idxs, measure_accuracy, remove_bad_samples
 
 def initialize_model(args):
     model_dict = {
@@ -26,15 +25,14 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
     global_weights = model.state_dict()
     train_loss, train_accuracy = [], []
     approx_banzhaf_values = defaultdict(float)
-    
+    selection_probabilities = np.full(args.num_users, 1 / args.num_users)
+
     for epoch in tqdm(range(args.epochs)):
         local_weights, local_losses = [], []
         print(f'\n | Global Training Round : {epoch+1} |\n')
 
         model.train()
         gradient = test_gradient(model, test_dataset)
-        for key in gradient:
-            gradient[key] = gradient[key].detach().to(device)
         
         if bad_clients is not None:
             good_clients = [i for i in range(args.num_users) if i not in bad_clients]
@@ -67,6 +65,13 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
         acc = evaluate_model(args, model, train_dataset, user_groups)
         train_accuracy.append(acc)
         
+        # update selection probabilities based on the banzhaf values
+        if bad_clients is not None:
+            total_banzhaf = sum(approx_banzhaf_values.values())
+            if total_banzhaf > 0:
+                selection_probabilities = np.array([approx_banzhaf_values[i] / total_banzhaf for i in range(args.num_users)])
+                selection_probabilities /= selection_probabilities.sum()  # normalize
+
         if (epoch + 1) % 2 == 0:
             print(f'\nAvg Training Stats after {epoch + 1} global rounds:')
             print(f'Training Loss: {np.mean(train_loss)}')
@@ -90,7 +95,7 @@ if __name__ == '__main__':
     exp_details(args)
 
     device = get_device()
-    train_dataset, test_dataset, user_groups = get_dataset(args)
+    train_dataset, test_dataset, user_groups, non_iid_clients, actual_bad_clients, actual_bad_samples = get_dataset(args)
     
     # train the global model
     global_model = initialize_model(args)
@@ -99,16 +104,26 @@ if __name__ == '__main__':
     global_model, approx_banzhaf_values = train_global_model(args, global_model, train_dataset, test_dataset, user_groups, device)
     test_acc, test_loss = test_inference(args, global_model, test_dataset)
 
-    # identify bad clients and retrain
-    bad_clients = identify_bad_clients(approx_banzhaf_values)
-    bad_client_accuracy = measure_bad_client_accuracy(args.num_users, bad_clients, args.badclient_prop) 
-    actual_bad_clients = get_bad_client_indexes(args.badclient_prop, args.num_users)    
+    # predict bad clients and measure accuracy
+    predicted_bad_clients = identify_bad_idxs(approx_banzhaf_values)
+    bad_client_accuracy = measure_accuracy(actual_bad_clients, predicted_bad_clients)
 
-    # retrain global model without bad clients
+    # predict bad samples and measure accuracy
+    # sample_banzhaf_values = {}
+    # for client in predicted_bad_clients:
+    #     local_model = LocalUpdate(args=args, dataset=train_dataset, idxs=user_groups[client])
+    #     client_banzhaf_values = local_model.estimate_banzhaf_values(model=copy.deepcopy(global_model))
+    #     sample_banzhaf_values.update(client_banzhaf_values)
+
+    # predicted_bad_samples = identify_bad_idxs(sample_banzhaf_values) 
+    # bad_sample_accuracy = measure_accuracy(actual_bad_samples, predicted_bad_samples)
+
+    # retrain the model w/o bad samples 
+    # updated_user_groups = remove_bad_samples(user_groups, predicted_bad_samples)
     global_model = initialize_model(args)
     global_model.to(device)
     global_model.train()
-    retrained_model, _ = train_global_model(args, global_model, train_dataset, test_dataset, user_groups, device, bad_clients)
+    retrained_model, _ = train_global_model(args, global_model, train_dataset, test_dataset, user_groups, device, predicted_bad_clients)
     retrain_test_acc, retrain_test_loss = test_inference(args, retrained_model, test_dataset)
 
     # log results
@@ -124,6 +139,5 @@ if __name__ == '__main__':
     logger.info(f'Test Accuracy Before Retraining: {100*test_acc}%')
     logger.info(f'Test Accuracy After Retraining: {100*retrain_test_acc}%')
     logger.info(f'Bad Client Accuracy: {bad_client_accuracy}')
-    logger.info(f'Banzhaf Values: {approx_banzhaf_values}')
-    logger.info(f'Predicted Bad Clients: {bad_clients} vs. Actual Bad Clients: {actual_bad_clients}')
+    # logger.info(f'Bad Sample Accuracy: {bad_sample_accuracy}')
     logger.info(f'Total Run Time: {time.time()-start_time}')
