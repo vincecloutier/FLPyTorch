@@ -27,6 +27,7 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
     approx_banzhaf_values = defaultdict(float)
     selection_probabilities = np.full(args.num_users, 1 / args.num_users)
 
+    no_improvement_count = 0
     for epoch in tqdm(range(args.epochs)):
         local_weights, local_losses = [], []
         print(f'\n | Global Training Round : {epoch+1} |\n')
@@ -48,7 +49,7 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
             local_weights.append(copy.deepcopy(w))
             local_losses.append(copy.deepcopy(loss))
             
-            # compute Banzhaf value estimate
+            # compute banzhaf value estimate
             delta_weights = {key: (w[key] - global_weights[key]).to(device) for key in w.keys()}
             b_value = sum((-torch.dot(gradient[key].flatten(), delta_weights[key].flatten()) for key in gradient.keys()))
             approx_banzhaf_values[idx] += b_value.item()
@@ -77,7 +78,19 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
             print(f'Training Loss: {np.mean(train_loss)}')
             print(f'Train Accuracy: {100 * acc:.2f}% \n')
 
-    return model, approx_banzhaf_values
+        test_acc, test_loss = test_inference(args, model, test_dataset)
+        if test_acc > best_test_acc * 1.01 or test_loss < best_test_loss * 0.99:
+            best_test_acc = test_acc
+            best_test_loss = test_loss
+            no_improvement_count = 0
+        else:
+            no_improvement_count += 1
+            if no_improvement_count > 5:
+                print(f'Convergence Reached At Round {epoch + 1}')
+                break
+            
+    convergence_round = epoch + 1 if no_improvement_count > 5 else args.epochs
+    return model, approx_banzhaf_values, convergence_round
 
 def evaluate_model(args, model, train_dataset, user_groups):
     model.eval()
@@ -101,7 +114,7 @@ if __name__ == '__main__':
     global_model = initialize_model(args)
     global_model.to(device)
     global_model.train()
-    global_model, approx_banzhaf_values = train_global_model(args, global_model, train_dataset, test_dataset, user_groups, device)
+    global_model, approx_banzhaf_values, convergence_round = train_global_model(args, global_model, train_dataset, test_dataset, user_groups, device)
     test_acc, test_loss = test_inference(args, global_model, test_dataset)
 
     # predict bad clients and measure accuracy
@@ -134,7 +147,7 @@ if __name__ == '__main__':
             setting_str = f"{len(actual_bad_clients)} Bad Clients" + f" with {args.num_categories_per_client} Categories Per Bad Client"
         case 2:
             setting_str = f"{len(actual_bad_clients)} Bad Clients" + f" with {100*args.mislabel_proportion}% Mislabeled Samples Per Bad Client"
-    logger.info(f'Number Of Clients: {args.num_users}, Fraction Of Clients Per Round: {args.frac}, Number Of Rounds: {args.epochs}, Local Epochs: {args.local_ep}')
+    logger.info(f'Number Of Clients: {args.num_users}, Client Selection Fraction: {args.frac}, Number Of Rounds: {args.epochs}, Convergence Round: {convergence_round}, Local Epochs: {args.local_ep}')
     logger.info(f'Dataset: {args.dataset}, Setting: {setting_str}')
     logger.info(f'Test Accuracy Before Retraining: {100*test_acc}%')
     logger.info(f'Test Accuracy After Retraining: {100*retrain_test_acc}%')
