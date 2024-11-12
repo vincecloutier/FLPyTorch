@@ -9,11 +9,21 @@ def get_dataset(args):
     the keys are the user index and the values are the corresponding data for
     each of those users.
     """
-    if args.dataset == 'cifar' or args.dataset == 'resnet':
+    if args.dataset == 'cifar' or args.dataset == 'resnet' or args.dataset == 'mobilenet':
         data_dir = './data/cifar/'
-        apply_transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-        train_dataset = datasets.CIFAR10(data_dir, train=True, download=True, transform=apply_transform)
-        test_dataset = datasets.CIFAR10(data_dir, train=False, download=True, transform=apply_transform)
+        transform_train = transforms.Compose([
+            transforms.RandomCrop(32, padding=4),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+        ])
+
+        transform_test = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+        ])
+        train_dataset = datasets.CIFAR10(data_dir, train=True, download=True, transform=transform_train)
+        test_dataset = datasets.CIFAR10(data_dir, train=False, download=True, transform=transform_test)
     elif args.dataset == 'mnist' or args.dataset == 'fmnist':
         data_dir = './data/mnist/' if args.dataset == 'mnist' else './data/fmnist/'
         apply_transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])

@@ -107,7 +107,7 @@ def mislabeled(dataset, dataset_name, dict_users, badclient_prop, mislabel_prop)
     """Randomly select a proportion of clients and mislabel a proportion of their samples."""
     if dataset_name in ['mnist', 'fmnist']:
         labels = dataset.targets.clone()
-    elif dataset_name in ['cifar', 'resnet']:
+    elif dataset_name in ['cifar', 'resnet', 'mobilenet']:
         labels = dataset.targets
     clients_to_mislabel = np.random.choice(range(len(dict_users)), int(badclient_prop * len(dict_users)), replace=False)
     bad_samples = []
@@ -119,7 +119,7 @@ def mislabeled(dataset, dataset_name, dict_users, badclient_prop, mislabel_prop)
         for idx in indices_to_mislabel:
             if dataset_name in ['mnist', 'fmnist']:
                 correct_label = labels[idx].item()
-            elif dataset_name in ['cifar', 'resnet']:
+            elif dataset_name in ['cifar', 'resnet', 'mobilenet']:
                 correct_label = labels[idx]
             incorrect_labels = list(range(10))
             incorrect_labels.remove(correct_label)

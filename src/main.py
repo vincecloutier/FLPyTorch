@@ -6,7 +6,7 @@ from tqdm import tqdm
 from collections import defaultdict
 from options import args_parser
 from update import LocalUpdate, test_inference, test_gradient
-from models import CNNMnist, CNNFashion_Mnist, CNNCifar, ResNet9
+from models import CNNMnist, CNNFashion_Mnist, CNNCifar, ResNet9, MobileNetV2
 from utils import get_dataset, average_weights, exp_details, setup_logger, get_device, identify_bad_idxs, measure_accuracy, remove_bad_samples
 
 def initialize_model(args):
@@ -14,7 +14,8 @@ def initialize_model(args):
         'mnist': CNNMnist,
         'fmnist': CNNFashion_Mnist,
         'cifar': CNNCifar,
-        'resnet': ResNet9
+        'resnet': ResNet9,
+        'mobilenet': MobileNetV2
     }
     if args.dataset in model_dict:
         return model_dict[args.dataset](args=args)
