@@ -107,12 +107,10 @@ def calculate_shapley_banzhaf(args, results, num_users):
 
     return shapley_values, banzhaf_values
 
-def run_process(subset, args, results_dict):
-    # Re-initialize datasets within the subprocess
+def run_process(subset, args, train_dataset, test_dataset, user_groups, results_dict):
     device = get_device()
     if device.type == 'cuda':
         torch.cuda.set_device(device.index)
-    train_dataset, test_dataset, user_groups, _, _, _ = get_dataset(args)
     train_subset_model(subset, args, train_dataset, test_dataset, user_groups, results_dict)
 
 def main():
@@ -150,7 +148,7 @@ def main():
     # Start processes
     for subset in all_subsets:
         semaphore.acquire()
-        p = mp.Process(target=run_process, args=(subset, args, results_dict))
+        p = mp.Process(target=run_process, args=(subset, args, train_dataset, test_dataset, user_groups, results_dict))
         p.start()
         processes.append((p, semaphore))
 
