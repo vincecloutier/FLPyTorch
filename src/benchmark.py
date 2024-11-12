@@ -84,13 +84,46 @@ def train_subset_model(subset, args, train_dataset, test_dataset, user_groups, r
     # Store the result in the shared dictionary
     results_dict[subset] = acc
 
+def calculate_shapley_banzhaf(args, results, num_users):
+    shapley_values = np.zeros(num_users)
+    banzhaf_values = np.zeros(num_users)
+    total_permutations = math.factorial(num_users)
+    all_clients = list(range(num_users))
+
+    for client in range(num_users):
+        for r in range(num_users):
+            subsets = list(itertools.combinations([c for c in all_clients if c != client], r))
+            for subset in subsets:
+                subset = tuple(sorted(subset))
+                subset_with_client = tuple(sorted(subset + (client,)))
+                result_without = results.get(subset, 0)
+                result_with = results.get(subset_with_client, 0)
+                marginal_contrib = result_with - result_without
+                weight = math.factorial(len(subset)) * math.factorial(num_users - len(subset) - 1) / total_permutations
+                shapley_values[client] += weight * marginal_contrib
+                banzhaf_values[client] += marginal_contrib
+        banzhaf_values[client] /= (2 ** (num_users - 1))
+
+    return shapley_values, banzhaf_values
+
+def run_process(subset, args, results_dict):
+    # Re-initialize datasets within the subprocess
+    device = get_device()
+    torch.cuda.set_device(device)
+    train_dataset, test_dataset, user_groups, _, _, _ = get_dataset(args)
+    train_subset_model(subset, args, train_dataset, test_dataset, user_groups, results_dict)
+
 def main():
     start_time = time.time()
     logger = setup_logger('experiment')
     args = args_parser()
     exp_details(args)
 
-    device = get_device()  # Use CUDA device
+    # Get the number of CPUs and GPUs
+    num_cpus = mp.cpu_count()
+    num_gpus = torch.cuda.device_count()
+    device = get_device()  # Use CUDA device if available
+
     train_dataset, test_dataset, user_groups, _, _, _ = get_dataset(args)
 
     num_users = args.num_users
@@ -109,20 +142,22 @@ def main():
     processes = []
 
     # Limit the number of processes to prevent GPU memory exhaustion
-    max_processes = torch.cuda.device_count()  # Assuming one process per GPU
+    max_processes = 8  # Adjust based on your hardware
     semaphore = mp.Semaphore(max_processes)
-
-    def run_process(subset):
-        with semaphore:
-            train_subset_model(subset, args, train_dataset, test_dataset, user_groups, results_dict)
 
     # Start processes
     for subset in all_subsets:
-        p = mp.Process(target=run_process, args=(subset,))
+        p = mp.Process(target=run_process, args=(subset, args, results_dict))
         p.start()
         processes.append(p)
 
-    # Join processes
+        # wait if we've reached the max number of processes
+        if len(processes) >= max_processes:
+            for p in processes:
+                p.join()
+            processes = []
+
+    # Join any remaining processes
     for p in processes:
         p.join()
 
@@ -148,28 +183,6 @@ def main():
     logger.info(f'Pearson Correlation: {pearsonr(shapley_values, banzhaf_values)}')
     logger.info(f'Spearman Correlation: {spearmanr(shapley_values, banzhaf_values)}')
     logger.info(f'Total Run Time: {time.time() - start_time}')
-
-def calculate_shapley_banzhaf(args, results, num_users):
-    shapley_values = np.zeros(num_users)
-    banzhaf_values = np.zeros(num_users)
-    total_permutations = math.factorial(num_users)
-    all_clients = list(range(num_users))
-
-    for client in range(num_users):
-        for r in range(num_users):
-            subsets = list(itertools.combinations([c for c in all_clients if c != client], r))
-            for subset in subsets:
-                subset = tuple(sorted(subset))
-                subset_with_client = tuple(sorted(subset + (client,)))
-                result_without = results.get(subset, 0)
-                result_with = results.get(subset_with_client, 0)
-                marginal_contrib = result_with - result_without
-                weight = math.factorial(len(subset)) * math.factorial(num_users - len(subset) - 1) / total_permutations
-                shapley_values[client] += weight * marginal_contrib
-                banzhaf_values[client] += marginal_contrib
-        banzhaf_values[client] /= (2 ** (num_users - 1))
-
-    return shapley_values, banzhaf_values
 
 if __name__ == '__main__':
     mp.set_start_method('spawn')  # Necessary for CUDA with multiprocessing
