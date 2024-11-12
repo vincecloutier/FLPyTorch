@@ -107,11 +107,13 @@ def calculate_shapley_banzhaf(args, results, num_users):
 
     return shapley_values, banzhaf_values
 
-def run_process(subset, args, train_dataset, test_dataset, user_groups, results_dict):
+def run_process(subset, args, train_dataset, test_dataset, user_groups, results_dict, progress_queue):
     device = get_device()
     if device.type == 'cuda':
         torch.cuda.set_device(device.index)
     train_subset_model(subset, args, train_dataset, test_dataset, user_groups, results_dict)
+    # Notify the main process that this subset is done
+    progress_queue.put(1)
 
 def main():
     start_time = time.time()
@@ -119,11 +121,11 @@ def main():
     args = args_parser()
     exp_details(args)
 
-    # Get the number of CPUs and GPUs
     num_cpus = mp.cpu_count()
     num_gpus = torch.cuda.device_count()
     device = get_device()  # Use CUDA device if available
 
+    # Load datasets once in the main process
     train_dataset, test_dataset, user_groups, _, _, _ = get_dataset(args)
 
     num_users = args.num_users
@@ -136,25 +138,37 @@ def main():
 
     print(f"Training Models For {len(all_subsets)} Subsets")
 
-    # Multiprocessing setup
     manager = mp.Manager()
     results_dict = manager.dict()
-    processes = []
 
-    # Limit the number of processes to prevent GPU memory exhaustion
-    max_processes = num_gpus if num_gpus > 0 else 1  # At least one process
-    semaphore = mp.Semaphore(max_processes)
+    # Create a queue to track progress
+    progress_queue = mp.Queue()
+    total_subsets = len(all_subsets)
 
     # Start processes
+    processes = []
+    max_processes = num_gpus if num_gpus > 0 else 1
+    semaphore = mp.Semaphore(max_processes)
+
     for subset in all_subsets:
         semaphore.acquire()
-        p = mp.Process(target=run_process, args=(subset, args, train_dataset, test_dataset, user_groups, results_dict))
+        p = mp.Process(target=run_process, args=(
+            subset, args, train_dataset, test_dataset, user_groups, results_dict, progress_queue))
         p.start()
         processes.append((p, semaphore))
 
+    # Progress bar
+    with tqdm(total=total_subsets, desc="Processing Subsets") as pbar:
+        completed_subsets = 0
+        while completed_subsets < total_subsets:
+            # Wait for a progress update
+            progress_queue.get()
+            completed_subsets += 1
+            pbar.update(1)
+
     # Join processes
     for p, sem in processes:
-        p.join()
+        p[0].join()
         sem.release()
 
     # Convert results to standard dict
