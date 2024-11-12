@@ -147,7 +147,7 @@ def main():
 
     # Start processes
     processes = []
-    max_processes = num_gpus if num_gpus > 0 else 1
+    max_processes = 4
     semaphore = mp.Semaphore(max_processes)
 
     for subset in all_subsets:
