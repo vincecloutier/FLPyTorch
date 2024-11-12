@@ -9,10 +9,11 @@ from tqdm import tqdm
 from options import args_parser
 from update import LocalUpdate, test_inference, test_gradient
 from models import CNNMnist, CNNFashion_Mnist, CNNCifar, ResNet9, MobileNetV2
-from utils import get_dataset, average_weights, exp_details, setup_logger, get_device
+from utils import get_dataset, average_weights, exp_details, setup_logger
 
 from scipy.stats import pearsonr, spearmanr
 import torch.multiprocessing as mp
+from functools import partial
 
 def initialize_model(args, device):
     model_dict = {
@@ -37,6 +38,7 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
 
     no_improvement_count = 0
     for epoch in range(args.epochs):
+        print(f'Global Epoch {epoch + 1} for Clients {clients}')
         local_weights, local_losses = [], []
 
         model.train()
@@ -49,7 +51,7 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
         for idx in idxs_users:
             local_model = LocalUpdate(args=args, dataset=train_dataset, idxs=user_groups[idx])
             w, loss = local_model.update_weights(model=copy.deepcopy(model), global_round=epoch)
-            # Ensure weights are on GPU
+            # Move weights to device (CPU)
             w = {k: v.to(device) for k, v in w.items()}
             local_weights.append(w)
             local_losses.append(loss)
@@ -74,16 +76,11 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
 
     return model, approx_banzhaf_values
 
-def train_subset_model(subset, args, train_dataset, test_dataset, user_groups, results_dict):
-    # Each process should initialize its own CUDA context
-    device = get_device()
-    if device.type == 'cuda':
-        torch.cuda.set_device(device.index)
+def train_subset_model(subset, args, train_dataset, test_dataset, user_groups, device):
     model = initialize_model(args, device)
     model, _ = train_global_model(args, model, train_dataset, test_dataset, user_groups, device, clients=list(subset))
     acc, _ = test_inference(args, model, test_dataset)
-    # Store the result in the shared dictionary
-    results_dict[subset] = acc
+    return (subset, acc)
 
 def calculate_shapley_banzhaf(args, results, num_users):
     shapley_values = np.zeros(num_users)
@@ -107,23 +104,14 @@ def calculate_shapley_banzhaf(args, results, num_users):
 
     return shapley_values, banzhaf_values
 
-def run_process(subset, args, train_dataset, test_dataset, user_groups, results_dict, progress_queue):
-    device = get_device()
-    if device.type == 'cuda':
-        torch.cuda.set_device(device.index)
-    train_subset_model(subset, args, train_dataset, test_dataset, user_groups, results_dict)
-    # Notify the main process that this subset is done
-    progress_queue.put(1)
-
 def main():
     start_time = time.time()
     logger = setup_logger('experiment')
     args = args_parser()
     exp_details(args)
 
-    num_cpus = mp.cpu_count()
-    num_gpus = torch.cuda.device_count()
-    device = get_device()  # Use CUDA device if available
+    num_cpus = 32  # Set this to the number of CPU cores you have
+    device = torch.device('cpu')  # Use CPU
 
     # Load datasets once in the main process
     train_dataset, test_dataset, user_groups, _, _, _ = get_dataset(args)
@@ -138,48 +126,18 @@ def main():
 
     print(f"Training Models For {len(all_subsets)} Subsets")
 
-    manager = mp.Manager()
-    results_dict = manager.dict()
+    # Function to pass to pool
+    worker_func = partial(train_subset_model, args=args, train_dataset=train_dataset, test_dataset=test_dataset, user_groups=user_groups, device=device)
 
-    # Create a queue to track progress
-    progress_queue = mp.Queue()
-    total_subsets = len(all_subsets)
-
-    # Start processes
-    processes = []
-    max_processes = 4
-    semaphore = mp.Semaphore(max_processes)
-
-    for subset in all_subsets:
-        semaphore.acquire()
-        p = mp.Process(target=run_process, args=(
-            subset, args, train_dataset, test_dataset, user_groups, results_dict, progress_queue))
-        p.start()
-        processes.append((p, semaphore))
-
-    # Progress bar
-    with tqdm(total=total_subsets, desc="Processing Subsets") as pbar:
-        completed_subsets = 0
-        while completed_subsets < total_subsets:
-            # Wait for a progress update
-            progress_queue.get()
-            completed_subsets += 1
-            pbar.update(1)
-
-    # Join processes
-    for p, sem in processes:
-        p[0].join()
-        sem.release()
-
-    # Convert results to standard dict
-    results = dict(results_dict)
+    results = {}
+    with mp.Pool(processes=num_cpus) as pool:
+        for subset, acc in tqdm(pool.imap_unordered(worker_func, all_subsets), total=len(all_subsets), desc="Processing Subsets"):
+            results[subset] = acc
 
     # Calculate Shapley and Banzhaf values
     shapley_values, banzhaf_values = calculate_shapley_banzhaf(args, results, num_users)
 
     # Train global model with all clients
-    if device.type == 'cuda':
-        torch.cuda.set_device(device.index)
     global_model = initialize_model(args, device)
     global_model.train()
     clients = list(range(num_users))
@@ -197,5 +155,4 @@ def main():
     logger.info(f'Total Run Time: {time.time() - start_time}')
 
 if __name__ == '__main__':
-    mp.set_start_method('spawn')  # Necessary for CUDA with multiprocessing
     main()
