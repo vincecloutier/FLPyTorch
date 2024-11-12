@@ -47,7 +47,7 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
         idxs_users = np.random.choice(clients, m, replace=False)
 
         for idx in idxs_users:
-            local_model = LocalUpdate(args=args, dataset=train_dataset, idxs=user_groups[idx], device=device)
+            local_model = LocalUpdate(args=args, dataset=train_dataset, idxs=user_groups[idx])
             w, loss = local_model.update_weights(model=copy.deepcopy(model), global_round=epoch)
             # Ensure weights are on GPU
             w = {k: v.to(device) for k, v in w.items()}
