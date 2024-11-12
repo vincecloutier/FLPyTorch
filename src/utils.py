@@ -86,9 +86,9 @@ def setup_logger(strategy_name: str) -> logging.Logger:
 
 def get_device():
     if torch.cuda.is_available():
-        return 'cuda'
+        return torch.device('cuda:0')
     else:
-        return 'mps'
+        return torch.device('cpu')
 
 def identify_bad_idxs(approx_banzhaf_values: dict, threshold: float = 1.5) -> list[int]:
     if not approx_banzhaf_values:

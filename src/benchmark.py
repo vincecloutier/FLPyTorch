@@ -77,7 +77,8 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
 def train_subset_model(subset, args, train_dataset, test_dataset, user_groups, results_dict):
     # Each process should initialize its own CUDA context
     device = get_device()
-    torch.cuda.set_device(device)
+    if device.type == 'cuda':
+        torch.cuda.set_device(device.index)
     model = initialize_model(args, device)
     model, _ = train_global_model(args, model, train_dataset, test_dataset, user_groups, device, clients=list(subset))
     acc, _ = test_inference(args, model, test_dataset)
@@ -109,7 +110,8 @@ def calculate_shapley_banzhaf(args, results, num_users):
 def run_process(subset, args, results_dict):
     # Re-initialize datasets within the subprocess
     device = get_device()
-    torch.cuda.set_device(device)
+    if device.type == 'cuda':
+        torch.cuda.set_device(device.index)
     train_dataset, test_dataset, user_groups, _, _, _ = get_dataset(args)
     train_subset_model(subset, args, train_dataset, test_dataset, user_groups, results_dict)
 
@@ -142,24 +144,20 @@ def main():
     processes = []
 
     # Limit the number of processes to prevent GPU memory exhaustion
-    max_processes = 8  # Adjust based on your hardware
+    max_processes = num_gpus if num_gpus > 0 else 1  # At least one process
     semaphore = mp.Semaphore(max_processes)
 
     # Start processes
     for subset in all_subsets:
+        semaphore.acquire()
         p = mp.Process(target=run_process, args=(subset, args, results_dict))
         p.start()
-        processes.append(p)
+        processes.append((p, semaphore))
 
-        # wait if we've reached the max number of processes
-        if len(processes) >= max_processes:
-            for p in processes:
-                p.join()
-            processes = []
-
-    # Join any remaining processes
-    for p in processes:
+    # Join processes
+    for p, sem in processes:
         p.join()
+        sem.release()
 
     # Convert results to standard dict
     results = dict(results_dict)
@@ -168,6 +166,8 @@ def main():
     shapley_values, banzhaf_values = calculate_shapley_banzhaf(args, results, num_users)
 
     # Train global model with all clients
+    if device.type == 'cuda':
+        torch.cuda.set_device(device.index)
     global_model = initialize_model(args, device)
     global_model.train()
     clients = list(range(num_users))
