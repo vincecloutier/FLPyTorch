@@ -104,7 +104,8 @@ if __name__ == '__main__':
     shapley_values, banzhaf_values = defaultdict(float), defaultdict(float)
     all_subsets = list(itertools.chain.from_iterable(itertools.combinations(range(args.num_users), r) for r in range(args.num_users + 1)))
 
-    pool = multiprocessing.Pool(processes=4)
+    num_cores = multiprocessing.cpu_count()
+    pool = multiprocessing.Pool(processes=num_cores)
     train_subset_partial = partial(train_subset, args=args, train_dataset=train_dataset, test_dataset=test_dataset, user_groups=user_groups)
     results_list = pool.map(train_subset_partial, all_subsets)
     pool.close()
