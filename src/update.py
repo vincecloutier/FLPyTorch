@@ -67,32 +67,9 @@ class LocalUpdate(object):
 
         return model.state_dict(), sum(epoch_loss) / len(epoch_loss)
 
-    def inference(self, model):
-        """Returns the inference accuracy and loss."""
 
-        model.eval()
-        loss, total, correct = 0.0, 0.0, 0.0
-
-        for batch_idx, (images, labels) in enumerate(self.testloader):
-            images, labels = images.to(self.device), labels.to(self.device)
-
-            # inference
-            outputs = model(images)
-            batch_loss = self.criterion(outputs, labels)
-            loss += batch_loss.item()
-
-            # prediction
-            _, pred_labels = torch.max(outputs, 1)
-            pred_labels = pred_labels.view(-1)
-            correct += torch.sum(torch.eq(pred_labels, labels)).item()
-            total += len(labels)
-
-        accuracy = correct/total
-        return accuracy, loss
-
-
-def test_inference(args, model, test_dataset):
-    """Returns the test accuracy and loss."""
+def test_inference(model, test_dataset):
+    """Returns the test accuracy and loss on the global model trained on the entire dataset."""
 
     model.eval()
     loss, total, correct = 0.0, 0.0, 0.0

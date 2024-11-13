@@ -65,7 +65,7 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
                 selection_probabilities = np.array([approx_banzhaf_values[i] / total_banzhaf for i in range(args.num_users)])
                 selection_probabilities /= selection_probabilities.sum()  # normalize
 
-        test_acc, test_loss = test_inference(args, model, test_dataset)
+        test_acc, test_loss = test_inference(model, test_dataset)
         if test_acc > best_test_acc * 1.01 or test_loss < best_test_loss * 0.99:
             best_test_acc = test_acc
             best_test_loss = test_loss
@@ -96,7 +96,7 @@ if __name__ == '__main__':
     global_model.to(device)
     global_model.train()
     global_model, approx_banzhaf_values, convergence_round = train_global_model(args, global_model, train_dataset, test_dataset, user_groups, device)
-    test_acc, test_loss = test_inference(args, global_model, test_dataset)
+    test_acc, test_loss = test_inference(global_model, test_dataset)
 
     # predict bad clients and measure accuracy
     predicted_bad_clients = identify_bad_idxs(approx_banzhaf_values)
@@ -107,7 +107,7 @@ if __name__ == '__main__':
     global_model.to(device)
     global_model.train()
     retrained_model, _, second_convergence_round = train_global_model(args, global_model, train_dataset, test_dataset, user_groups, device, predicted_bad_clients)
-    retrain_test_acc, retrain_test_loss = test_inference(args, retrained_model, test_dataset)
+    retrain_test_acc, retrain_test_loss = test_inference(retrained_model, test_dataset)
 
     # log results
     match args.setting:

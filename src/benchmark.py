@@ -60,7 +60,7 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
         global_weights = average_weights(local_weights)
         model.load_state_dict(global_weights)
 
-        test_acc, test_loss = test_inference(args, model, test_dataset)
+        test_acc, test_loss = test_inference(model, test_dataset)
         if test_acc > best_test_acc * 1.01 or test_loss < best_test_loss * 0.99:
             best_test_acc, best_test_loss = test_acc, test_loss
             no_improvement_count = 0
@@ -91,7 +91,7 @@ if __name__ == '__main__':
     for subset in all_subsets:
         subset = tuple(sorted(subset))
         models[subset] = train_global_model(args, initialize_model(args).to(device), train_dataset, test_dataset, user_groups, device, subset)[0]
-        results[subset] = test_inference(args, models[subset], test_dataset)[0]
+        results[subset] = test_inference(models[subset], test_dataset)[0]
 
     for client in range(args.num_users):
         for r in range(args.num_users):
@@ -108,7 +108,7 @@ if __name__ == '__main__':
     global_model.train()
     clients = [c for c in range(args.num_users)]
     global_model, approx_banzhaf_values = train_global_model(args, global_model, train_dataset, test_dataset, user_groups, device, clients=clients, isBanzhaf=True)
-    test_acc, test_loss = test_inference(args, global_model, test_dataset)
+    test_acc, test_loss = test_inference(global_model, test_dataset)
 
     # log results
     match args.setting:
