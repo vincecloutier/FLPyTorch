@@ -72,14 +72,14 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
         print(f'Best Test Accuracy: {best_test_acc}, Best Test Loss: {best_test_loss}')
 
     # clients_str = "_".join(str(client) for client in clients)
-    # torch.save(model.state_dict(), f"{clients_str}_epoch_{epoch + 1}.pth")
+    # torch.save(model.state_dict(), f"{clients_str}_epoch_{epoch + 1}_{args.dataset}_{args.setting}.pth")
     return model, approx_banzhaf_values
 
 
 if __name__ == '__main__':
     start_time = time.time()
-    logger = setup_logger('experiment')
     args = args_parser()
+    logger = setup_logger(f'benchmark_{args.dataset}_{args.setting}')
     exp_details(args)
 
     device = get_device()
@@ -118,9 +118,10 @@ if __name__ == '__main__':
     print(approx_banzhaf_values)
     
     # remove any clients that are not in approx_banzhaf_values and are not in shapley_values and banzhaf_values 
-    shapley_values = {client: shapley_values[client] for client in shapley_values if client in approx_banzhaf_values}
-    banzhaf_values = {client: banzhaf_values[client] for client in banzhaf_values if client in approx_banzhaf_values}
-    approx_banzhaf_values = {client: approx_banzhaf_values[client] for client in approx_banzhaf_values if client in shapley_values and client in banzhaf_values}
+    shared_clients = set(shapley_values.keys()) & set(banzhaf_values.keys()) & set(approx_banzhaf_values.keys())
+    shapley_values = [shapley_values[client] for client in shared_clients]
+    banzhaf_values = [banzhaf_values[client] for client in shared_clients]
+    approx_banzhaf_values = [approx_banzhaf_values[client] for client in shared_clients]
     print(shapley_values)
     print(banzhaf_values)
     print(approx_banzhaf_values)
