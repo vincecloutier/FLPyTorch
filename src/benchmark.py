@@ -14,6 +14,7 @@ import multiprocessing
 from scipy.stats import pearsonr, spearmanr
 from functools import partial
 
+
 def initialize_model(args):
     model_dict = {
         'mnist': CNNMnist,
@@ -26,6 +27,7 @@ def initialize_model(args):
         return model_dict[args.dataset](args=args)
     else:
         exit('Error: unrecognized dataset')
+
 
 def train_global_model(args, model, train_dataset, test_dataset, user_groups, device, clients=None, isBanzhaf=False):
     if clients is None or len(clients) == 0:
@@ -53,8 +55,10 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
             # compute banzhaf value estimate
             if isBanzhaf:
                 delta_weights = {key: (w[key] - global_weights[key]).to(device) for key in w.keys()}
-                b_value = sum((-torch.dot(gradient[key].flatten(), delta_weights[key].flatten()) for key in gradient.keys()))
-                approx_banzhaf_values[idx] += b_value.item()
+                # b_value = sum((torch.dot(gradient[key].flatten(), delta_weights[key].flatten()) for key in gradient.keys()))
+                b_value = sum((gradient[key] * delta_weights[key]).sum() for key in gradient.keys())
+                approx_banzhaf_values[idx] -= b_value.item() / args.num_users
+
 
         # update global weights and model
         global_weights = average_weights(local_weights)
@@ -75,6 +79,7 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
     # clients_str = "_".join(str(client) for client in clients)
     # torch.save(model.state_dict(), f"{clients_str}_epoch_{epoch + 1}_{args.dataset}_{args.setting}.pth")
     return model, approx_banzhaf_values
+
 
 def train_subset(subset, args, train_dataset, test_dataset, user_groups):
     device = get_device()
@@ -100,10 +105,12 @@ if __name__ == '__main__':
     device = get_device()
     train_dataset, test_dataset, user_groups, _, _, _ = get_dataset(args)
 
-    # initialize Shapley and Banzhaf values
     shapley_values, banzhaf_values = defaultdict(float), defaultdict(float)
     all_subsets = list(itertools.chain.from_iterable(itertools.combinations(range(args.num_users), r) for r in range(args.num_users + 1)))
 
+
+    
+    
     
     pool = multiprocessing.Pool(processes=6)
     train_subset_partial = partial(train_subset, args=args, train_dataset=train_dataset, test_dataset=test_dataset, user_groups=user_groups)
@@ -120,9 +127,6 @@ if __name__ == '__main__':
                 marginal_contribution = results[subset_key] - results[subset_with_client_key]
                 shapley_values[client] += ((math.factorial(len(subset)) * math.factorial(args.num_users - len(subset) - 1)) / math.factorial(args.num_users)) * marginal_contribution
                 banzhaf_values[client] += marginal_contribution / len(all_subsets)
-    print(shapley_values)
-    print(banzhaf_values)
-
 
     global_model = initialize_model(args)
     global_model.to(device)
@@ -130,7 +134,6 @@ if __name__ == '__main__':
     clients = [c for c in range(args.num_users)]
     global_model, approx_banzhaf_values = train_global_model(args, global_model, train_dataset, test_dataset, user_groups, device, clients=clients, isBanzhaf=True)
     test_acc, test_loss = test_inference(global_model, test_dataset)
-    print(approx_banzhaf_values)
     
     # remove any clients that are not in approx_banzhaf_values and are not in shapley_values and banzhaf_values 
     shared_clients = set(shapley_values.keys()) & set(banzhaf_values.keys()) & set(approx_banzhaf_values.keys())
