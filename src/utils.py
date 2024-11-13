@@ -99,7 +99,9 @@ def identify_bad_idxs(approx_banzhaf_values: dict, threshold: float = 1.5) -> li
     return bad_idxs
 
 def measure_accuracy(targets, predictions):
-    if len(targets) == 0 or len(predictions) == 0 or len(targets) is None or len(predictions) is None:
+    if targets is None or predictions is None:
+        return 0.0
+    if len(targets) == 0 or len(predictions) == 0:
         return 0.0
     targets, predictions = set(targets), set(predictions)
     TP = len(predictions & targets)
