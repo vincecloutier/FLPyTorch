@@ -33,7 +33,6 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
     best_test_acc, best_test_loss = 0, float('inf')
     approx_banzhaf_values = defaultdict(float)
 
-    no_improvement_count = 0
     for epoch in tqdm(range(args.epochs), desc=f"Global Training For Subset {clients}"):
         local_weights, local_losses = [], []
 
@@ -62,13 +61,15 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
 
         test_acc, test_loss = test_inference(model, test_dataset)
         if test_acc > best_test_acc * 1.01 or test_loss < best_test_loss * 0.99:
-            best_test_acc, best_test_loss = test_acc, test_loss
+            best_test_acc = test_acc
+            best_test_loss = test_loss
             no_improvement_count = 0
         else:
             no_improvement_count += 1
             if no_improvement_count > 5:
                 print(f'Convergence Reached At Round {epoch + 1}')
                 break
+        print(f'Best Test Accuracy: {best_test_acc}, Best Test Loss: {best_test_loss}')
 
     return model, approx_banzhaf_values
 
@@ -80,46 +81,42 @@ if __name__ == '__main__':
     exp_details(args)
 
     device = get_device()
-    train_dataset, test_dataset, user_groups, _, actual_bad_clients, _ = get_dataset(args)
+    train_dataset, test_dataset, user_groups, _, _, _ = get_dataset(args)
 
+    global_model = initialize_model(args)
+    global_model.to(device)
+    global_model.train()
     # initialize Shapley and Banzhaf values
     shapley_values, banzhaf_values = defaultdict(float), defaultdict(float)
     all_subsets = list(itertools.chain.from_iterable(itertools.combinations(range(args.num_users), r) for r in range(args.num_users + 1)))
-    models, results = {}, {}
-    print(f"Training Models For {len(all_subsets)} Subsets")
+    results = {}
+
     # train models for each subset
     for subset in all_subsets:
-        subset = tuple(sorted(subset))
-        models[subset] = train_global_model(args, initialize_model(args).to(device), train_dataset, test_dataset, user_groups, device, subset)[0]
-        results[subset] = test_inference(models[subset], test_dataset)[0]
+        subset_key = tuple(sorted(subset))
+        print(f"Training Model For Subset {subset_key}")
+        model, _ = train_global_model(args, global_model, train_dataset, test_dataset, user_groups, device, subset)
+        accuracy, loss = test_inference(model, test_dataset)
+        results[subset_key] = loss
 
     for client in range(args.num_users):
         for r in range(args.num_users):
             for subset in itertools.combinations([c for c in range(args.num_users) if c != client], r):
-                subset = tuple(sorted(subset))
-                subset_with_client = tuple(sorted(subset + (client,)))
-                marginal_contribution = results[subset] - results[subset_with_client]
+                subset_key = tuple(sorted(subset))
+                subset_with_client_key = tuple(sorted(subset + (client,)))
+                marginal_contribution = results[subset_key] - results[subset_with_client_key]
                 shapley_values[client] += ((math.factorial(len(subset)) * math.factorial(args.num_users - len(subset) - 1)) / math.factorial(args.num_users)) * marginal_contribution
                 banzhaf_values[client] += marginal_contribution / len(all_subsets)
                 print(shapley_values)
                 print(banzhaf_values)
 
-    global_model = initialize_model(args).to(device)
-    global_model.train()
     clients = [c for c in range(args.num_users)]
     global_model, approx_banzhaf_values = train_global_model(args, global_model, train_dataset, test_dataset, user_groups, device, clients=clients, isBanzhaf=True)
     test_acc, test_loss = test_inference(global_model, test_dataset)
 
     # log results
-    match args.setting:
-        case 0:
-            setting_str = "IID"
-        case 1:
-            setting_str = f"{len(actual_bad_clients)} Bad Clients" + f" with {args.num_categories_per_client} Categories Per Bad Client"
-        case 2:
-            setting_str = f"{len(actual_bad_clients)} Bad Clients" + f" with {100*args.mislabel_proportion}% Mislabeled Samples Per Bad Client"
-    logger.info(f'Number Of Clients: {args.num_users}, Client Selection Fraction: {args.frac}, Local Epochs: {args.local_ep}')
-    logger.info(f'Dataset: {args.dataset}, Setting: {setting_str}')
+    logger.info(f'Number Of Clients: {args.num_users}, Client Selection Fraction: {args.frac}, Local Epochs: {args.local_ep}, Batch Size: {args.local_bs}')
+    logger.info(f'Dataset: {args.dataset}, Setting: IID, Number Of Rounds: {args.epochs}')
     logger.info(f'Test Accuracy Of Global Model: {100*test_acc}%')
     logger.info(f'Shapley Values: {shapley_values}')
     logger.info(f'Banzhaf Values: {banzhaf_values}')
