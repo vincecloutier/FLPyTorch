@@ -5,11 +5,11 @@ def args_parser():
     parser = argparse.ArgumentParser()
 
     # federated arguments
-    parser.add_argument('--epochs', type=int, default=50, help="number of rounds of training")
-    parser.add_argument('--num_users', type=int, default=5, help="number of users: K")
+    parser.add_argument('--epochs', type=int, default=10, help="number of rounds of training")
+    parser.add_argument('--num_users', type=int, default=8, help="number of users: K")
     parser.add_argument('--frac', type=float, default=0.6, help='the fraction of clients: C')
     parser.add_argument('--local_ep', type=int, default=3, help="the number of local epochs: E")
-    parser.add_argument('--local_bs', type=int, default=256, help="local batch size: B")
+    parser.add_argument('--local_bs', type=int, default=256, help="local batch size: B") # maybe change this - since banzhaf is gradient based ?
     parser.add_argument('--lr', type=float, default=0.01, help='learning rate')
     parser.add_argument('--momentum', type=float, default=0.9, help='SGD momentum (default: 0.5)')
 
