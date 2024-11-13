@@ -85,9 +85,6 @@ if __name__ == '__main__':
     device = get_device()
     train_dataset, test_dataset, user_groups, _, _, _ = get_dataset(args)
 
-    global_model = initialize_model(args)
-    global_model.to(device)
-    global_model.train()
     # initialize Shapley and Banzhaf values
     shapley_values, banzhaf_values = defaultdict(float), defaultdict(float)
     all_subsets = list(itertools.chain.from_iterable(itertools.combinations(range(args.num_users), r) for r in range(args.num_users + 1)))
@@ -95,6 +92,10 @@ if __name__ == '__main__':
 
     # train models for each subset
     for subset in all_subsets:
+        global_model = initialize_model(args)
+        global_model.to(device)
+        global_model.train()
+
         subset_key = tuple(sorted(subset))
         print(f"Training Model For Subset {subset_key}")
         model, _ = train_global_model(args, global_model, train_dataset, test_dataset, user_groups, device, subset)
