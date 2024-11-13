@@ -71,6 +71,8 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
                 break
         print(f'Best Test Accuracy: {best_test_acc}, Best Test Loss: {best_test_loss}')
 
+    # clients_str = "_".join(str(client) for client in clients)
+    # torch.save(model.state_dict(), f"{clients_str}_epoch_{epoch + 1}.pth")
     return model, approx_banzhaf_values
 
 
@@ -107,12 +109,21 @@ if __name__ == '__main__':
                 marginal_contribution = results[subset_key] - results[subset_with_client_key]
                 shapley_values[client] += ((math.factorial(len(subset)) * math.factorial(args.num_users - len(subset) - 1)) / math.factorial(args.num_users)) * marginal_contribution
                 banzhaf_values[client] += marginal_contribution / len(all_subsets)
-                print(shapley_values)
-                print(banzhaf_values)
+    print(shapley_values)
+    print(banzhaf_values)
 
     clients = [c for c in range(args.num_users)]
     global_model, approx_banzhaf_values = train_global_model(args, global_model, train_dataset, test_dataset, user_groups, device, clients=clients, isBanzhaf=True)
     test_acc, test_loss = test_inference(global_model, test_dataset)
+    print(approx_banzhaf_values)
+    
+    # remove any clients that are not in approx_banzhaf_values and are not in shapley_values and banzhaf_values 
+    shapley_values = {client: shapley_values[client] for client in shapley_values if client in approx_banzhaf_values}
+    banzhaf_values = {client: banzhaf_values[client] for client in banzhaf_values if client in approx_banzhaf_values}
+    approx_banzhaf_values = {client: approx_banzhaf_values[client] for client in approx_banzhaf_values if client in shapley_values and client in banzhaf_values}
+    print(shapley_values)
+    print(banzhaf_values)
+    print(approx_banzhaf_values)
 
     # log results
     logger.info(f'Number Of Clients: {args.num_users}, Client Selection Fraction: {args.frac}, Local Epochs: {args.local_ep}, Batch Size: {args.local_bs}')
