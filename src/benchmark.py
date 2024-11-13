@@ -99,7 +99,7 @@ if __name__ == '__main__':
     multiprocessing.set_start_method('spawn')
     start_time = time.time()
     args = args_parser()
-    logger = setup_logger(f'benchmark_{args.dataset}_{args.setting}')
+    logger = setup_logger(f'benchmark_{args.dataset}_{args.setting}_{args.num_users}_{args.local_bs}')
     exp_details(args)
 
     device = get_device()
