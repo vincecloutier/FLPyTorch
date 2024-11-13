@@ -10,8 +10,9 @@ from options import args_parser
 from update import LocalUpdate, test_inference, test_gradient
 from models import CNNMnist, CNNFashion_Mnist, CNNCifar, ResNet9, MobileNetV2
 from utils import get_dataset, average_weights, exp_details, setup_logger, get_device
-
+import multiprocessing
 from scipy.stats import pearsonr, spearmanr
+from functools import partial
 
 def initialize_model(args):
     model_dict = {
@@ -75,8 +76,22 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
     # torch.save(model.state_dict(), f"{clients_str}_epoch_{epoch + 1}_{args.dataset}_{args.setting}.pth")
     return model, approx_banzhaf_values
 
+def train_subset(subset, args, train_dataset, test_dataset, user_groups):
+    device = get_device()
+    global_model = initialize_model(args)
+    global_model.to(device)
+    global_model.train()
+
+    subset_key = tuple(sorted(subset))
+    print(f"Training Model For Subset {subset_key}")
+    model, _ = train_global_model(args, global_model, train_dataset, test_dataset, user_groups, device, subset)
+    accuracy, loss = test_inference(model, test_dataset)
+    torch.cuda.empty_cache()
+    return (subset_key, loss)
+
 
 if __name__ == '__main__':
+    multiprocessing.set_start_method('spawn')
     start_time = time.time()
     args = args_parser()
     logger = setup_logger(f'benchmark_{args.dataset}_{args.setting}')
@@ -88,19 +103,13 @@ if __name__ == '__main__':
     # initialize Shapley and Banzhaf values
     shapley_values, banzhaf_values = defaultdict(float), defaultdict(float)
     all_subsets = list(itertools.chain.from_iterable(itertools.combinations(range(args.num_users), r) for r in range(args.num_users + 1)))
-    results = {}
 
-    # train models for each subset
-    for subset in all_subsets:
-        global_model = initialize_model(args)
-        global_model.to(device)
-        global_model.train()
-
-        subset_key = tuple(sorted(subset))
-        print(f"Training Model For Subset {subset_key}")
-        model, _ = train_global_model(args, global_model, train_dataset, test_dataset, user_groups, device, subset)
-        accuracy, loss = test_inference(model, test_dataset)
-        results[subset_key] = loss
+    pool = multiprocessing.Pool(processes=4)
+    train_subset_partial = partial(train_subset, args=args, train_dataset=train_dataset, test_dataset=test_dataset, user_groups=user_groups)
+    results_list = pool.map(train_subset_partial, all_subsets)
+    pool.close()
+    pool.join()
+    results = dict(results_list)
 
     for client in range(args.num_users):
         for r in range(args.num_users):
@@ -113,6 +122,10 @@ if __name__ == '__main__':
     print(shapley_values)
     print(banzhaf_values)
 
+
+    global_model = initialize_model(args)
+    global_model.to(device)
+    global_model.train()
     clients = [c for c in range(args.num_users)]
     global_model, approx_banzhaf_values = train_global_model(args, global_model, train_dataset, test_dataset, user_groups, device, clients=clients, isBanzhaf=True)
     test_acc, test_loss = test_inference(global_model, test_dataset)
