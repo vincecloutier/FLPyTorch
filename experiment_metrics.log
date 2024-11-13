@@ -60,3 +60,17 @@
 2024-11-11 13:44:57,456 INFO Test Accuracy After Retraining: 68.82000000000001%
 2024-11-11 13:44:57,456 INFO Bad Client Accuracy: 0.8
 2024-11-11 13:44:57,456 INFO Total Run Time: 3135.3584599494934
+
+
+# TODO NOTE YOU WROTE THIS IN A FILE INSIDE SRC
+2024-11-12 22:25:03,726 INFO Number Of Clients: 5, Client Selection Fraction: 0.6, Local Epochs: 3
+2024-11-12 22:25:03,726 INFO Dataset: mobilenet, Setting: 1 Bad Clients with 40.0% Mislabeled Samples Per Bad Client
+2024-11-12 22:25:03,727 INFO Test Accuracy Of Global Model: 10.0%
+2024-11-12 22:25:03,727 INFO Shapley Values: defaultdict(<class 'float'>, {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0, 4: 0.0})
+2024-11-12 22:25:03,727 INFO Banzhaf Values: defaultdict(<class 'float'>, {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0, 4: 0.0})
+2024-11-12 22:25:03,727 INFO Approximate Banzhaf Values: defaultdict(<class 'float'>, {4: 110529159.99195337, 3: -6315129.579571724, 0: 203911120.8555417, 2: -12723055.575514793, 1: 60926439.515625})
+2024-11-12 22:25:03,731 INFO Pearson Correlation Between Shapley And Banzhaf Values: PearsonRResult(statistic=nan, pvalue=nan)
+2024-11-12 22:25:03,731 INFO Spearman Correlation Between Shapley And Banzhaf Values: SignificanceResult(statistic=nan, pvalue=nan)
+2024-11-12 22:25:03,732 INFO Pearson Correlation Between Shapley And Approximate Banzhaf Values: PearsonRResult(statistic=nan, pvalue=nan)
+2024-11-12 22:25:03,733 INFO Spearman Correlation Between Shapley And Approximate Banzhaf Values: SignificanceResult(statistic=nan, pvalue=nan)
+2024-11-12 22:25:03,733 INFO Total Run Time: 30279.91388130188
