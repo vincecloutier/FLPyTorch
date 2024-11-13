@@ -90,7 +90,9 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
             if no_improvement_count > 5:
                 print(f'Convergence Reached At Round {epoch + 1}')
                 break
-            
+        print(f'Approximate Banzhaf Values: {approx_banzhaf_values}')
+        print(f'Local Losses: {local_losses}')
+        print(f'Best Test Accuracy: {best_test_acc}, Best Test Loss: {best_test_loss}')
     convergence_round = epoch + 1 if no_improvement_count > 5 else args.epochs
     return model, approx_banzhaf_values, convergence_round
 
