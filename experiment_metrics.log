@@ -110,3 +110,26 @@ CIFAR STUFF:
 2024-11-13 13:28:54,496 INFO Spearman Correlation Between Shapley And Banzhaf Values: SignificanceResult(statistic=0.7999999999999999, pvalue=0.10408803866182788)
 2024-11-13 13:28:54,497 INFO Pearson Correlation Between Shapley And Approximate Banzhaf Values: PearsonRResult(statistic=-0.5423383196435236, pvalue=0.3450017362129023)
 2024-11-13 13:28:54,498 INFO Spearman Correlation Between Shapley And Approximate Banzhaf Values: SignificanceResult(statistic=-0.49999999999999994, pvalue=0.39100221895577053)
+2024-11-13 14:56:34,116 INFO Number Of Clients: 8, Client Selection Fraction: 0.6, Local Epochs: 3, Batch Size: 128
+2024-11-13 14:56:34,117 INFO Dataset: cifar, Setting: IID, Number Of Rounds: 10
+2024-11-13 14:56:34,118 INFO Test Accuracy Of Global Model: 48.03%
+2024-11-13 14:56:34,118 INFO Shapley Values: [8.979729959510633, 8.864531347581325, 8.808182590064549, 9.66007720090093, 8.902889581521354, 9.494947423253745, 8.641165906190878, 9.566828833307543]
+2024-11-13 14:56:34,119 INFO Banzhaf Values: [0.7227194961160421, 0.7642406988888979, 0.7489415043964982, 0.8290616748854518, 0.684575061313808, 0.82290677446872, 0.7650831574574113, 0.7576249353587627]
+2024-11-13 14:56:34,119 INFO Approximate Banzhaf Values: [0.061816532630473375, 0.043045607628300786, 0.06026961142197251, 0.02230350347235799, 0.05099592870101333, 0.02970390720292926, 0.05728296050801873, 0.06544323451817036]
+2024-11-13 14:56:34,122 INFO Pearson Correlation Between Shapley And Banzhaf Values: PearsonRResult(statistic=0.6175862845396082, pvalue=0.10277844079127467)
+2024-11-13 14:56:34,123 INFO Spearman Correlation Between Shapley And Banzhaf Values: SignificanceResult(statistic=0.30952380952380953, pvalue=0.4556448907375822)
+2024-11-13 14:56:34,124 INFO Pearson Correlation Between Shapley And Approximate Banzhaf Values: PearsonRResult(statistic=-0.5144729545712355, pvalue=0.19206227387266003)
+2024-11-13 14:56:34,126 INFO Spearman Correlation Between Shapley And Approximate Banzhaf Values: SignificanceResult(statistic=-0.2142857142857143, pvalue=0.6103444156452669)
+
+
+MOBILENET STUFF:
+2024-11-13 15:28:13,019 INFO Number Of Clients: 5, Client Selection Fraction: 0.6, Local Epochs: 3, Batch Size: 256
+2024-11-13 15:28:13,020 INFO Dataset: mobilenet, Setting: IID, Number Of Rounds: 30
+2024-11-13 15:28:13,020 INFO Test Accuracy Of Global Model: 73.29%
+2024-11-13 15:28:13,021 INFO Shapley Values: [24.612190292278928, 24.040030952294668, 24.62182369927565, 22.468360290924704, 25.15955013136069]
+2024-11-13 15:28:13,021 INFO Banzhaf Values: [6.843448542058468, 6.321067288517952, 6.696817737072706, 6.327272951602936, 6.542531941086054]
+2024-11-13 15:28:13,021 INFO Approximate Banzhaf Values: [0.31077867719577623, 0.36402533017098904, 0.29145101710892046, 0.33279594476989593, 0.19306844866805478]
+2024-11-13 15:28:13,024 INFO Pearson Correlation Between Shapley And Banzhaf Values: PearsonRResult(statistic=0.6301071362526811, pvalue=0.25453445567211735)
+2024-11-13 15:28:13,025 INFO Spearman Correlation Between Shapley And Banzhaf Values: SignificanceResult(statistic=0.49999999999999994, pvalue=0.39100221895577053)
+2024-11-13 15:28:13,027 INFO Pearson Correlation Between Shapley And Approximate Banzhaf Values: PearsonRResult(statistic=-0.6295525562227242, pvalue=0.2550829171924289)
+2024-11-13 15:28:13,028 INFO Spearman Correlation Between Shapley And Approximate Banzhaf Values: SignificanceResult(statistic=-0.8999999999999998, pvalue=0.03738607346849874)
