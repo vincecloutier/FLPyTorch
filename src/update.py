@@ -15,6 +15,7 @@ class DatasetSplit(Dataset):
 
     def __getitem__(self, item):
         image, label = self.dataset[self.idxs[item]]
+        print(type(image), type(label))
         return torch.tensor(image), torch.tensor(label)
 
 
@@ -58,8 +59,7 @@ class LocalUpdate(object):
                 loss = self.criterion(log_probs, labels)
                 loss.backward()
 
-                if self.args.dataset == 'resnet':
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
 
                 optimizer.step()
                 batch_loss.append(loss.item())

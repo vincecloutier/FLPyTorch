@@ -24,7 +24,6 @@ def initialize_model(args):
 
 def train_global_model(args, model, train_dataset, test_dataset, user_groups, device, bad_clients=None):
     global_weights = model.state_dict()
-    train_loss, train_accuracy = [], []
     best_test_acc, best_test_loss = 0, float('inf')
     approx_banzhaf_values = defaultdict(float)
     selection_probabilities = np.full(args.num_users, 1 / args.num_users)
@@ -32,7 +31,6 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
     no_improvement_count = 0
     for epoch in tqdm(range(args.epochs)):
         local_weights, local_losses = [], []
-        print(f'\n | Global Training Round : {epoch+1} |\n')
 
         model.train()
         gradient = test_gradient(model, test_dataset)
@@ -59,26 +57,13 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
         # update global weights and model
         global_weights = average_weights(local_weights)
         model.load_state_dict(global_weights)
-        
-        # calculate average loss
-        loss_avg = sum(local_losses) / len(local_losses)
-        train_loss.append(loss_avg)
 
-        # calculate average training accuracy
-        acc = evaluate_model(args, model, train_dataset, user_groups)
-        train_accuracy.append(acc)
-        
         # update selection probabilities based on the banzhaf values
         if bad_clients is not None:
             total_banzhaf = sum(approx_banzhaf_values.values())
             if total_banzhaf > 0:
                 selection_probabilities = np.array([approx_banzhaf_values[i] / total_banzhaf for i in range(args.num_users)])
                 selection_probabilities /= selection_probabilities.sum()  # normalize
-
-        if (epoch + 1) % 2 == 0:
-            print(f'\nAvg Training Stats after {epoch + 1} global rounds:')
-            print(f'Training Loss: {np.mean(train_loss)}')
-            print(f'Train Accuracy: {100 * acc:.2f}% \n')
 
         test_acc, test_loss = test_inference(args, model, test_dataset)
         if test_acc > best_test_acc * 1.01 or test_loss < best_test_loss * 0.99:
@@ -96,14 +81,6 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
     convergence_round = epoch + 1 if no_improvement_count > 5 else args.epochs
     return model, approx_banzhaf_values, convergence_round
 
-def evaluate_model(args, model, train_dataset, user_groups):
-    model.eval()
-    list_acc = []
-    for c in range(args.num_users):
-        local_model = LocalUpdate(args=args, dataset=train_dataset, idxs=user_groups[c])
-        acc, _ = local_model.inference(model=model)
-        list_acc.append(acc)
-    return sum(list_acc) / len(list_acc)
 
 if __name__ == '__main__':
     start_time = time.time()
