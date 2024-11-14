@@ -110,12 +110,9 @@ def mislabeled(dataset, dataset_name, dict_users, badclient_prop, mislabel_prop)
     elif dataset_name in ['cifar', 'resnet', 'mobilenet']:
         labels = dataset.targets
     clients_to_mislabel = np.random.choice(range(len(dict_users)), int(badclient_prop * len(dict_users)), replace=False)
-    bad_samples = []
     for client_id in clients_to_mislabel:
         client_indices = np.array(list(dict_users[client_id]), dtype=int)
-        num_samples = len(client_indices)
-        indices_to_mislabel = np.random.choice(client_indices, int(mislabel_prop * num_samples), replace=False)
-        bad_samples.extend(indices_to_mislabel)
+        indices_to_mislabel = np.random.choice(client_indices, int(mislabel_prop * len(client_indices)), replace=False)
         for idx in indices_to_mislabel:
             if dataset_name in ['mnist', 'fmnist']:
                 correct_label = labels[idx].item()
@@ -126,4 +123,4 @@ def mislabeled(dataset, dataset_name, dict_users, badclient_prop, mislabel_prop)
             new_label = np.random.choice(incorrect_labels)
             labels[idx] = new_label
     dataset.targets = labels
-    return dict_users, clients_to_mislabel, bad_samples
+    return dict_users, clients_to_mislabel

@@ -11,7 +11,7 @@ from update import LocalUpdate, test_inference, test_gradient
 from models import CNNMnist, CNNFashion_Mnist, CNNCifar, ResNet9, MobileNetV2
 from utils import get_dataset, average_weights, exp_details, setup_logger, get_device
 import multiprocessing
-from scipy.stats import pearsonr, spearmanr
+from scipy.stats import pearsonr
 from functools import partial
 
 
@@ -103,7 +103,7 @@ if __name__ == '__main__':
     exp_details(args)
 
     device = get_device()
-    train_dataset, test_dataset, user_groups, _, _, _ = get_dataset(args)
+    train_dataset, test_dataset, user_groups, actual_bad_clients = get_dataset(args)
 
     shapley_values, banzhaf_values = defaultdict(float), defaultdict(float)
     all_subsets = list(itertools.chain.from_iterable(itertools.combinations(range(args.num_users), r) for r in range(args.num_users + 1)))
@@ -149,6 +149,5 @@ if __name__ == '__main__':
     logger.info(f'Banzhaf Values: {banzhaf_values}')
     logger.info(f'Approximate Banzhaf Values: {approx_banzhaf_values}')
     logger.info(f'Pearson Correlation Between Shapley And Banzhaf Values: {pearsonr(shapley_values, banzhaf_values)}')
-    logger.info(f'Spearman Correlation Between Shapley And Banzhaf Values: {spearmanr(shapley_values, banzhaf_values)}')
     logger.info(f'Pearson Correlation Between Shapley And Approximate Banzhaf Values: {pearsonr(shapley_values, approx_banzhaf_values)}')
-    logger.info(f'Spearman Correlation Between Shapley And Approximate Banzhaf Values: {spearmanr(shapley_values, approx_banzhaf_values)}')
+    logger.info(f'Pearson Correlation Between Banzhaf And Approximate Banzhaf Values: {pearsonr(banzhaf_values, approx_banzhaf_values)}')

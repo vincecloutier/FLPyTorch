@@ -33,14 +33,14 @@ def get_dataset(args):
     match args.setting:
         case 0:
             user_groups = iid(train_dataset, args.num_users)
-            return train_dataset, test_dataset, user_groups, None, None, None
+            return train_dataset, test_dataset, user_groups, None
         case 1:
-            user_groups, non_iid_clients = noniid(train_dataset, args.dataset, args.num_users, args.badclient_prop, args.num_categories_per_client)
-            return train_dataset, test_dataset, user_groups, non_iid_clients, None, None
+            user_groups, bad_clients = noniid(train_dataset, args.dataset, args.num_users, args.badclient_prop, args.num_categories_per_client)
+            return train_dataset, test_dataset, user_groups, bad_clients
         case 2:
             iid_user_groups = iid(train_dataset, args.num_users)
-            user_groups, bad_clients, bad_samples = mislabeled(train_dataset, args.dataset, iid_user_groups, args.badclient_prop, args.mislabel_proportion)
-            return train_dataset, test_dataset, user_groups, None, bad_clients, bad_samples
+            user_groups, bad_clients = mislabeled(train_dataset, args.dataset, iid_user_groups, args.badclient_prop, args.mislabel_proportion)
+            return train_dataset, test_dataset, user_groups, bad_clients
         case _  :
             raise ValueError("Invalid value for --iid. Please use 0 or 1.")
 
@@ -109,10 +109,3 @@ def measure_accuracy(targets, predictions):
     FN = len(targets - predictions)
     TN = len(targets) - (TP + FP + FN)
     return (TP + TN) / len(targets)
-
-def remove_bad_samples(user_groups, bad_samples):
-    updated_user_groups = {}
-    for client_idx, data_idxs in user_groups.items():
-        updated_data_idxs = [idx for idx in data_idxs if idx not in bad_samples]
-        updated_user_groups[client_idx] = updated_data_idxs
-    return updated_user_groups

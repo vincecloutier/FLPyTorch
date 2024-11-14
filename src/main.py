@@ -7,7 +7,7 @@ from collections import defaultdict
 from options import args_parser
 from update import LocalUpdate, test_inference, test_gradient
 from models import CNNMnist, CNNFashion_Mnist, CNNCifar, ResNet9, MobileNetV2
-from utils import get_dataset, average_weights, exp_details, setup_logger, get_device, identify_bad_idxs, measure_accuracy, remove_bad_samples
+from utils import get_dataset, average_weights, exp_details, setup_logger, get_device, identify_bad_idxs, measure_accuracy
 
 def initialize_model(args):
     model_dict = {
@@ -89,7 +89,7 @@ if __name__ == '__main__':
     exp_details(args)
 
     device = get_device()
-    train_dataset, test_dataset, user_groups, non_iid_clients, actual_bad_clients, actual_bad_samples = get_dataset(args)
+    train_dataset, test_dataset, user_groups, actual_bad_clients = get_dataset(args)
     
     # train the global model
     global_model = initialize_model(args)
