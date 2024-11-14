@@ -130,3 +130,21 @@ MOBILENET STUFF:
 2024-11-13 17:37:05,716 INFO Spearman Correlation Between Shapley And Banzhaf Values: SignificanceResult(statistic=0.5393939393939393, pvalue=0.1075931877824148)
 2024-11-13 17:37:05,717 INFO Pearson Correlation Between Shapley And Approximate Banzhaf Values: PearsonRResult(statistic=-0.3226629770907185, pvalue=0.3631826374299209)
 2024-11-13 17:37:05,718 INFO Spearman Correlation Between Shapley And Approximate Banzhaf Values: SignificanceResult(statistic=-0.33333333333333326, pvalue=0.34659350708733405)
+
+
+2024-11-14 12:24:14,303 INFO Number Of Clients: 5, Client Selection Fraction: 0.6, Local Epochs: 10, Batch Size: 128
+2024-11-14 12:24:14,313 INFO Dataset: cifar, Setting: IID, Number Of Rounds: 25
+2024-11-14 12:24:14,314 INFO Test Accuracy Of Global Model: 58.47%
+2024-11-14 12:24:14,315 INFO Shapley Values: [18.580359778801604, 18.382907129327457, 17.798161449035007, 19.05175413886706, 19.082643366853393]
+2024-11-14 12:24:14,316 INFO Banzhaf Values: [3.3672749996185303, 3.2786958627402782, 2.814063347876072, 3.5683792904019356, 3.4928530044853687]
+2024-11-14 12:24:14,317 INFO Approximate Banzhaf Values Simple: [-0.13069273787550628, -0.09832042967900634, -0.0944698869716376, -0.10965246245905291, -0.12688119406811893]
+2024-11-14 12:24:14,318 INFO Approximate Banzhaf Values Hessian: [-11.541361808776855, -2.188819491304457, -4.480500829173252, 22.10438061435707, -1.9131518378853798]
+2024-11-14 12:24:14,322 INFO Pearson Correlation Between Shapley And Banzhaf Values: PearsonRResult(statistic=0.9679974486379912, pvalue=0.006839351736143768)
+2024-11-14 12:24:14,325 INFO Pearson Correlation Between Shapley And Approximate Banzhaf Values Simple: PearsonRResult(statistic=-0.6562658337341241, pvalue=0.22903362779229117)
+2024-11-14 12:24:14,327 INFO Pearson Correlation Between Shapley And Approximate Banzhaf Values Hessian: PearsonRResult(statistic=0.49556571924145754, pvalue=0.39589891188754794)
+2024-11-14 12:24:14,330 INFO Pearson Correlation Between Banzhaf Values Simple And Approximate Banzhaf Values Simple: PearsonRResult(statistic=-0.6355068909996487, pvalue=0.24921095512537958)
+2024-11-14 12:24:14,332 INFO Pearson Correlation Between Banzhaf Values Hessian And Approximate Banzhaf Values Hessian: PearsonRResult(statistic=0.46425475290667034, pvalue=0.4308719595284532)
+2024-11-14 12:24:14,333 INFO Bad Client Accuracy Simple: 0.0
+2024-11-14 12:24:14,334 INFO Bad Client Accuracy Hessian: 0.0
+2024-11-14 12:24:14,335 INFO Average Difference Between Banzhaf Values Simple And Hessian: 8.37750055907236
+2024-11-14 12:24:14,336 INFO Total Run Time: 7182.150530576706
