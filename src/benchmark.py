@@ -10,7 +10,7 @@ from options import args_parser
 from update import LocalUpdate, test_inference, test_gradient
 from models import CNNMnist, CNNFashion_Mnist, CNNCifar, ResNet9, MobileNetV2
 from estimation import compute_bv_simple, compute_bv_hvp, compute_G_t, compute_G_minus_i_t
-from utils import get_dataset, average_weights, exp_details, setup_logger, get_device, identify_bad_idxs, measure_accuracy
+from utils import get_dataset, average_weights, setup_logger, get_device, identify_bad_idxs, measure_accuracy
 import multiprocessing
 from scipy.stats import pearsonr
 from functools import partial
@@ -112,7 +112,7 @@ if __name__ == '__main__':
     start_time = time.time()
     args = args_parser()
     logger = setup_logger(f'benchmark_{args.dataset}_{args.setting}_{args.num_users}_{args.local_bs}')
-    exp_details(args)
+    print(args)
 
     device = get_device()
     train_dataset, valid_dataset, test_dataset, user_groups, actual_bad_clients = get_dataset(args)

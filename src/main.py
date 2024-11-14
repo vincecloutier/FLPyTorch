@@ -7,7 +7,7 @@ from collections import defaultdict
 from options import args_parser
 from update import LocalUpdate, test_inference, test_gradient
 from models import CNNMnist, CNNFashion_Mnist, CNNCifar, ResNet9, MobileNetV2
-from utils import get_dataset, average_weights, exp_details, setup_logger, get_device, identify_bad_idxs, measure_accuracy
+from utils import get_dataset, average_weights, setup_logger, get_device, identify_bad_idxs, measure_accuracy
 from estimation import compute_bv_hvp, compute_bv_simple, compute_G_t, compute_G_minus_i_t
 
 def initialize_model(args):
@@ -99,7 +99,7 @@ if __name__ == '__main__':
     start_time = time.time()
     logger = setup_logger('experiment')
     args = args_parser()
-    exp_details(args)
+    print(args)
 
     device = get_device()
     train_dataset, valid_dataset, test_dataset, user_groups, actual_bad_clients = get_dataset(args)
