@@ -30,7 +30,7 @@ def initialize_model(args):
         exit('Error: unrecognized dataset')
 
 
-def train_global_model(args, model, train_dataset, test_dataset, user_groups, device, clients=None, isBanzhaf=False):
+def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, user_groups, device, clients=None, isBanzhaf=False):
     if clients is None or len(clients) == 0:
         return model, defaultdict(float)
     global_weights = model.state_dict()
@@ -43,7 +43,7 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
 
         model.train()
         if isBanzhaf:
-            gradient = test_gradient(args, model, test_dataset)
+            gradient = test_gradient(args, model, valid_dataset)
             delta_t = defaultdict(dict)
             delta_g = defaultdict(dict)
 
@@ -113,14 +113,14 @@ if __name__ == '__main__':
     exp_details(args)
 
     device = get_device()
-    train_dataset, test_dataset, user_groups, actual_bad_clients = get_dataset(args)
+    train_dataset, valid_dataset, test_dataset, user_groups, actual_bad_clients = get_dataset(args)
 
     shapley_values, banzhaf_values = defaultdict(float), defaultdict(float)
     all_subsets = list(itertools.chain.from_iterable(itertools.combinations(range(args.num_users), r) for r in range(args.num_users + 1)))
 
 
     pool = multiprocessing.Pool(processes=18)
-    train_subset_partial = partial(train_subset, args=args, train_dataset=train_dataset, test_dataset=test_dataset, user_groups=user_groups)
+    train_subset_partial = partial(train_subset, args=args, train_dataset=train_dataset, valid_dataset=valid_dataset, test_dataset=test_dataset, user_groups=user_groups)
     results_list = pool.map(train_subset_partial, all_subsets)
     pool.close()
     pool.join()
@@ -139,7 +139,7 @@ if __name__ == '__main__':
     global_model.to(device)
     global_model.train()
     clients = [c for c in range(args.num_users)]
-    global_model, approx_banzhaf_values_simple, approx_banzhaf_values_hessian = train_global_model(args, global_model, train_dataset, test_dataset, user_groups, device, clients=clients, isBanzhaf=True)
+    global_model, approx_banzhaf_values_simple, approx_banzhaf_values_hessian = train_global_model(args, global_model, train_dataset, valid_dataset, test_dataset, user_groups, device, clients=clients, isBanzhaf=True)
     test_acc, test_loss = test_inference(global_model, test_dataset)
     
     predicted_bad_client_simple = identify_bad_idxs(approx_banzhaf_values_simple)

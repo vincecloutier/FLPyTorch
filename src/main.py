@@ -102,7 +102,7 @@ if __name__ == '__main__':
     exp_details(args)
 
     device = get_device()
-    train_dataset, test_dataset, user_groups, actual_bad_clients = get_dataset(args)
+    train_dataset, valid_dataset, test_dataset, user_groups, actual_bad_clients = get_dataset(args)
     
     # train the global model
     global_model = initialize_model(args)
