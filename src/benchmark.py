@@ -37,6 +37,9 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
     best_test_acc, best_test_loss = 0, float('inf')
     approx_banzhaf_values_hessian = defaultdict(float)
     approx_banzhaf_values_simple = defaultdict(float)
+    if isBanzhaf:
+        delta_t = defaultdict(dict)
+        delta_g = defaultdict(lambda: {key: torch.zeros_like(global_weights[key]) for key in global_weights.keys()})
 
     for epoch in tqdm(range(args.epochs), desc=f"Global Training For Subset {clients}"):
         local_weights, local_losses = [], []
@@ -44,8 +47,6 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
         model.train()
         if isBanzhaf:
             gradient = test_gradient(args, model, valid_dataset)
-            delta_t = defaultdict(dict)
-            delta_g = defaultdict(dict)
 
         m = max(int(args.frac * len(clients)), 1)
         idxs_users = np.random.choice(clients, m, replace=False)
