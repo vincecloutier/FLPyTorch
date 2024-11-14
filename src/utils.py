@@ -3,11 +3,12 @@ import torch
 from torchvision import datasets, transforms
 from sampling import iid, noniid, mislabeled
 import logging
+import numpy as np
 
 def get_dataset(args):
-    """ Returns train and test datasets and a user group which is a dict where
-    the keys are the user index and the values are the corresponding data for
-    each of those users.
+    """ Returns train, validation, and test datasets along with a user group,
+    which is a dict where the keys are the user index and the values are the
+    corresponding data for each of those users.
     """
     if args.dataset == 'cifar' or args.dataset == 'resnet' or args.dataset == 'mobilenet':
         data_dir = './data/cifar/'
@@ -22,28 +23,56 @@ def get_dataset(args):
             transforms.ToTensor(),
             transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
         ])
-        train_dataset = datasets.CIFAR10(data_dir, train=True, download=True, transform=transform_train)
-        # TODO: allocate 10% of the training set as validation set
-        valid_dataset = datasets.CIFAR10(data_dir, train=True, download=True, transform=transform_train)
+        
+        # load the full training dataset
+        full_train_dataset = datasets.CIFAR10(data_dir, train=True, download=True, transform=transform_train)
+
+        # allocate 10% of the training set as validation set
+        num_train = len(full_train_dataset)
+        split = int(np.floor(0.1 * num_train))
+        indices = list(range(num_train))
+        np.random.shuffle(indices)
+        train_idx, valid_idx = indices[split:], indices[:split]
+
+        # create train and validation datasets
+        train_dataset = torch.utils.data.Subset(full_train_dataset, train_idx)
+        valid_dataset = torch.utils.data.Subset(full_train_dataset, valid_idx)
+
+        # load the test dataset
         test_dataset = datasets.CIFAR10(data_dir, train=False, download=True, transform=transform_test)
     elif args.dataset == 'mnist' or args.dataset == 'fmnist':
         data_dir = './data/mnist/' if args.dataset == 'mnist' else './data/fmnist/'
         apply_transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
-        train_dataset = datasets.MNIST(data_dir, train=True, download=True, transform=apply_transform)
+
+        # load the full training dataset
+        full_train_dataset = datasets.MNIST(data_dir, train=True, download=True, transform=apply_transform)
+
+        # allocate 10% of the training set as validation set
+        num_train = len(full_train_dataset)
+        split = int(np.floor(0.1 * num_train))
+        indices = list(range(num_train))
+        np.random.shuffle(indices)
+        train_idx, valid_idx = indices[split:], indices[:split]
+
+        # create train and validation datasets
+        train_dataset = torch.utils.data.Subset(full_train_dataset, train_idx)
+        valid_dataset = torch.utils.data.Subset(full_train_dataset, valid_idx)
+
+        # load the test dataset
         test_dataset = datasets.MNIST(data_dir, train=False, download=True, transform=apply_transform)
      
     match args.setting:
         case 0:
             user_groups = iid(train_dataset, args.num_users)
-            return train_dataset, test_dataset, user_groups, None
+            return train_dataset, valid_dataset, test_dataset, user_groups, None
         case 1:
             user_groups, bad_clients = noniid(train_dataset, args.dataset, args.num_users, args.badclient_prop, args.num_categories_per_client)
-            return train_dataset, test_dataset, user_groups, bad_clients
+            return train_dataset, valid_dataset, test_dataset, user_groups, bad_clients
         case 2:
             iid_user_groups = iid(train_dataset, args.num_users)
             user_groups, bad_clients = mislabeled(train_dataset, args.dataset, iid_user_groups, args.badclient_prop, args.mislabel_proportion)
-            return train_dataset, test_dataset, user_groups, bad_clients
-        case _  :
+            return train_dataset, valid_dataset, test_dataset, user_groups, bad_clients
+        case _:
             raise ValueError("Invalid value for --iid. Please use 0 or 1.")
 
 
