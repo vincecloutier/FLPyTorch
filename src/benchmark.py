@@ -120,7 +120,7 @@ if __name__ == '__main__':
     all_subsets = list(itertools.chain.from_iterable(itertools.combinations(range(args.num_users), r) for r in range(args.num_users + 1)))
 
 
-    pool = multiprocessing.Pool(processes=20)
+    pool = multiprocessing.Pool(processes=28)
     train_subset_partial = partial(train_subset, args=args, train_dataset=train_dataset, valid_dataset=valid_dataset, test_dataset=test_dataset, user_groups=user_groups)
     results_list = pool.map(train_subset_partial, all_subsets)
     pool.close()
