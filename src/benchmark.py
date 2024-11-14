@@ -162,8 +162,17 @@ if __name__ == '__main__':
     print(approx_banzhaf_values_hessian)
 
     # log results
+    match args.setting:
+        case 0:
+            setting_str = "IID"
+        case 1:
+            setting_str = f"{len(actual_bad_clients)} Bad Clients" + f" with {args.num_categories_per_client} Categories Per Bad Client"
+        case 2:
+            setting_str = f"{len(actual_bad_clients)} Bad Clients" + f" with {100*args.mislabel_proportion}% Mislabeled Samples Per Bad Client"
+        case 3:
+            setting_str = f"{len(actual_bad_clients)} Bad Clients" + f" with {100*args.noise_proportion}% Noisy Samples Per Bad Client"
     logger.info(f'Number Of Clients: {args.num_users}, Client Selection Fraction: {args.frac}, Local Epochs: {args.local_ep}, Batch Size: {args.local_bs}')
-    logger.info(f'Dataset: {args.dataset}, Setting: IID, Number Of Rounds: {args.epochs}')
+    logger.info(f'Dataset: {args.dataset}, Setting: {setting_str}, Number Of Rounds: {args.epochs}')
     logger.info(f'Test Accuracy Of Global Model: {100*test_acc}%')
     logger.info(f'Shapley Values: {shapley_values}')
     logger.info(f'Banzhaf Values: {banzhaf_values}')
