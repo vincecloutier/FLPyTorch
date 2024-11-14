@@ -9,7 +9,7 @@ from tqdm import tqdm
 from options import args_parser
 from update import LocalUpdate, test_inference, test_gradient
 from models import CNNMnist, CNNFashion_Mnist, CNNCifar, ResNet9, MobileNetV2
-from estimation import compute_bv_simple
+from estimation import compute_bv_simple, compute_bv_hvp, compute_G_t, compute_G_minus_i_t
 from utils import get_dataset, average_weights, exp_details, setup_logger, get_device, identify_bad_idxs, measure_accuracy
 import multiprocessing
 from scipy.stats import pearsonr
@@ -35,7 +35,8 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
         return model, defaultdict(float)
     global_weights = model.state_dict()
     best_test_acc, best_test_loss = 0, float('inf')
-    approx_banzhaf_values = defaultdict(float)
+    approx_banzhaf_values_hessian = defaultdict(float)
+    approx_banzhaf_values_simple = defaultdict(float)
 
     for epoch in tqdm(range(args.epochs), desc=f"Global Training For Subset {clients}"):
         local_weights, local_losses = [], []
@@ -44,6 +45,7 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
         if isBanzhaf:
             gradient = test_gradient(args, model, test_dataset)
             delta_t = defaultdict(dict)
+            delta_g = defaultdict(dict)
 
         m = max(int(args.frac * len(clients)), 1)
         idxs_users = np.random.choice(clients, m, replace=False)
@@ -59,8 +61,14 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
                 delta_t[epoch][idx] = {key: (global_weights[key] - w[key]).to(device) for key in w.keys()}
 
         if isBanzhaf:
+            G_t = compute_G_t(delta_t[epoch], global_weights.keys())
             for idx in idxs_users:
-                approx_banzhaf_values[idx] += compute_bv_simple(args, gradient, delta_t[epoch][idx])
+                G_t_minus_i = compute_G_minus_i_t(delta_t[epoch], global_weights.keys(), idx)
+                if epoch > 0:
+                    for key in global_weights.keys():
+                        delta_g[idx][key] += G_t_minus_i[key] - G_t[key]
+                approx_banzhaf_values_hessian[idx] += compute_bv_hvp(args, model, test_dataset, gradient, delta_t[epoch][idx], delta_g[idx])
+                approx_banzhaf_values_simple[idx] += compute_bv_simple(args, gradient, delta_t[epoch][idx])
 
         # update global weights and model
         global_weights = average_weights(local_weights)
@@ -80,7 +88,7 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
 
     # clients_str = "_".join(str(client) for client in clients)
     # torch.save(model.state_dict(), f"{clients_str}_epoch_{epoch + 1}_{args.dataset}_{args.setting}.pth")
-    return model, approx_banzhaf_values
+    return model, approx_banzhaf_values_simple, approx_banzhaf_values_hessian
 
 
 def train_subset(subset, args, train_dataset, test_dataset, user_groups):
@@ -131,20 +139,25 @@ if __name__ == '__main__':
     global_model.to(device)
     global_model.train()
     clients = [c for c in range(args.num_users)]
-    global_model, approx_banzhaf_values = train_global_model(args, global_model, train_dataset, test_dataset, user_groups, device, clients=clients, isBanzhaf=True)
+    global_model, approx_banzhaf_values_simple, approx_banzhaf_values_hessian = train_global_model(args, global_model, train_dataset, test_dataset, user_groups, device, clients=clients, isBanzhaf=True)
     test_acc, test_loss = test_inference(global_model, test_dataset)
     
-    predicted_bad_clients = identify_bad_idxs(approx_banzhaf_values)
-    bad_client_accuracy = measure_accuracy(actual_bad_clients, predicted_bad_clients)
+    predicted_bad_client_simple = identify_bad_idxs(approx_banzhaf_values_simple)
+    bad_client_accuracy_simple = measure_accuracy(actual_bad_clients, predicted_bad_client_simple)
+
+    predicted_bad_client_hvp = identify_bad_idxs(approx_banzhaf_values_hessian)
+    bad_client_accuracy_hvp = measure_accuracy(actual_bad_clients, predicted_bad_client_hvp)
 
     # remove any clients that are not in approx_banzhaf_values and are not in shapley_values and banzhaf_values 
-    shared_clients = set(shapley_values.keys()) & set(banzhaf_values.keys()) & set(approx_banzhaf_values.keys())
+    shared_clients = set(shapley_values.keys()) & set(banzhaf_values.keys()) & set(approx_banzhaf_values_simple.keys())
     shapley_values = [shapley_values[client] for client in shared_clients]
     banzhaf_values = [banzhaf_values[client] for client in shared_clients]
-    approx_banzhaf_values = [approx_banzhaf_values[client] for client in shared_clients]
+    approx_banzhaf_values_simple = [approx_banzhaf_values_simple[client] for client in shared_clients]
+    approx_banzhaf_values_hessian = [approx_banzhaf_values_hessian[client] for client in shared_clients]
     print(shapley_values)
     print(banzhaf_values)
-    print(approx_banzhaf_values)
+    print(approx_banzhaf_values_simple)
+    print(approx_banzhaf_values_hessian)
 
     # log results
     logger.info(f'Number Of Clients: {args.num_users}, Client Selection Fraction: {args.frac}, Local Epochs: {args.local_ep}, Batch Size: {args.local_bs}')
@@ -152,9 +165,14 @@ if __name__ == '__main__':
     logger.info(f'Test Accuracy Of Global Model: {100*test_acc}%')
     logger.info(f'Shapley Values: {shapley_values}')
     logger.info(f'Banzhaf Values: {banzhaf_values}')
-    logger.info(f'Approximate Banzhaf Values: {approx_banzhaf_values}')
+    logger.info(f'Approximate Banzhaf Values Simple: {approx_banzhaf_values_simple}')
+    logger.info(f'Approximate Banzhaf Values Hessian: {approx_banzhaf_values_hessian}')
     logger.info(f'Pearson Correlation Between Shapley And Banzhaf Values: {pearsonr(shapley_values, banzhaf_values)}')
-    logger.info(f'Pearson Correlation Between Shapley And Approximate Banzhaf Values: {pearsonr(shapley_values, approx_banzhaf_values)}')
-    logger.info(f'Pearson Correlation Between Banzhaf And Approximate Banzhaf Values: {pearsonr(banzhaf_values, approx_banzhaf_values)}')
-    logger.info(f'Bad Client Accuracy: {bad_client_accuracy}')
+    logger.info(f'Pearson Correlation Between Shapley And Approximate Banzhaf Values Simple: {pearsonr(shapley_values, approx_banzhaf_values_simple)}')
+    logger.info(f'Pearson Correlation Between Shapley And Approximate Banzhaf Values Hessian: {pearsonr(shapley_values, approx_banzhaf_values_hessian)}')
+    logger.info(f'Pearson Correlation Between Banzhaf Values Simple And Approximate Banzhaf Values Simple: {pearsonr(banzhaf_values, approx_banzhaf_values_simple)}')
+    logger.info(f'Pearson Correlation Between Banzhaf Values Hessian And Approximate Banzhaf Values Hessian: {pearsonr(banzhaf_values, approx_banzhaf_values_hessian)}')
+    logger.info(f'Bad Client Accuracy Simple: {bad_client_accuracy_simple}')
+    logger.info(f'Bad Client Accuracy Hessian: {bad_client_accuracy_hvp}')
+    logger.info(f'Average Difference Between Banzhaf Values Simple And Hessian: {np.mean(np.abs(np.array(approx_banzhaf_values_simple) - np.array(approx_banzhaf_values_hessian)))}')
     logger.info(f'Total Run Time: {time.time()-start_time}')
