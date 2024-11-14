@@ -17,7 +17,8 @@ class CNNMnist(nn.Module):
         x = F.relu(self.fc1(x), inplace=False)
         x = F.dropout(x, training=self.training, inplace=False)
         x = self.fc2(x)
-        return x
+        # return F.log_softmax(x, dim=1)
+        return x # for cross entropy loss
 
 
 class CNNFashion_Mnist(nn.Module):
@@ -60,7 +61,8 @@ class CNNCifar(nn.Module):
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
-        return F.log_softmax(x, dim=1)
+        # return F.log_softmax(x, dim=1)
+        return x # for cross entropy loss
 
 
 #ResNet9 For CIFAR10
@@ -90,8 +92,9 @@ class ResNet9(nn.Module):
         out = self.conv4(out)
         out = self.res2(out) + out
         out = self.classifier(out)
-        return F.log_softmax(out, dim=1)
-
+        # return F.log_softmax(out, dim=1)
+        return out # for cross entropy loss
+    
 # MobileNetV2 For CIFAR10   
 class Block(nn.Module):
     '''expand + depthwise + pointwise'''
@@ -156,4 +159,5 @@ class MobileNetV2(nn.Module):
         out = F.avg_pool2d(out, 4)
         out = out.view(out.size(0), -1)
         out = self.linear(out)
-        return F.log_softmax(out, dim=1)
+        # return F.log_softmax(out, dim=1)
+        return out # for cross entropy loss
