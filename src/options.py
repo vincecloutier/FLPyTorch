@@ -5,8 +5,8 @@ def args_parser():
     parser = argparse.ArgumentParser()
 
     # federated arguments
-    parser.add_argument('--epochs', type=int, default=2, help="number of rounds of training")
-    parser.add_argument('--num_users', type=int, default=2, help="number of users: K")
+    parser.add_argument('--epochs', type=int, default=25, help="number of rounds of training")
+    parser.add_argument('--num_users', type=int, default=5, help="number of users: K")
     parser.add_argument('--frac', type=float, default=0.6, help='the fraction of clients: C')
     parser.add_argument('--local_ep', type=int, default=1, help="the number of local epochs: E")
     parser.add_argument('--local_bs', type=int, default=128, help="local batch size: B")
@@ -15,7 +15,7 @@ def args_parser():
     parser.add_argument('--hessian', type=int, default=0, help='Use Hessian-vector product to compute Banzhaf values (default: 0)')
 
     # other arguments
-    parser.add_argument('--dataset', type=str, default='mnist', help="name of dataset")
+    parser.add_argument('--dataset', type=str, default='mobilenet', help="name of dataset")
     parser.add_argument('--optimizer', type=str, default='sgd', help="type of optimizer")
     parser.add_argument('--setting', type=int, default=0, help= "Set to 0 for IID, 1 for non-iid, 2 for mislabeled.")
     parser.add_argument('--badclient_prop', type=float, default=0.0, help= "Proportion of either non-iid or mislabeled or noisy clients.")
