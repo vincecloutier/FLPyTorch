@@ -99,7 +99,7 @@ def train_subset(subset, args, train_dataset, valid_dataset, test_dataset, user_
 
     subset_key = tuple(sorted(subset))
     print(f"Training Model For Subset {subset_key}")
-    model, _ = train_global_model(args, global_model, train_dataset, valid_dataset, test_dataset, user_groups, device, subset)
+    model, _, _ = train_global_model(args, global_model, train_dataset, valid_dataset, test_dataset, user_groups, device, subset)
     accuracy, loss = test_inference(model, test_dataset)
     torch.cuda.empty_cache()
     return (subset_key, loss)
