@@ -15,7 +15,7 @@ def args_parser():
     parser.add_argument('--hessian', type=int, default=0, help='Use Hessian-vector product to compute Banzhaf values (default: 0)')
 
     # other arguments
-    parser.add_argument('--dataset', type=str, default='cifar', help="name of dataset")
+    parser.add_argument('--dataset', type=str, default='mobilenet', help="name of dataset")
     parser.add_argument('--optimizer', type=str, default='sgd', help="type of optimizer")
     parser.add_argument('--setting', type=int, default=0, help= "Set to 0 for IID, 1 for non-iid, 2 for mislabeled.")
     parser.add_argument('--badclient_prop', type=float, default=0.0, help= "Proportion of either non-iid or mislabeled or noisy clients.")
