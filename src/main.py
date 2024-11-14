@@ -28,8 +28,8 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
     best_test_acc, best_test_loss = 0, float('inf')
     approx_banzhaf_values = defaultdict(float)
     selection_probabilities = np.full(args.num_users, 1 / args.num_users)
-    delta = defaultdict(dict)
-    accumulated_Delta_G = defaultdict(lambda: {key: torch.zeros_like(global_weights[key]) for key in global_weights.keys()})
+    delta_t = defaultdict(dict)
+    delta_g = defaultdict(lambda: {key: torch.zeros_like(global_weights[key]) for key in global_weights.keys()})
 
     no_improvement_count = 0
     for epoch in tqdm(range(args.epochs)):
@@ -53,23 +53,23 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
             local_losses.append(copy.deepcopy(loss))
             
             # compute banzhaf value estimate
-            delta[epoch][idx] = {key: (global_weights[key] - w[key]).to(device) for key in w.keys()}
+            delta_t[epoch][idx] = {key: (global_weights[key] - w[key]).to(device) for key in w.keys()}
 
         global_weights = average_weights(local_weights)
         model.load_state_dict(global_weights)
 
         # compute banzhaf values
         if args.hessian == 1:
-            G_t = compute_G_t(delta[epoch], global_weights.keys())
+            G_t = compute_G_t(delta_t[epoch], global_weights.keys())
             for idx in idxs_users:
-                G_t_minus_i = compute_G_minus_i_t(delta[epoch], global_weights.keys(), idx)
+                G_t_minus_i = compute_G_minus_i_t(delta_t[epoch], global_weights.keys(), idx)
                 if epoch > 0:
                     for key in global_weights.keys():
-                        accumulated_Delta_G[idx][key] += G_t_minus_i[key] - G_t[key]
-                approx_banzhaf_values[idx] += compute_bv_hvp(args, model, test_dataset, gradient, delta[epoch][idx], accumulated_Delta_G[idx])
+                        delta_g[idx][key] += G_t_minus_i[key] - G_t[key]
+                approx_banzhaf_values[idx] += compute_bv_hvp(args, model, test_dataset, gradient, delta_t[epoch][idx], delta_g[idx])
         else:
             for idx in idxs_users:
-                approx_banzhaf_values[idx] += compute_bv_simple(args, gradient, delta[epoch][idx])
+                approx_banzhaf_values[idx] += compute_bv_simple(args, gradient, delta_t[epoch][idx])
     
         # update selection probabilities based on the banzhaf values
         if bad_clients is not None:
