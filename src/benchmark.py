@@ -9,7 +9,7 @@ from tqdm import tqdm
 from options import args_parser
 from update import LocalUpdate, test_inference, test_gradient
 from models import CNNMnist, CNNFashion_Mnist, CNNCifar, ResNet9, MobileNetV2
-from utils import get_dataset, average_weights, exp_details, setup_logger, get_device
+from utils import get_dataset, average_weights, exp_details, setup_logger, get_device, identify_bad_idxs, measure_accuracy
 import multiprocessing
 from scipy.stats import pearsonr
 from functools import partial
@@ -132,6 +132,9 @@ if __name__ == '__main__':
     global_model, approx_banzhaf_values = train_global_model(args, global_model, train_dataset, test_dataset, user_groups, device, clients=clients, isBanzhaf=True)
     test_acc, test_loss = test_inference(global_model, test_dataset)
     
+    predicted_bad_clients = identify_bad_idxs(approx_banzhaf_values)
+    bad_client_accuracy = measure_accuracy(actual_bad_clients, predicted_bad_clients)
+
     # remove any clients that are not in approx_banzhaf_values and are not in shapley_values and banzhaf_values 
     shared_clients = set(shapley_values.keys()) & set(banzhaf_values.keys()) & set(approx_banzhaf_values.keys())
     shapley_values = [shapley_values[client] for client in shared_clients]
@@ -151,3 +154,5 @@ if __name__ == '__main__':
     logger.info(f'Pearson Correlation Between Shapley And Banzhaf Values: {pearsonr(shapley_values, banzhaf_values)}')
     logger.info(f'Pearson Correlation Between Shapley And Approximate Banzhaf Values: {pearsonr(shapley_values, approx_banzhaf_values)}')
     logger.info(f'Pearson Correlation Between Banzhaf And Approximate Banzhaf Values: {pearsonr(banzhaf_values, approx_banzhaf_values)}')
+    logger.info(f'Bad Client Accuracy: {bad_client_accuracy}')
+    logger.info(f'Total Run Time: {time.time()-start_time}')
