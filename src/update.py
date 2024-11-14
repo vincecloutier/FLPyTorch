@@ -22,7 +22,7 @@ class LocalUpdate(object):
         self.args = args
         self.trainloader = DataLoader(DatasetSplit(dataset, idxs), batch_size=self.args.local_bs, shuffle=True)
         self.device = get_device()
-        self.criterion = nn.NLLLoss().to(self.device)
+        self.criterion = nn.CrossEntropyLoss().to(self.device)
 
     def update_weights(self, model, global_round):
         # set mode to train model
@@ -64,7 +64,7 @@ def test_inference(model, test_dataset):
 
     device = get_device()
 
-    criterion = nn.NLLLoss().to(device)
+    criterion = nn.CrossEntropyLoss().to(device)
     testloader = DataLoader(test_dataset, batch_size=128, shuffle=False)
 
     for batch_idx, (images, labels) in enumerate(testloader):
@@ -84,38 +84,103 @@ def test_inference(model, test_dataset):
     accuracy = correct/total
     return accuracy, loss
 
-def test_gradient(model, test_dataset):
-    """Returns the average gradient of the loss with respect to the model parameters on the test dataset."""
+# def test_gradient(model, test_dataset):
+#     """Returns the average gradient of the loss with respect to the model parameters on the test dataset."""
     
+#     model.eval()
+#     for param in model.parameters():
+#         if param.grad is not None:
+#             param.grad.zero_()
+
+#     device = get_device()
+
+#     criterion = nn.NLLLoss().to(device)
+#     testloader = DataLoader(test_dataset, batch_size=128, shuffle=False)
+    
+#     total_batches = len(testloader)
+    
+#     for batch_idx, (images, labels) in enumerate(testloader):
+#         images, labels = images.to(device), labels.to(device)
+
+#         # forward pass
+#         outputs = model(images)
+#         loss = criterion(outputs, labels) / total_batches
+
+#         # backward pass to compute gradients
+#         loss.backward()
+
+#     # collect average gradients
+#     gradients = {}
+#     for name, param in model.named_parameters():
+#         if param.requires_grad:
+#             gradients[name] = param.grad.clone().detach() if param.grad is not None else None
+
+#     for key in gradients:
+#         gradients[key] = gradients[key].detach().to(device)
+
+#     return gradients
+
+def test_gradient(args, model, dataset):
+    """Computes the gradient of the validation loss with respect to the model parameters."""
+
     model.eval()
-    for param in model.parameters():
-        if param.grad is not None:
-            param.grad.zero_()
+    model.zero_grad()  # clear existing gradients
 
     device = get_device()
 
-    criterion = nn.NLLLoss().to(device)
-    testloader = DataLoader(test_dataset, batch_size=128, shuffle=False)
+    criterion = nn.CrossEntropyLoss().to(device)
+    data_loader = DataLoader(dataset, batch_size=len(dataset), shuffle=False) # top insight to use full dataset
     
-    total_batches = len(testloader)
-    
-    for batch_idx, (images, labels) in enumerate(testloader):
-        images, labels = images.to(device), labels.to(device)
+    inputs, targets = next(iter(data_loader))
+    inputs, targets = inputs.to(device), targets.to(device)
 
-        # forward pass
-        outputs = model(images)
-        loss = criterion(outputs, labels) / total_batches
+    # forward pass
+    outputs = model(inputs)
+    loss = criterion(outputs, targets)
 
-        # backward pass to compute gradients
-        loss.backward()
+    # backward pass
+    if args.hessian == 1:
+        grad_params = torch.autograd.grad(loss, model.parameters(), create_graph=True, retain_graph=True)
+    else:
+        grad_params = torch.autograd.grad(loss, model.parameters(), create_graph=False, retain_graph=False)
 
-    # collect average gradients
-    gradients = {}
-    for name, param in model.named_parameters():
+    # collect gradients
+    gradient = {}
+    for (name, param), grad in zip(model.named_parameters(), grad_params):
         if param.requires_grad:
-            gradients[name] = param.grad.clone().detach() if param.grad is not None else None
+            gradient[name] = grad.clone().detach()
 
-    for key in gradients:
-        gradients[key] = gradients[key].detach().to(device)
+    return gradient
 
-    return gradients
+
+def compute_hessian(model, dataset, v_list):
+    """Computes the Hessian-vector product Hv, where H is the Hessian of loss w.r.t. model parameters."""
+    device = get_device()
+    model.eval()
+    criterion = nn.CrossEntropyLoss().to(device)
+    data_loader = DataLoader(dataset, batch_size=len(dataset), shuffle=False)
+    inputs, targets = next(iter(data_loader))
+    inputs, targets = inputs.to(device), targets.to(device)
+    outputs = model(inputs)
+    validation_loss = criterion(outputs, targets)
+
+    # first gradient
+    params = [p for p in model.parameters() if p.requires_grad]
+    grad_params = torch.autograd.grad(validation_loss, params, create_graph=True, retain_graph=True)
+    
+    # flatten grad_params and v_list
+    grad_params_flat = torch.cat([g.contiguous().view(-1) for g in grad_params])
+    v_flat = torch.cat([v.contiguous().view(-1) for v in v_list])
+    
+    # compute the dot product grad_params_flat * v_flat
+    grad_dot_v = torch.dot(grad_params_flat, v_flat)
+    
+    # second gradient
+    hvp = torch.autograd.grad(grad_dot_v, params, retain_graph=True)
+    
+    # return as a dict
+    hv_dict = {}
+    for (name, param), hv in zip(model.named_parameters(), hvp):
+        if param.requires_grad:
+            hv_dict[name] = hv.clone().detach()
+    return hv_dict
