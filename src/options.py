@@ -4,6 +4,8 @@ import argparse
 def args_parser():
     parser = argparse.ArgumentParser()
 
+    parser.add_argument('--processes', type=int, default=8, help="number of processes")
+
     # federated arguments
     parser.add_argument('--epochs', type=int, default=5, help="number of rounds of training")
     parser.add_argument('--num_users', type=int, default=5, help="number of users: K")
