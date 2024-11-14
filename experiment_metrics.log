@@ -148,3 +148,24 @@ MOBILENET STUFF:
 2024-11-14 12:24:14,334 INFO Bad Client Accuracy Hessian: 0.0
 2024-11-14 12:24:14,335 INFO Average Difference Between Banzhaf Values Simple And Hessian: 8.37750055907236
 2024-11-14 12:24:14,336 INFO Total Run Time: 7182.150530576706
+
+
+2024-11-14 13:30:40,585 INFO Number Of Clients: 5, Client Selection Fraction: 0.6, Local Epochs: 3, Batch Size: 256
+2024-11-14 13:30:40,585 INFO Dataset: cifar, Setting: IID, Number Of Rounds: 5
+2024-11-14 13:30:40,586 INFO Test Accuracy Of Global Model: 41.349999999999994%
+2024-11-14 13:30:40,586 INFO Shapley Values: [11.009800825516383, 12.1204866707325, 12.87049713134766, 13.190137737989431, 12.832213058074318]
+2024-11-14 13:30:40,586 INFO Banzhaf Values: [1.9342281632125378, 1.8934939317405224, 2.3709380961954594, 2.5275645963847637, 2.3103569261729717]
+2024-11-14 13:30:40,587 INFO Approximate Banzhaf Values Simple: [-0.08005866827443242, -0.016498841578140855, -0.05849418230354786, -0.09924672939814627, -0.03531101252883673]
+2024-11-14 13:30:40,587 INFO Approximate Banzhaf Values Hessian: [0.2650032243691385, -0.16478648432530463, 0.06989829987287521, -1.2124490106943995, -0.10008517652750015]
+2024-11-14 13:30:40,589 INFO Pearson Correlation Between Shapley And Banzhaf Values: PearsonRResult(statistic=0.862642202627364, pvalue=0.059835254279541304)
+2024-11-14 13:30:40,592 INFO Pearson Correlation Between Shapley And Approximate Banzhaf Values Simple: PearsonRResult(statistic=-0.03406079200565791, pvalue=0.9566408395399274)
+2024-11-14 13:30:40,595 INFO Pearson Correlation Between Shapley And Approximate Banzhaf Values Hessian: PearsonRResult(statistic=-0.6410433362710388, pvalue=0.24378442570550896)
+2024-11-14 13:30:40,598 INFO Pearson Correlation Between Banzhaf And Approximate Banzhaf Values Simple: PearsonRResult(statistic=-0.48235932540835036, pvalue=0.4105664481539605)
+2024-11-14 13:30:40,600 INFO Pearson Correlation Between Banzhaf And Approximate Banzhaf Values Hessian: PearsonRResult(statistic=-0.6341410293642231, pvalue=0.2505546583671641)
+2024-11-14 13:30:40,601 INFO Bad Client Accuracy Simple: 0.0
+2024-11-14 13:30:40,602 INFO Bad Client Accuracy Hessian: 0.0
+2024-11-14 13:30:40,608 INFO Average Difference Between Banzhaf Values Simple And Hessian: 0.3599436925724149
+2024-11-14 13:30:40,609 INFO Total Run Time: 494.58078598976135
+
+
+HYBRID STUFF:
