@@ -6,7 +6,7 @@ def args_parser():
 
     # federated arguments
     parser.add_argument('--epochs', type=int, default=1, help="number of rounds of training")
-    parser.add_argument('--num_users', type=int, default=50, help="number of users: K")
+    parser.add_argument('--num_users', type=int, default=2, help="number of users: K")
     parser.add_argument('--frac', type=float, default=0.6, help='the fraction of clients: C')
     parser.add_argument('--local_ep', type=int, default=1, help="the number of local epochs: E")
     parser.add_argument('--local_bs', type=int, default=128, help="local batch size: B") # maybe change this - since banzhaf is gradient based  - go like 1024?

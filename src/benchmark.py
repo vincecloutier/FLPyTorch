@@ -9,6 +9,7 @@ from tqdm import tqdm
 from options import args_parser
 from update import LocalUpdate, test_inference, test_gradient
 from models import CNNMnist, CNNFashion_Mnist, CNNCifar, ResNet9, MobileNetV2
+from estimation import compute_bv_simple
 from utils import get_dataset, average_weights, exp_details, setup_logger, get_device, identify_bad_idxs, measure_accuracy
 import multiprocessing
 from scipy.stats import pearsonr
@@ -42,6 +43,7 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
         model.train()
         if isBanzhaf:
             gradient = test_gradient(args, model, test_dataset)
+            delta_t = defaultdict(dict)
 
         m = max(int(args.frac * len(clients)), 1)
         idxs_users = np.random.choice(clients, m, replace=False)
@@ -54,11 +56,11 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
 
             # compute banzhaf value estimate
             if isBanzhaf:
-                delta_weights = {key: (w[key] - global_weights[key]).to(device) for key in w.keys()}
-                # b_value = sum((torch.dot(gradient[key].flatten(), delta_weights[key].flatten()) for key in gradient.keys()))
-                b_value = sum((gradient[key] * delta_weights[key]).sum() for key in gradient.keys())
-                approx_banzhaf_values[idx] -= b_value.item() / args.num_users
+                delta_t[epoch][idx] = {key: (global_weights[key] - w[key]).to(device) for key in w.keys()}
 
+        if isBanzhaf:
+            for idx in idxs_users:
+                approx_banzhaf_values[idx] += compute_bv_simple(args, gradient, delta_t[epoch][idx])
 
         # update global weights and model
         global_weights = average_weights(local_weights)
