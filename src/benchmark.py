@@ -32,7 +32,7 @@ def initialize_model(args):
 
 def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, user_groups, device, clients=None, isBanzhaf=False):
     if clients is None or len(clients) == 0:
-        return model, defaultdict(float)
+        return model, defaultdict(float), defaultdict(float)
     global_weights = model.state_dict()
     best_test_acc, best_test_loss = 0, float('inf')
     approx_banzhaf_values_hessian = defaultdict(float)
