@@ -91,7 +91,7 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
     return model, approx_banzhaf_values_simple, approx_banzhaf_values_hessian
 
 
-def train_subset(subset, args, train_dataset, test_dataset, user_groups):
+def train_subset(subset, args, train_dataset, valid_dataset, test_dataset, user_groups):
     device = get_device()
     global_model = initialize_model(args)
     global_model.to(device)
@@ -99,7 +99,7 @@ def train_subset(subset, args, train_dataset, test_dataset, user_groups):
 
     subset_key = tuple(sorted(subset))
     print(f"Training Model For Subset {subset_key}")
-    model, _ = train_global_model(args, global_model, train_dataset, test_dataset, user_groups, device, subset)
+    model, _ = train_global_model(args, global_model, train_dataset, valid_dataset, test_dataset, user_groups, device, subset)
     accuracy, loss = test_inference(model, test_dataset)
     torch.cuda.empty_cache()
     return (subset_key, loss)
