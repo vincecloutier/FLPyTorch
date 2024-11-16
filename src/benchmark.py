@@ -183,6 +183,7 @@ if __name__ == '__main__':
     logger.info(f'Pearson Correlation Between Shapley And Approximate Banzhaf Values Hessian: {pearsonr(shapley_values, approx_banzhaf_values_hessian)}')
     logger.info(f'Pearson Correlation Between Banzhaf And Approximate Banzhaf Values Simple: {pearsonr(banzhaf_values, approx_banzhaf_values_simple)}')
     logger.info(f'Pearson Correlation Between Banzhaf And Approximate Banzhaf Values Hessian: {pearsonr(banzhaf_values, approx_banzhaf_values_hessian)}')
+    logger.info(f'Actual Bad Clients: {actual_bad_clients}')
     logger.info(f'Bad Client Accuracy Simple: {bad_client_accuracy_simple}')
     logger.info(f'Bad Client Accuracy Hessian: {bad_client_accuracy_hvp}')
     logger.info(f'Average Difference Between Banzhaf Values Simple And Hessian: {np.mean(np.abs(np.array(approx_banzhaf_values_simple) - np.array(approx_banzhaf_values_hessian)))}')
