@@ -128,39 +128,3 @@ MOBILENET STUFF:
 2024-11-13 15:28:13,025 INFO Spearman Correlation Between Shapley And Banzhaf Values: SignificanceResult(statistic=0.49999999999999994, pvalue=0.39100221895577053)
 2024-11-13 15:28:13,027 INFO Pearson Correlation Between Shapley And Approximate Banzhaf Values: PearsonRResult(statistic=-0.6295525562227242, pvalue=0.2550829171924289)
 2024-11-13 15:28:13,028 INFO Spearman Correlation Between Shapley And Approximate Banzhaf Values: SignificanceResult(statistic=-0.8999999999999998, pvalue=0.03738607346849874)
-
-2024-11-14 17:08:10,789 INFO Number Of Clients: 2, Client Selection Fraction: 0.6, Local Epochs: 1
-2024-11-14 17:08:10,789 INFO Batch Size: 256, Learning Rate: 0.01, Momentum: 0.9
-2024-11-14 17:08:10,789 INFO Convergence Round: 1, Retraining Convergence Round: 1, Number Of Rounds: 1
-2024-11-14 17:08:10,789 INFO Dataset: mnist, Setting: 0 Bad Clients with 40.0% Mislabeled Samples Per Bad Client
-2024-11-14 17:08:10,789 INFO Test Accuracy Before Retraining: 84.42%
-2024-11-14 17:08:10,789 INFO Test Accuracy After Retraining: 88.42%
-2024-11-14 17:08:10,789 INFO Bad Client Accuracy: 0.0
-2024-11-14 17:08:10,789 INFO Total Run Time: 12.446983814239502
-2024-11-14 17:20:13,236 INFO Number Of Clients: 2, Client Selection Fraction: 0.6, Local Epochs: 1
-2024-11-14 17:20:13,236 INFO Batch Size: 256, Learning Rate: 0.01, Momentum: 0.9
-2024-11-14 17:20:13,236 INFO Convergence Round: 1, Retraining Convergence Round: 1, Number Of Rounds: 1
-2024-11-14 17:20:13,236 INFO Dataset: mnist, Setting: 0 Bad Clients with 4 Categories Per Bad Client
-2024-11-14 17:20:13,236 INFO Test Accuracy Before Retraining: 87.0%
-2024-11-14 17:20:13,236 INFO Test Accuracy After Retraining: 87.52%
-2024-11-14 17:20:13,236 INFO Bad Client Accuracy: 0.0
-2024-11-14 17:20:13,236 INFO Total Run Time: 12.439544916152954
-2024-11-14 17:22:45,048 INFO Number Of Clients: 2, Client Selection Fraction: 0.6, Local Epochs: 1
-2024-11-14 17:22:45,048 INFO Batch Size: 256, Learning Rate: 0.01, Momentum: 0.9
-2024-11-14 17:22:45,048 INFO Convergence Round: 1, Retraining Convergence Round: 1, Number Of Rounds: 1
-2024-11-14 17:22:45,048 INFO Dataset: mnist, Setting: 0 Bad Clients with 40.0% Mislabeled Samples Per Bad Client
-2024-11-14 17:22:45,048 INFO Test Accuracy Before Retraining: 86.78%
-2024-11-14 17:22:45,048 INFO Test Accuracy After Retraining: 87.36%
-2024-11-14 17:22:45,048 INFO Bad Client Accuracy: 0.0
-2024-11-14 17:22:45,048 INFO Total Run Time: 12.323605060577393
-2024-11-14 17:24:05,779 INFO Number Of Clients: 2, Client Selection Fraction: 0.6, Local Epochs: 1
-2024-11-14 17:24:05,779 INFO Batch Size: 256, Learning Rate: 0.01, Momentum: 0.9
-2024-11-14 17:24:05,779 INFO Convergence Round: 1, Retraining Convergence Round: 1, Number Of Rounds: 1
-2024-11-14 17:25:38,618 INFO Number Of Clients: 2, Client Selection Fraction: 0.6, Local Epochs: 1
-2024-11-14 17:25:38,618 INFO Batch Size: 256, Learning Rate: 0.01, Momentum: 0.9
-2024-11-14 17:25:38,618 INFO Convergence Round: 1, Retraining Convergence Round: 1, Number Of Rounds: 1
-2024-11-14 17:25:38,618 INFO Dataset: mnist, Setting: 0 Bad Clients with 40.0% Noisy Samples Per Bad Client
-2024-11-14 17:25:38,618 INFO Test Accuracy Before Retraining: 86.44%
-2024-11-14 17:25:38,618 INFO Test Accuracy After Retraining: 87.82%
-2024-11-14 17:25:38,618 INFO Bad Client Accuracy: 0.0
-2024-11-14 17:25:38,618 INFO Total Run Time: 12.759579181671143

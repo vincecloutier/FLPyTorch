@@ -2,7 +2,7 @@ import copy
 import torch
 from torchvision import datasets, transforms
 from torch.utils.data import Dataset
-from sampling import iid, noniid, mislabeled
+from sampling import iid, noniid, mislabeled, noisy
 import logging
 import numpy as np
 from models import CNNFashion_Mnist, CNNCifar, ResNet9, MobileNetV2
@@ -11,6 +11,7 @@ class SubsetSplit(Dataset):
     """An abstract Dataset class wrapped around Pytorch Dataset class."""
     def __init__(self, dataset, idxs):
         self.dataset = dataset
+        self.data = dataset.data
         self.idxs = [int(i) for i in idxs]
         self.targets = np.array(self.dataset.targets)[self.idxs]
 
@@ -114,7 +115,7 @@ def get_dataset(args):
     elif args.setting == 3:
         # TODO: add noisy setting
         iid_user_groups = iid(train_dataset, args.num_users)
-        user_groups, bad_clients = mislabeled(train_dataset, args.dataset, iid_user_groups, args.badclient_prop, args.noise_proportion, args.alpha)
+        user_groups, bad_clients = noisy(train_dataset, args.dataset, iid_user_groups, args.badclient_prop, args.noise_proportion, args.alpha)
         return train_dataset, valid_dataset, test_dataset, user_groups, bad_clients 
     else:
         raise ValueError("Invalid value for --setting. Please use 0, 1, 2, or 3.")
