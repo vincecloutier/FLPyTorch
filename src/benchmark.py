@@ -31,6 +31,9 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
         model.train()
         if isBanzhaf:
             gradient = test_gradient(args, model, valid_dataset)
+            # get the set of keys present in the gradient 
+            # this allows us to avoid buffer keys in delta_t
+            gradient_keys = set(gradient.keys())
 
         m = max(int(args.frac * len(clients)), 1)
         idxs_users = np.random.choice(clients, m, replace=False)
@@ -43,7 +46,7 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
 
             # compute banzhaf value estimate
             if isBanzhaf:
-                delta_t[epoch][idx] = {key: (global_weights[key] - w[key]).to(device) for key in w.keys()}
+                delta_t[epoch][idx] = {key: (global_weights[key] - w[key]).to(device) for key in w.keys() if key in gradient_keys}
 
         if isBanzhaf:
             G_t = compute_G_t(delta_t[epoch], global_weights.keys())
