@@ -67,13 +67,9 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
             no_improvement_count = 0
         else:
             no_improvement_count += 1
-            if no_improvement_count > 5:
-                print(f'Convergence Reached At Round {epoch + 1}')
+            if no_improvement_count > 3:
                 break
-        print(f'Best Test Accuracy: {best_test_acc}, Best Test Loss: {best_test_loss}')
 
-    # clients_str = "_".join(str(client) for client in clients)
-    # torch.save(model.state_dict(), f"{clients_str}_epoch_{epoch + 1}_{args.dataset}_{args.setting}.pth")
     return model, approx_banzhaf_values_simple, approx_banzhaf_values_hessian
 
 
