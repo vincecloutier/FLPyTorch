@@ -25,8 +25,7 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
         delta_t = defaultdict(dict)
         delta_g = defaultdict(lambda: {key: torch.zeros_like(global_weights[key]) for key in global_weights.keys()})
 
-    n = 2*args.epochs if isBanzhaf else args.epochs
-    for epoch in tqdm(range(n), desc=f"Global Training For Subset {clients}"):
+    for epoch in tqdm(range(args.epochs), desc=f"Global Training For Subset {clients}"):
         local_weights, local_losses = [], []
 
         model.train()
