@@ -48,27 +48,25 @@ def noniid(dataset, dataset_name, num_users, badclient_prop, num_cat):
     shards_per_client = shard_id // num_users
     iid_clients = np.random.choice(range(num_users), num_iid_clients, replace=False)
     non_iid_clients = [i for i in range(num_users) if i not in iid_clients]
-    
+
     if shard_id < num_users * shards_per_client:
         raise ValueError("Not enough shards to assign to all clients")
 
     # assign shards to iid clients
     assigned_shard_ids = set()
     for i in iid_clients:
-        client_shard_ids = all_shard_ids[i * shards_per_client: (i + 1) * shards_per_client]
+        client_shard_ids = all_shard_ids[:shards_per_client]
+        all_shard_ids = all_shard_ids[shards_per_client:]
         dict_users[i] = np.concatenate([shard_id_to_indices[sid] for sid in client_shard_ids])
         assigned_shard_ids.update(client_shard_ids)
 
-    # assign shards to non iid clients
+    # assign shards to non-IID clients
     for i in non_iid_clients:
         # select k random categories
         categories = np.random.choice(num_classes, num_cat, replace=False)
         available_shards = []
         for c in categories:
             available_shards.extend([sid for sid in shards_per_category[c] if sid not in assigned_shard_ids])
-
-        if len(available_shards) < shards_per_client:
-            raise ValueError(f"Not enough shards available for client {i} in selected categories.")
 
         np.random.shuffle(available_shards)
         client_shard_ids = available_shards[:shards_per_client]
