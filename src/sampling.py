@@ -1,5 +1,4 @@
 import numpy as np
-from collections import defaultdict
 
 def iid(dataset, num_users):
     """Sample iid client data."""
@@ -10,35 +9,12 @@ def iid(dataset, num_users):
         all_idxs = list(set(all_idxs) - dict_users[i])
     return dict_users
 
-# def noniid(dataset, dataset_name, num_users):
-#     """Sample non-iid client data."""
-#     if dataset_name == 'mnist' or dataset_name == 'fmnist':
-#         num_shards, num_imgs = 600, 100
-#     elif dataset_name == 'cifar' or dataset_name == 'resnet':
-#         num_shards, num_imgs = 200, 250
-#     idx_shard = [i for i in range(num_shards)]
-#     dict_users = {i: np.array([]) for i in range(num_users)}
-#     idxs = np.arange(num_shards*num_imgs)
-#     labels = dataset.train_labels.numpy()
-
-#     # sort labels
-#     idxs_labels = np.vstack((idxs, labels))
-#     idxs_labels = idxs_labels[:, idxs_labels[1, :].argsort()]
-#     idxs = idxs_labels[0, :]
-
-#     # divide and assign 2 shards/client
-#     for i in range(num_users):
-#         rand_set = set(np.random.choice(idx_shard, 2, replace=False))
-#         idx_shard = list(set(idx_shard) - rand_set)
-#         for rand in rand_set:
-#             dict_users[i] = np.concatenate((dict_users[i], idxs[rand*num_imgs:(rand+1)*num_imgs]), axis=0)
-#     return dict_users
 
 def noniid(dataset, dataset_name, num_users, badclient_prop, num_cat):
     """Sample non-IID client data with specified number of categories per client and percentage of non-IID clients."""
-    if dataset_name in ['fmnist']:
+    if dataset_name == 'fmnist':
         shard_size = 100
-    elif dataset_name in ['cifar', 'resnet', 'mobilenet']:
+    else:
         shard_size = 250
 
     idxs = np.arange(len(dataset.targets))
@@ -118,10 +94,10 @@ def mislabeled(dataset, dataset_name, dict_users, badclient_prop, mislabel_prop)
     dataset.targets = labels
     return dict_users, clients_to_mislabel
 
+
 def noisy(dataset, dataset_name, dict_users, badclient_prop, noise_prop, alpha):
     """Randomly select a proportion of clients and add noise to a proportion of their samples."""
     labels = dataset.targets.copy()
-
     clients_to_noisy = np.random.choice(range(len(dict_users)), int(badclient_prop * len(dict_users)), replace=False)
     for client_id in clients_to_noisy:
         client_indices = np.array(list(dict_users[client_id]), dtype=int)
@@ -129,15 +105,11 @@ def noisy(dataset, dataset_name, dict_users, badclient_prop, noise_prop, alpha):
         indices_of_target_class = np.where(labels[client_indices] == 2)[0]
         for idx in indices_of_base_class:
             target_idx = np.random.choice(indices_of_target_class)
-
             base_image = dataset.data[idx]
             target_image = dataset.data[target_idx]
-
             noisy_image = alpha * base_image + (1 - alpha) * target_image
             noisy_image = noisy_image.astype(dataset.data.dtype)
-
             dataset.data[idx] = noisy_image
             labels[idx] = labels[target_idx]
-
     dataset.targets = labels
     return dict_users, clients_to_noisy
