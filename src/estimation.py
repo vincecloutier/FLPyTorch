@@ -29,7 +29,7 @@ def compute_bv_hvp(args, model, train_dataset, gradient, delta_t_i, accumulated_
     hessian_term = compute_hessian(model, train_dataset, accumulated_Delta_G_i_list)
 
     # multiply by alpha
-    # hessian_term = {name: alpha * hvp_dict[name] for name in hvp_dict}
+    # hessian_term = {name: args.alpha * hvp_dict[name] for name in hvp_dict}
 
     # compute total_term = delta_term + hessian_term
     total_term = {}
