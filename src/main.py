@@ -117,7 +117,7 @@ if __name__ == '__main__':
     elif args.setting == 2:
         setting_str = f"{len(actual_bad_clients)} Bad Clients" + f" with {100*args.mislabel_proportion}% Mislabeled Samples Per Bad Client"
     elif args.setting == 3:
-        setting_str = f"{len(actual_bad_clients)} Bad Clients" + f" with {100*args.noise_proportion}% Noisy Samples Per Bad Client"
+        setting_str = f"{len(actual_bad_clients)} Bad Clients" + f" with {100*args.alpha}% Alpha For The Noisy Samples"
     logger.info(f'Number Of Clients: {args.num_users}, Client Selection Fraction: {args.frac}, Local Epochs: {args.local_ep}')
     logger.info(f'Batch Size: {args.local_bs}, Learning Rate: {args.lr}, Momentum: {args.momentum}')
     logger.info(f'Convergence Round: {convergence_round}, Retraining Convergence Round: {second_convergence_round}, Number Of Rounds: {args.epochs}')
