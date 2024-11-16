@@ -36,21 +36,20 @@ def iid(dataset, num_users):
 
 def noniid(dataset, dataset_name, num_users, badclient_prop, num_cat):
     """Sample non-IID client data with specified number of categories per client and percentage of non-IID clients."""
-    if dataset_name in ['mnist', 'fmnist']:
+    if dataset_name in ['fmnist']:
         shard_size = 100
-    elif dataset_name in ['cifar', 'resnet']:
+    elif dataset_name in ['cifar', 'resnet', 'mobilenet']:
         shard_size = 250
 
-    labels = dataset.train_labels.numpy()
-    idxs = np.arange(len(labels))
-    num_classes = len(np.unique(labels))
+    idxs = np.arange(len(dataset.targets))
+    num_classes = len(np.unique(dataset.targets))
 
     # create shards per category
     shards_per_category = {}
     shard_id_to_indices = {}
     shard_id = 0
     for c in range(num_classes):
-        idxs_c = idxs[labels == c]
+        idxs_c = idxs[dataset.targets == c]
         np.random.shuffle(idxs_c)
         num_shards_c = len(idxs_c) // shard_size
         shards_c = []
@@ -105,19 +104,13 @@ def noniid(dataset, dataset_name, num_users, badclient_prop, num_cat):
 
 def mislabeled(dataset, dataset_name, dict_users, badclient_prop, mislabel_prop):
     """Randomly select a proportion of clients and mislabel a proportion of their samples."""
-    if dataset_name in ['mnist', 'fmnist']:
-        labels = dataset.targets.clone()
-    elif dataset_name in ['cifar', 'resnet', 'mobilenet']:
-        labels = dataset.targets
+    labels = dataset.targets.copy()
     clients_to_mislabel = np.random.choice(range(len(dict_users)), int(badclient_prop * len(dict_users)), replace=False)
     for client_id in clients_to_mislabel:
         client_indices = np.array(list(dict_users[client_id]), dtype=int)
         indices_to_mislabel = np.random.choice(client_indices, int(mislabel_prop * len(client_indices)), replace=False)
         for idx in indices_to_mislabel:
-            if dataset_name in ['mnist', 'fmnist']:
-                correct_label = labels[idx].item()
-            elif dataset_name in ['cifar', 'resnet', 'mobilenet']:
-                correct_label = labels[idx]
+            correct_label = labels[idx]
             incorrect_labels = list(range(10))
             incorrect_labels.remove(correct_label)
             new_label = np.random.choice(incorrect_labels)

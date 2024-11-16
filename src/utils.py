@@ -1,10 +1,25 @@
 import copy
 import torch
 from torchvision import datasets, transforms
+from torch.utils.data import Dataset
 from sampling import iid, noniid, mislabeled
 import logging
 import numpy as np
 from models import CNNFashion_Mnist, CNNCifar, ResNet9, MobileNetV2
+
+class SubsetSplit(Dataset):
+    """An abstract Dataset class wrapped around Pytorch Dataset class."""
+    def __init__(self, dataset, idxs):
+        self.dataset = dataset
+        self.idxs = [int(i) for i in idxs]
+        self.targets = np.array(self.dataset.targets)[self.idxs]
+
+    def __len__(self):
+        return len(self.idxs)
+
+    def __getitem__(self, item):
+        image, label = self.dataset[self.idxs[item]]
+        return image, torch.tensor(label, dtype=torch.long)
 
 def get_dataset(args):
     """ Returns train, validation, and test datasets along with a user group,
@@ -36,8 +51,8 @@ def get_dataset(args):
         train_idx, valid_idx = indices[split:], indices[:split]
 
         # create train and validation datasets
-        train_dataset = torch.utils.data.Subset(full_train_dataset, train_idx)
-        valid_dataset = torch.utils.data.Subset(full_train_dataset, valid_idx)
+        train_dataset = SubsetSplit(full_train_dataset, train_idx)
+        valid_dataset = SubsetSplit(full_train_dataset, valid_idx)
 
         # load the test dataset
         test_dataset = datasets.CIFAR10(data_dir, train=False, download=True, transform=transform_test)
@@ -56,19 +71,33 @@ def get_dataset(args):
         train_idx, valid_idx = indices[split:], indices[:split]
 
         # create train and validation datasets
-        train_dataset = torch.utils.data.Subset(full_train_dataset, train_idx)
-        valid_dataset = torch.utils.data.Subset(full_train_dataset, valid_idx)
+        train_dataset = SubsetSplit(full_train_dataset, train_idx)
+        valid_dataset = SubsetSplit(full_train_dataset, valid_idx)
 
         # load the test dataset
         test_dataset = datasets.FashionMNIST(data_dir, train=False, download=True, transform=apply_transform)
     else:
         data_dir = './data/imagenet/'
-        transform_train = transforms.Compose([
-            transforms.RandomResizedCrop(224),
-            transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        ])
+        # transform_train = transforms.Compose([
+        #     transforms.RandomResizedCrop(224),
+        #     transforms.RandomHorizontalFlip(),
+        #     transforms.ToTensor(),
+        #     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        # ])
+        # full_train_dataset = datasets.ImageNet(data_dir, train=True, download=True, transform=transform_train)
+
+        # # allocate 10% of the training set as validation set
+        # num_train = len(full_train_dataset)
+        # split = int(np.floor(0.1 * num_train))
+        # indices = list(range(num_train))
+        # np.random.shuffle(indices)
+        # train_idx, valid_idx = indices[split:], indices[:split]
+
+        # train_dataset = SubsetSplit(full_train_dataset, train_idx)
+        # valid_dataset = SubsetSplit(full_train_dataset, valid_idx)
+
+        # # load the test dataset
+        # test_dataset = datasets.ImageNet(data_dir, train=False, download=True, transform=transform_test)
 
 
     # handle different settings
