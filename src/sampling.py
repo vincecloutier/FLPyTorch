@@ -49,9 +49,6 @@ def noniid(dataset, dataset_name, num_users, badclient_prop, num_cat):
     iid_clients = np.random.choice(range(num_users), num_iid_clients, replace=False)
     non_iid_clients = [i for i in range(num_users) if i not in iid_clients]
 
-    if shard_id < num_users * shards_per_client:
-        raise ValueError("Not enough shards to assign to all clients")
-
     # assign shards to iid clients
     assigned_shard_ids = set()
     for i in iid_clients:
