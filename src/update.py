@@ -4,7 +4,7 @@ from torch.utils.data import DataLoader, Dataset
 from utils import get_device
 
 
-class DatasetSplit(Dataset):
+class ClientSplit(Dataset):
     """An abstract Dataset class wrapped around Pytorch Dataset class."""
     def __init__(self, dataset, idxs):
         self.dataset = dataset
@@ -21,7 +21,7 @@ class DatasetSplit(Dataset):
 class LocalUpdate(object):
     def __init__(self, args, dataset, idxs):
         self.args = args
-        self.trainloader = DataLoader(DatasetSplit(dataset, idxs), batch_size=self.args.local_bs, shuffle=True)
+        self.trainloader = DataLoader(ClientSplit(dataset, idxs), batch_size=self.args.local_bs, shuffle=True)
         self.device = get_device()
         self.criterion = nn.CrossEntropyLoss().to(self.device)
 
