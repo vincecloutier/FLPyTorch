@@ -17,6 +17,7 @@ class DatasetSplit(Dataset):
         image, label = self.dataset[self.idxs[item]]
         return image, torch.tensor(label, dtype=torch.long)
 
+
 class LocalUpdate(object):
     def __init__(self, args, dataset, idxs):
         self.args = args
@@ -84,6 +85,7 @@ def test_inference(model, test_dataset):
     accuracy = correct/total
     return accuracy, loss
 
+
 # def test_gradient(model, test_dataset):
 #     """Returns the average gradient of the loss with respect to the model parameters on the test dataset."""
     
@@ -119,6 +121,7 @@ def test_inference(model, test_dataset):
 #         gradients[key] = gradients[key].detach().to(device)
 
 #     return gradients
+
 
 def test_gradient(args, model, dataset):
     """Computes the gradient of the validation loss with respect to the model parameters."""
