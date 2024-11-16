@@ -126,6 +126,12 @@ if __name__ == '__main__':
     global_model, approx_banzhaf_values_simple, approx_banzhaf_values_hessian = train_global_model(args, global_model, train_dataset, valid_dataset, test_dataset, user_groups, device, clients=clients, isBanzhaf=True)
     test_acc, test_loss = test_inference(global_model, test_dataset)
 
+
+    identified_bad_clients_simple = identify_bad_idxs(approx_banzhaf_values_simple)
+    identified_bad_clients_hessian = identify_bad_idxs(approx_banzhaf_values_hessian)
+    bad_client_accuracy_simple = measure_accuracy(actual_bad_clients, identified_bad_clients_simple)
+    bad_client_accuracy_hessian = measure_accuracy(actual_bad_clients, identified_bad_clients_hessian)
+
     print(shapley_values)
     print(banzhaf_values)
     print(approx_banzhaf_values_simple)
@@ -137,6 +143,7 @@ if __name__ == '__main__':
     banzhaf_values = [banzhaf_values[client] for client in shared_clients]
     approx_banzhaf_values_simple = [approx_banzhaf_values_simple[client] for client in shared_clients]
     approx_banzhaf_values_hessian = [approx_banzhaf_values_hessian[client] for client in shared_clients]
+
 
     # log results
     if args.setting == 0:
@@ -159,5 +166,10 @@ if __name__ == '__main__':
     logger.info(f'Pearson Correlation Between Shapley And Approximate Banzhaf Values Hessian: {pearsonr(shapley_values, approx_banzhaf_values_hessian)}')
     logger.info(f'Pearson Correlation Between Banzhaf And Approximate Banzhaf Values Simple: {pearsonr(banzhaf_values, approx_banzhaf_values_simple)}')
     logger.info(f'Pearson Correlation Between Banzhaf And Approximate Banzhaf Values Hessian: {pearsonr(banzhaf_values, approx_banzhaf_values_hessian)}')
+    logger.info(f'Actual Bad Clients: {actual_bad_clients}')
+    logger.info(f'Identified Bad Clients Simple: {identified_bad_clients_simple}')
+    logger.info(f'Identified Bad Clients Hessian: {identified_bad_clients_hessian}')
+    logger.info(f'Bad Client Accuracy Simple: {bad_client_accuracy_simple}')
+    logger.info(f'Bad Client Accuracy Hessian: {bad_client_accuracy_hessian}')
     logger.info(f'Average Difference Between Banzhaf Values Simple And Hessian: {np.mean(np.abs(np.array(approx_banzhaf_values_simple) - np.array(approx_banzhaf_values_hessian)))}')
     logger.info(f'Total Run Time: {time.time()-start_time}')
