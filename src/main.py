@@ -6,22 +6,9 @@ from tqdm import tqdm
 from collections import defaultdict
 from options import args_parser
 from update import LocalUpdate, test_inference, test_gradient
-from models import CNNMnist, CNNFashion_Mnist, CNNCifar, ResNet9, MobileNetV2
-from utils import get_dataset, average_weights, setup_logger, get_device, identify_bad_idxs, measure_accuracy
+from utils import get_dataset, average_weights, setup_logger, get_device, identify_bad_idxs, measure_accuracy, initialize_model
 from estimation import compute_bv_hvp, compute_bv_simple, compute_G_t, compute_G_minus_i_t
 
-def initialize_model(args):
-    model_dict = {
-        'mnist': CNNMnist,
-        'fmnist': CNNFashion_Mnist,
-        'cifar': CNNCifar,
-        'resnet': ResNet9,
-        'mobilenet': MobileNetV2
-    }
-    if args.dataset in model_dict:
-        return model_dict[args.dataset](args=args)
-    else:
-        exit('Error: unrecognized dataset')
 
 def train_global_model(args, model, train_dataset, test_dataset, user_groups, device, bad_clients=None):
     global_weights = model.state_dict()
