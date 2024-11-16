@@ -162,23 +162,24 @@ def get_device():
         return torch.device('cpu')
 
 
-def identify_bad_idxs(approx_banzhaf_values: dict, threshold: float = 1.5) -> list[int]:
+def identify_bad_idxs(approx_banzhaf_values: dict, threshold: float = 2) -> list[int]:
     if not approx_banzhaf_values:
         return []
     banzhaf_tensor = torch.tensor(list(approx_banzhaf_values.values()))
     median_banzhaf = torch.median(banzhaf_tensor)    
-    bad_idxs = [key for key, banzhaf in approx_banzhaf_values.items() if banzhaf < median_banzhaf / threshold]
+    bad_idxs = [key for key, banzhaf in approx_banzhaf_values.items() if banzhaf > median_banzhaf / threshold]
     return bad_idxs
 
 
 def measure_accuracy(targets, predictions):
     if targets is None or predictions is None:
         return 0.0
-    if len(targets) == 0 or len(predictions) == 0:
-        return 0.0
+    if len(targets) == 0 and len(predictions) == 0:
+        return 1.0
     targets, predictions = set(targets), set(predictions)
     TP = len(predictions & targets)
     FP = len(predictions - targets)
     FN = len(targets - predictions)
-    TN = len(targets) - (TP + FP + FN)
-    return (TP + TN) / len(targets)
+    universe = targets | predictions
+    TN = len(universe - (targets | predictions))
+    return (TP + TN) / (TP + TN + FP + FN)
