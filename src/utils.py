@@ -45,38 +45,27 @@ def get_dataset(args):
         full_train_dataset = datasets.CIFAR10(data_dir, train=True, download=True, transform=transform_train)
 
         # allocate 10% of the training set as validation set
-        num_train = len(full_train_dataset)
-        split = int(np.floor(0.1 * num_train))
-        indices = list(range(num_train))
-        np.random.shuffle(indices)
-        train_idx, valid_idx = indices[split:], indices[:split]
-
-        # create train and validation datasets
-        train_dataset = SubsetSplit(full_train_dataset, train_idx)
-        valid_dataset = SubsetSplit(full_train_dataset, valid_idx)
+        train_dataset, valid_dataset = train_val_split(full_train_dataset, 0.1)
 
         # load the test dataset
         test_dataset = datasets.CIFAR10(data_dir, train=False, download=True, transform=transform_test)
     elif args.dataset == 'fmnist':
         data_dir = './data/fmnist/'
-        apply_transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
+        transform = transforms.Compose([
+            transforms.RandomHorizontalFlip(), 
+            transforms.RandomRotation(10),     
+            transforms.ToTensor(),             
+            transforms.Normalize((0.5,), (0.5,))  
+        ])
 
         # load the full training dataset
-        full_train_dataset = datasets.FashionMNIST(data_dir, train=True, download=True, transform=apply_transform)
-
-        # allocate 10% of the training set as validation set
-        num_train = len(full_train_dataset)
-        split = int(np.floor(0.1 * num_train))
-        indices = list(range(num_train))
-        np.random.shuffle(indices)
-        train_idx, valid_idx = indices[split:], indices[:split]
+        full_train_dataset = datasets.FashionMNIST(data_dir, train=True, download=True, transform=transform)
 
         # create train and validation datasets
-        train_dataset = SubsetSplit(full_train_dataset, train_idx)
-        valid_dataset = SubsetSplit(full_train_dataset, valid_idx)
+        train_dataset, valid_dataset = train_val_split(full_train_dataset, 0.1)
 
         # load the test dataset
-        test_dataset = datasets.FashionMNIST(data_dir, train=False, download=True, transform=apply_transform)
+        test_dataset = datasets.FashionMNIST(data_dir, train=False, download=True, transform=transform)
     else:
         data_dir = './data/imagenet/'
         # transform_train = transforms.Compose([
@@ -88,14 +77,7 @@ def get_dataset(args):
         # full_train_dataset = datasets.ImageNet(data_dir, train=True, download=True, transform=transform_train)
 
         # # allocate 10% of the training set as validation set
-        # num_train = len(full_train_dataset)
-        # split = int(np.floor(0.1 * num_train))
-        # indices = list(range(num_train))
-        # np.random.shuffle(indices)
-        # train_idx, valid_idx = indices[split:], indices[:split]
-
-        # train_dataset = SubsetSplit(full_train_dataset, train_idx)
-        # valid_dataset = SubsetSplit(full_train_dataset, valid_idx)
+        # train_dataset, valid_dataset = train_val_split(full_train_dataset, 0.1)
 
         # # load the test dataset
         # test_dataset = datasets.ImageNet(data_dir, train=False, download=True, transform=transform_test)
@@ -118,6 +100,15 @@ def get_dataset(args):
         return train_dataset, valid_dataset, test_dataset, user_groups, bad_clients 
     else:
         raise ValueError("Invalid value for --setting. Please use 0, 1, 2, or 3.")
+
+
+def train_val_split(full_train_dataset, val_prop):
+    num_train = len(full_train_dataset)
+    split = int(np.floor(val_prop * num_train))
+    indices = list(range(num_train))
+    np.random.shuffle(indices)
+    train_idx, valid_idx = indices[split:], indices[:split]
+    return SubsetSplit(full_train_dataset, train_idx), SubsetSplit(full_train_dataset, valid_idx)
 
 
 def average_weights(w):
