@@ -134,16 +134,17 @@ if __name__ == '__main__':
     predicted_bad_client_hvp = identify_bad_idxs(approx_banzhaf_values_hessian)
     bad_client_accuracy_hvp = measure_accuracy(actual_bad_clients, predicted_bad_client_hvp)
 
+    print(shapley_values)
+    print(banzhaf_values)
+    print(approx_banzhaf_values_simple)
+    print(approx_banzhaf_values_hessian)
+
     # remove any clients that are not in approx_banzhaf_values and are not in shapley_values and banzhaf_values 
     shared_clients = set(shapley_values.keys()) & set(banzhaf_values.keys()) & set(approx_banzhaf_values_simple.keys())
     shapley_values = [shapley_values[client] for client in shared_clients]
     banzhaf_values = [banzhaf_values[client] for client in shared_clients]
     approx_banzhaf_values_simple = [approx_banzhaf_values_simple[client] for client in shared_clients]
     approx_banzhaf_values_hessian = [approx_banzhaf_values_hessian[client] for client in shared_clients]
-    print(shapley_values)
-    print(banzhaf_values)
-    print(approx_banzhaf_values_simple)
-    print(approx_banzhaf_values_hessian)
 
     # log results
     if args.setting == 0:
