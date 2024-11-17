@@ -31,9 +31,6 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
         model.train()
         if isBanzhaf:
             gradient = test_gradient(args, model, valid_dataset)
-            # get the set of keys present in the gradient 
-            # this allows us to avoid buffer keys in delta_t
-            gradient_keys = set(gradient.keys())
 
         m = max(int(args.frac * len(clients)), 1)
         idxs_users = np.random.choice(clients, m, replace=False)
@@ -46,14 +43,14 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
 
             # compute banzhaf value estimate
             if isBanzhaf:
-                delta_t[epoch][idx] = {key: (global_weights[key] - w[key]).to(device) for key in w.keys() if key in gradient_keys}
+                delta_t[epoch][idx] = {key: (global_weights[key] - w[key]).to(device) for key in w.keys()}
 
         if isBanzhaf:
-            G_t = compute_G_t(delta_t[epoch], gradient_keys)
+            G_t = compute_G_t(delta_t[epoch], global_weights.keys())
             for idx in idxs_users:
-                G_t_minus_i = compute_G_minus_i_t(delta_t[epoch], gradient_keys, idx)
+                G_t_minus_i = compute_G_minus_i_t(delta_t[epoch], global_weights.keys(), idx)
                 if epoch > 0:
-                    for key in gradient_keys:
+                    for key in global_weights.keys():
                         delta_g[idx][key] += G_t_minus_i[key] - G_t[key]
                 approx_banzhaf_values_hessian[idx] += compute_bv_hvp(args, model, test_dataset, gradient, delta_t[epoch][idx], delta_g[idx])
                 approx_banzhaf_values_simple[idx] += compute_bv_simple(args, gradient, delta_t[epoch][idx])
