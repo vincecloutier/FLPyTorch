@@ -9,8 +9,22 @@ from update import LocalUpdate, test_inference, test_gradient
 from utils import get_dataset, average_weights, setup_logger, get_device, identify_bad_idxs, measure_accuracy, initialize_model
 from estimation import compute_bv_hvp, compute_bv_simple, compute_G_t, compute_G_minus_i_t
 import warnings
-
+import multiprocessing
+from functools import partial
 warnings.filterwarnings("ignore", category=UserWarning)
+
+
+def train_client(args, idx, global_weights, train_dataset, user_groups, epoch, device):
+    model = initialize_model(args)
+    model.load_state_dict(global_weights)
+    model.to(device)
+    model.train()
+
+    local_model = LocalUpdate(args=args, dataset=train_dataset, idxs=user_groups[idx])
+    w, _ = local_model.update_weights(model=model, global_round=epoch)
+    delta = {key: (global_weights[key] - w[key]).to(device) for key in global_weights.keys()}
+    return idx, w, delta
+
 
 def train_global_model(args, model, train_dataset, test_dataset, user_groups, device, bad_clients=None):
     global_weights = model.state_dict()
@@ -40,6 +54,16 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
             w, _ = local_model.update_weights(model=copy.deepcopy(model), global_round=epoch)
             local_weights.append(copy.deepcopy(w))
             delta_t[epoch][idx] = {key: (global_weights[key] - w[key]).to(device) for key in w.keys()}
+
+        pool = multiprocessing.Pool(processes=args.processes)
+        train_client_partial = partial(
+            train_client, args=args, global_weights=copy.deepcopy(global_weights), train_dataset=train_dataset, user_groups=user_groups, epoch=epoch, device=device
+        )
+        results = pool.map(train_client_partial, idxs_users)
+
+        for idx, w, delta in results:
+            local_weights.append(copy.deepcopy(w))
+            delta_t[epoch][idx] = delta
 
         global_weights = average_weights(local_weights)
         model.load_state_dict(global_weights)
