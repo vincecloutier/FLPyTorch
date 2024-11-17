@@ -15,6 +15,10 @@ warnings.filterwarnings("ignore", category=UserWarning)
 
 
 def train_client(idx, args, global_weights, train_dataset, user_groups, epoch, device):
+    torch.cuda.set_device(device)
+
+    torch.backends.cudnn.init()
+
     model = initialize_model(args)
     model.load_state_dict(global_weights)
     model.to(device)
@@ -107,6 +111,11 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
 
 if __name__ == '__main__':
     multiprocessing.set_start_method('spawn')
+
+    if torch.cuda.is_available():
+        torch.backends.cudnn.benchmark = True
+        torch.backends.cudnn.enabled = True
+
     start_time = time.time()
     logger = setup_logger('experiment')
     args = args_parser()
