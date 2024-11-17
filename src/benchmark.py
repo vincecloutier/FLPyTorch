@@ -1,5 +1,5 @@
 import itertools
-import math
+from math import factorial as fact
 from collections import defaultdict
 import copy
 import time
@@ -80,7 +80,7 @@ def train_subset(subset, args, train_dataset, valid_dataset, test_dataset, user_
 
     subset_key = tuple(sorted(subset))
     print(f"Training Model For Subset {subset_key}")
-    if subset_key == (1, 2, 3, 4, 5):
+    if subset_key == (0, 1, 2, 3, 4):
         isBanzhaf = True
     else:
         isBanzhaf = False
@@ -101,7 +101,7 @@ if __name__ == '__main__':
     train_dataset, valid_dataset, test_dataset, user_groups, actual_bad_clients = get_dataset(args)
 
     shapley_values, banzhaf_values = defaultdict(float), defaultdict(float)
-    all_subsets = list(itertools.chain.from_iterable(itertools.combinations(range(args.num_users), r) for r in range(args.num_users + 1))).reverse()
+    all_subsets = list(itertools.chain.from_iterable(itertools.combinations(range(args.num_users), r) for r in range(args.num_users, -1, -1)))
 
     pool = multiprocessing.Pool(processes=args.processes)
     train_subset_partial = partial(train_subset, args=args, train_dataset=train_dataset, valid_dataset=valid_dataset, test_dataset=test_dataset, user_groups=user_groups)
@@ -117,9 +117,9 @@ if __name__ == '__main__':
             for subset in itertools.combinations([c for c in range(args.num_users) if c != client], r):
                 subset_key = tuple(sorted(subset))
                 subset_with_client_key = tuple(sorted(subset + (client,)))
-                marginal_contribution = results[subset_key][0] - results[subset_with_client_key][0]
-                shapley_values[client] += ((math.factorial(len(subset)) * math.factorial(args.num_users - len(subset) - 1)) / math.factorial(args.num_users)) * marginal_contribution
-                banzhaf_values[client] += marginal_contribution / len(all_subsets)
+                mc = results[subset_key][0] - results[subset_with_client_key][0]
+                shapley_values[client] += ((fact(len(subset)) * fact(args.num_users - len(subset) - 1)) / fact(args.num_users)) * mc
+                banzhaf_values[client] += mc / len(all_subsets)
 
     longest_client_key = max(results.keys(), key=len)
     test_acc, test_loss, abv_simple, abv_hessian = results[longest_client_key]
@@ -134,7 +134,7 @@ if __name__ == '__main__':
     print(abv_simple)
     print(abv_hessian)
 
-    # remove any clients that are not in approx_banzhaf_values and are not in shapley_values and banzhaf_values 
+    # remove any clients that are not in all metrics
     shared_clients = set(shapley_values.keys()) & set(banzhaf_values.keys()) & set(abv_simple.keys()) & set(abv_hessian.keys())
     sv = [shapley_values[client] for client in shared_clients]
     bv = [banzhaf_values[client] for client in shared_clients]
@@ -145,14 +145,14 @@ if __name__ == '__main__':
     if args.setting == 0:
         setting_str = "IID"
     elif args.setting == 1:
-        setting_str = f"{len(actual_bad_clients)} Bad Clients" + f" with {args.num_categories_per_client} Categories Per Bad Client"
+        setting_str = f"{len(actual_bad_clients)} Bad Clients with {args.num_categories_per_client} Categories Per Bad Client"
     elif args.setting == 2:
-        setting_str = f"{len(actual_bad_clients)} Bad Clients" + f" with {100*args.mislabel_proportion}% Mislabeled Samples Per Bad Client"
+        setting_str = f"{len(actual_bad_clients)} Bad Clients with {100 * args.mislabel_proportion}% Mislabeled Samples Per Bad Client"
     elif args.setting == 3:
-        setting_str = f"{len(actual_bad_clients)} Bad Clients" + f" with {100*args.alpha}% Alpha For The Noisy Samples"
+        setting_str = f"{len(actual_bad_clients)} Bad Clients with {100 * args.alpha}% Alpha For The Noisy Samples"
     logger.info(f'Number Of Clients: {args.num_users}, Client Selection Fraction: {args.frac}, Local Epochs: {args.local_ep}, Batch Size: {args.local_bs}')
     logger.info(f'Dataset: {args.dataset}, Setting: {setting_str}, Number Of Rounds: {args.epochs}')
-    logger.info(f'Test Accuracy Of Global Model: {100*test_acc}%')
+    logger.info(f'Test Accuracy Of Global Model: {100 * test_acc}%')
     logger.info(f'Shapley Values: {shapley_values}')
     logger.info(f'Banzhaf Values: {banzhaf_values}')
     logger.info(f'Approximate Banzhaf Values Simple: {abv_simple}')
@@ -167,4 +167,4 @@ if __name__ == '__main__':
     logger.info(f'Identified Bad Clients Hessian: {identified_bad_clients_hessian}')
     logger.info(f'Bad Client Accuracy Simple: {bad_client_accuracy_simple}')
     logger.info(f'Bad Client Accuracy Hessian: {bad_client_accuracy_hessian}')
-    logger.info(f'Total Run Time: {time.time()-start_time}')
+    logger.info(f'Total Run Time: {time.time() - start_time}')
