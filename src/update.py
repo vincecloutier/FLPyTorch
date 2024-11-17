@@ -21,7 +21,7 @@ class ClientSplit(Dataset):
 class LocalUpdate(object):
     def __init__(self, args, dataset, idxs):
         self.args = args
-        self.trainloader = DataLoader(ClientSplit(dataset, idxs), batch_size=self.args.local_bs, shuffle=True, num_workers=args.num_workers, pin_memory=True)
+        self.trainloader = DataLoader(ClientSplit(dataset, idxs), batch_size=self.args.local_bs, shuffle=True, pin_memory=True)
         self.device = get_device()
         self.criterion = nn.CrossEntropyLoss().to(self.device)
 

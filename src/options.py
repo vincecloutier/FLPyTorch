@@ -26,7 +26,6 @@ def args_parser():
     parser.add_argument('--momentum', type=float, default=0.9, help='SGD momentum (default: 0.9)')
 
     # simulation arguments
-    parser.add_argument('--num_workers', type=int, default=1, help="number of workers")
     parser.add_argument('--processes', type=int, default=8, help="number of processes")
     parser.add_argument('--verbose', type=int, default=1, help='verbose')
 
