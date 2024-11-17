@@ -5,7 +5,7 @@ from torch.utils.data import Dataset
 from sampling import iid, noniid, mislabeled, noisy
 import logging
 import numpy as np
-from models import CNNFashion_Mnist, CNNCifar, ResNet9, MobileNetV2
+from models import CNNFashion, CNNCifar, ResNet9, MobileNetV2
 
 class SubsetSplit(Dataset):
     """An abstract Dataset class wrapped around Pytorch Dataset class."""
@@ -51,21 +51,23 @@ def get_dataset(args):
         test_dataset = datasets.CIFAR10(data_dir, train=False, download=True, transform=transform_test)
     elif args.dataset == 'fmnist':
         data_dir = './data/fmnist/'
-        transform = transforms.Compose([
-            transforms.RandomHorizontalFlip(), 
-            transforms.RandomRotation(10),     
-            transforms.ToTensor(),             
-            transforms.Normalize((0.5,), (0.5,))  
+        train_transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.1307,), (0.3081,))
+        ])
+        test_transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.1307,), (0.3081,))
         ])
 
         # load the full training dataset
-        full_train_dataset = datasets.FashionMNIST(data_dir, train=True, download=True, transform=transform)
+        full_train_dataset = datasets.FashionMNIST(data_dir, train=True, download=True, transform=train_transform)
 
         # create train and validation datasets
         train_dataset, valid_dataset = train_val_split(full_train_dataset, 0.1)
 
         # load the test dataset
-        test_dataset = datasets.FashionMNIST(data_dir, train=False, download=True, transform=transform)
+        test_dataset = datasets.FashionMNIST(data_dir, train=False, download=True, transform=test_transform)
     else:
         data_dir = './data/imagenet/'
         # transform_train = transforms.Compose([
@@ -123,7 +125,7 @@ def average_weights(w):
 
 def initialize_model(args):
     model_dict = {
-        'fmnist': CNNFashion_Mnist,
+        'fmnist': CNNFashion,
         'cifar': CNNCifar,
         'resnet': ResNet9,
         'mobilenet': MobileNetV2

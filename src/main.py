@@ -75,8 +75,7 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
                 print(f'Convergence Reached At Round {epoch + 1}')
                 break
             
-    convergence_round = epoch + 1
-    return model, approx_banzhaf_values, convergence_round
+    return model, approx_banzhaf_values
 
 
 if __name__ == '__main__':
@@ -92,7 +91,7 @@ if __name__ == '__main__':
     global_model = initialize_model(args)
     global_model.to(device)
     global_model.train()
-    global_model, approx_banzhaf_values, convergence_round = train_global_model(args, global_model, train_dataset, test_dataset, user_groups, device)
+    global_model, approx_banzhaf_values = train_global_model(args, global_model, train_dataset, test_dataset, user_groups, device)
     test_acc, test_loss = test_inference(global_model, test_dataset)
 
     # predict bad clients and measure accuracy
@@ -100,11 +99,12 @@ if __name__ == '__main__':
     bad_client_accuracy = measure_accuracy(actual_bad_clients, predicted_bad_clients)
 
     # retrain the model w/o bad clients 
-    global_model = initialize_model(args)
-    global_model.to(device)
-    global_model.train()
-    retrained_model, _, second_convergence_round = train_global_model(args, global_model, train_dataset, test_dataset, user_groups, device, predicted_bad_clients)
-    retrain_test_acc, retrain_test_loss = test_inference(retrained_model, test_dataset)
+    if args.retrain:
+        global_model = initialize_model(args)
+        global_model.to(device)
+        global_model.train()
+        retrained_model, _, = train_global_model(args, global_model, train_dataset, test_dataset, user_groups, device, predicted_bad_clients)
+        retrain_test_acc, retrain_test_loss = test_inference(retrained_model, test_dataset)
 
     # log results
     if args.setting == 0:
@@ -117,10 +117,10 @@ if __name__ == '__main__':
         setting_str = f"{len(actual_bad_clients)} Bad Clients" + f" with {100*args.alpha}% Alpha For The Noisy Samples"
     logger.info(f'Number Of Clients: {args.num_users}, Client Selection Fraction: {args.frac}, Local Epochs: {args.local_ep}')
     logger.info(f'Batch Size: {args.local_bs}, Learning Rate: {args.lr}, Momentum: {args.momentum}')
-    logger.info(f'Convergence Round: {convergence_round}, Retraining Convergence Round: {second_convergence_round}, Number Of Rounds: {args.epochs}')
-    logger.info(f'Dataset: {args.dataset}, Setting: {setting_str}')
+    logger.info(f'Dataset: {args.dataset}, Setting: {setting_str}, Number Of Rounds: {args.epochs}')
     logger.info(f'Test Accuracy Before Retraining: {100*test_acc}%')
-    logger.info(f'Test Accuracy After Retraining: {100*retrain_test_acc}%')
+    if args.retrain:
+        logger.info(f'Test Accuracy After Retraining: {100*retrain_test_acc}%')
     logger.info(f'Banzhaf Values: {approx_banzhaf_values}')
     logger.info(f'Actual Bad Clients: {actual_bad_clients}')
     logger.info(f'Predicted Bad Clients: {predicted_bad_clients}')
