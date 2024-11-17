@@ -42,13 +42,13 @@ def get_dataset(args):
         ])
         
         # load the full training dataset
-        full_train_dataset = datasets.CIFAR10(data_dir, train=True, download=True, transform=transform_train)
+        full_train_dataset = datasets.CIFAR10(data_dir, train=True, download=True, transform=transform_train, num_workers=args.num_workers, pin_memory=True)
 
         # allocate 10% of the training set as validation set
         train_dataset, valid_dataset = train_val_split(full_train_dataset, 0.1)
 
         # load the test dataset
-        test_dataset = datasets.CIFAR10(data_dir, train=False, download=True, transform=transform_test)
+        test_dataset = datasets.CIFAR10(data_dir, train=False, download=True, transform=transform_test, num_workers=args.num_workers, pin_memory=True)
     elif args.dataset == 'fmnist':
         data_dir = './data/fmnist/'
         train_transform = transforms.Compose([
@@ -61,13 +61,13 @@ def get_dataset(args):
         ])
 
         # load the full training dataset
-        full_train_dataset = datasets.FashionMNIST(data_dir, train=True, download=True, transform=train_transform)
+        full_train_dataset = datasets.FashionMNIST(data_dir, train=True, download=True, transform=train_transform, num_workers=args.num_workers, pin_memory=True)
 
         # create train and validation datasets
         train_dataset, valid_dataset = train_val_split(full_train_dataset, 0.1)
 
         # load the test dataset
-        test_dataset = datasets.FashionMNIST(data_dir, train=False, download=True, transform=test_transform)
+        test_dataset = datasets.FashionMNIST(data_dir, train=False, download=True, transform=test_transform, num_workers=args.num_workers, pin_memory=True)
     else:
         data_dir = './data/imagenet/'
         # transform_train = transforms.Compose([
