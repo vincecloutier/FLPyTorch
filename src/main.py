@@ -62,10 +62,8 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
 
         with multiprocessing.Pool(processes=args.processes) as pool:
             results = pool.map(train_client_partial, idxs_users)
-        torch.cuda.memory_summary(device=device)
         pool.close()
         pool.join()
-        torch.cuda.memory_summary(device=device)
         for idx, w, delta in results:
             local_weights.append(copy.deepcopy(w))
             delta_t[epoch][idx] = delta
@@ -103,6 +101,9 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
             if no_improvement_count > 3:
                 print(f'Convergence Reached At Round {epoch + 1}')
                 break
+
+    print(f'Test Accuracy: {test_acc}, Test Loss: {test_loss}')
+    print(torch.cuda.memory_summary(device=device))
             
     return model, approx_banzhaf_values
 
