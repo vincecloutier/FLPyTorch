@@ -14,7 +14,7 @@ from functools import partial
 warnings.filterwarnings("ignore", category=UserWarning)
 
 
-def train_client(args, idx, global_weights, train_dataset, user_groups, epoch, device):
+def train_client(idx, args, global_weights, train_dataset, user_groups, epoch, device):
     model = initialize_model(args)
     model.load_state_dict(global_weights)
     model.to(device)
