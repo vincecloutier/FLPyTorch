@@ -1,0 +1,29 @@
+IID:
+2024-11-17 12:59:11,059 INFO Dataset: cifar, Setting: IID, Number Of Rounds: 50
+2024-11-17 12:59:11,059 INFO Test Accuracy Of Global Model: 71.34%
+2024-11-17 12:59:11,059 INFO Shapley Values: [-24.409884888927145, -22.62767086327076, -23.909745270013808, -22.760746810833616, -23.29781094590823]
+2024-11-17 12:59:11,060 INFO Banzhaf Values: [-5.948816725984216, -5.545571552589536, -5.311726374551654, -5.041963508352637, -5.593782817944884]
+2024-11-17 12:59:11,060 INFO Approximate Banzhaf Values Simple: [-0.252875097328797, -0.2288856585510075, -0.2835275926627219, -0.2190842186100781, -0.2911171605810523]
+2024-11-17 12:59:11,061 INFO Approximate Banzhaf Values Hessian: [-2.5707323076203465, -5.749352287501097, -22.565373002551496, 17.26112177222967, 18.256525065749884]
+2024-11-17 12:59:11,066 INFO Pearson Correlation Between Shapley And Banzhaf Values: PearsonRResult(statistic=0.5911590717916565, pvalue=0.2937993103568037)
+2024-11-17 12:59:11,069 INFO Pearson Correlation Between Shapley And Approximate Banzhaf Values Simple: PearsonRResult(statistic=0.5346602497200321, pvalue=0.3532392262808291)
+2024-11-17 12:59:11,071 INFO Pearson Correlation Between Shapley And Approximate Banzhaf Values Hessian: PearsonRResult(statistic=0.43433142228073834, pvalue=0.4649075261787133)
+2024-11-17 12:59:11,073 INFO Pearson Correlation Between Banzhaf And Approximate Banzhaf Values Simple: PearsonRResult(statistic=0.28504595974437896, pvalue=0.6420446957173753)
+2024-11-17 12:59:11,076 INFO Pearson Correlation Between Banzhaf And Approximate Banzhaf Values Hessian: PearsonRResult(statistic=0.14270408126246648, pvalue=0.8189221097920425)
+2024-11-17 12:59:11,077 INFO Actual Bad Clients: None
+2024-11-17 12:59:11,077 INFO Identified Bad Clients Simple: []
+2024-11-17 12:59:11,078 INFO Identified Bad Clients Hessian: [4, 3]
+2024-11-17 12:59:11,078 INFO Bad Client Accuracy Simple: 0.0
+2024-11-17 12:59:11,078 INFO Bad Client Accuracy Hessian: 0.0
+2024-11-17 12:59:11,079 INFO Total Run Time: 2989.124108314514
+
+
+
+NON IID:
+
+
+
+MISLABELED:
+
+
+
