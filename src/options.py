@@ -19,7 +19,7 @@ def args_parser():
     parser.add_argument('--alpha', type=float, default=0.9, help= "Alpha parameter for noisy setting.")
 
     # training arguments
-    parser.add_argument('--local_ep', type=int, default=10, help="the number of local epochs: E") #10 for iid, 3 for non-iid
+    parser.add_argument('--local_ep', type=int, default=10, help="the number of local epochs: E") #10 for iid, 3 for non-iid, noisy, mislabeled (or if many clients)
     parser.add_argument('--local_bs', type=int, default=128, help="local batch size: B")
     parser.add_argument('--optimizer', type=str, default='sgd', help="type of optimizer")
     parser.add_argument('--lr', type=float, default=0.01, help='learning rate')
