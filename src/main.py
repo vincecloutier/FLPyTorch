@@ -49,17 +49,13 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
             m = max(int(args.frac * args.num_users), 1)
             idxs_users = np.random.choice(range(args.num_users), m, replace=False)
 
-        for idx in idxs_users:
-            local_model = LocalUpdate(args=args, dataset=train_dataset, idxs=user_groups[idx])
-            w, _ = local_model.update_weights(model=copy.deepcopy(model), global_round=epoch)
-            local_weights.append(copy.deepcopy(w))
-            delta_t[epoch][idx] = {key: (global_weights[key] - w[key]).to(device) for key in w.keys()}
-
         pool = multiprocessing.Pool(processes=args.processes)
         train_client_partial = partial(
             train_client, args=args, global_weights=copy.deepcopy(global_weights), train_dataset=train_dataset, user_groups=user_groups, epoch=epoch, device=device
         )
         results = pool.map(train_client_partial, idxs_users)
+        pool.close()
+        pool.join()
 
         for idx, w, delta in results:
             local_weights.append(copy.deepcopy(w))
@@ -103,6 +99,7 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
 
 
 if __name__ == '__main__':
+    multiprocessing.set_start_method('spawn')
     start_time = time.time()
     logger = setup_logger('experiment')
     args = args_parser()

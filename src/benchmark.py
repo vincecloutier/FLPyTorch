@@ -91,7 +91,7 @@ def train_subset(subset, args, train_dataset, valid_dataset, test_dataset, user_
 
 
 if __name__ == '__main__':
-    multiprocessing.set_start_method('fork')
+    multiprocessing.set_start_method('spawn')
     start_time = time.time()
     args = args_parser()
     logger = setup_logger(f'benchmark_{args.dataset}_{args.setting}')
