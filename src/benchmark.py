@@ -118,8 +118,8 @@ if __name__ == '__main__':
                 subset_key = tuple(sorted(subset))
                 subset_with_client_key = tuple(sorted(subset + (client,)))
                 mc = results[subset_key][0] - results[subset_with_client_key][0]
-                shapley_values[client] += ((fact(len(subset)) * fact(args.num_users - len(subset) - 1)) / fact(args.num_users)) * mc
-                banzhaf_values[client] += mc / len(all_subsets)
+                shapley_values[client] -= ((fact(len(subset)) * fact(args.num_users - len(subset) - 1)) / fact(args.num_users)) * mc
+                banzhaf_values[client] -= mc / len(all_subsets)
 
     longest_client_key = max(results.keys(), key=len)
     test_loss, test_acc, abv_simple, abv_hessian = results[longest_client_key]
