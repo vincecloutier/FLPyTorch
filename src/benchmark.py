@@ -122,7 +122,7 @@ if __name__ == '__main__':
                 banzhaf_values[client] += mc / len(all_subsets)
 
     longest_client_key = max(results.keys(), key=len)
-    test_acc, test_loss, abv_simple, abv_hessian = results[longest_client_key]
+    test_loss, test_acc, abv_simple, abv_hessian = results[longest_client_key]
 
     identified_bad_clients_simple = identify_bad_idxs(abv_simple)
     identified_bad_clients_hessian = identify_bad_idxs(abv_hessian)
@@ -153,8 +153,8 @@ if __name__ == '__main__':
     logger.info(f'Number Of Clients: {args.num_users}, Client Selection Fraction: {args.frac}, Local Epochs: {args.local_ep}, Batch Size: {args.local_bs}')
     logger.info(f'Dataset: {args.dataset}, Setting: {setting_str}, Number Of Rounds: {args.epochs}')
     logger.info(f'Test Accuracy Of Global Model: {100 * test_acc}%')
-    logger.info(f'Shapley Values: {shapley_values}')
-    logger.info(f'Banzhaf Values: {banzhaf_values}')
+    logger.info(f'Shapley Values: {sv}')
+    logger.info(f'Banzhaf Values: {bv}')
     logger.info(f'Approximate Banzhaf Values Simple: {abv_simple}')
     logger.info(f'Approximate Banzhaf Values Hessian: {abv_hessian}')
     logger.info(f'Pearson Correlation Between Shapley And Banzhaf Values: {pearsonr(sv, bv)}')
