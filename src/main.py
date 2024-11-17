@@ -126,6 +126,9 @@ if __name__ == '__main__':
     logger.info(f'Dataset: {args.dataset}, Setting: {setting_str}')
     logger.info(f'Test Accuracy Before Retraining: {100*test_acc}%')
     logger.info(f'Test Accuracy After Retraining: {100*retrain_test_acc}%')
+    logger.info(f'Banzhaf Values: {approx_banzhaf_values}')
+    logger.info(f'Actual Bad Clients: {actual_bad_clients}')
+    logger.info(f'Predicted Bad Clients: {predicted_bad_clients}')
     logger.info(f'Bad Client Accuracy: {bad_client_accuracy}')
     logger.info(f'Total Run Time: {time.time()-start_time}')
 
