@@ -33,23 +33,17 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
             m = max(int(args.frac * args.num_users), 1)
             idxs_users = np.random.choice(range(args.num_users), m, replace=False)
 
-        # get the set of keys present in the gradient 
-        # this allows us to avoid buffer keys in delta_t
-        gradient_keys = set(gradient.keys())
-
         for idx in idxs_users:
             local_model = LocalUpdate(args=args, dataset=train_dataset, idxs=user_groups[idx])
             w, loss = local_model.update_weights(model=copy.deepcopy(model), global_round=epoch)
             local_weights.append(copy.deepcopy(w))
             local_losses.append(copy.deepcopy(loss))
-            
-            # compute delta_t with only keys present in gradient
-            delta_t[epoch][idx] = {key: (global_weights[key] - w[key]).to(device) for key in w.keys() if key in gradient_keys}
+            delta_t[epoch][idx] = {key: (global_weights[key] - w[key]).to(device) for key in w.keys()}
 
         global_weights = average_weights(local_weights)
         model.load_state_dict(global_weights)
 
-        # compute Banzhaf values
+        # compute banzhaf values
         if args.hessian == 1:
             G_t = compute_G_t(delta_t[epoch], global_weights.keys())
             for idx in idxs_users:
@@ -62,12 +56,12 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
             for idx in idxs_users:
                 approx_banzhaf_values[idx] += compute_bv_simple(args, gradient, delta_t[epoch][idx])
     
-        # Update selection probabilities based on the Banzhaf values
+        # update selection probabilities based on the banzhaf values
         if bad_clients is not None:
             total_banzhaf = sum(approx_banzhaf_values.values())
             if total_banzhaf > 0:
                 selection_probabilities = np.array([approx_banzhaf_values[i] / total_banzhaf for i in range(args.num_users)])
-                selection_probabilities /= selection_probabilities.sum()  # Normalize
+                selection_probabilities /= selection_probabilities.sum()  # normalize
 
         test_acc, test_loss = test_inference(model, test_dataset)
         if test_acc > best_test_acc * 1.01 or test_loss < best_test_loss * 0.99:
