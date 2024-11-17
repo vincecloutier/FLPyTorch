@@ -17,8 +17,6 @@ warnings.filterwarnings("ignore", category=UserWarning)
 def train_client(idx, args, global_weights, train_dataset, user_groups, epoch, device):
     torch.cuda.set_device(device)
 
-    torch.backends.cudnn.init()
-
     model = initialize_model(args)
     model.load_state_dict(global_weights)
     model.to(device)
