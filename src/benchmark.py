@@ -121,7 +121,8 @@ if __name__ == '__main__':
                 shapley_values[client] += ((math.factorial(len(subset)) * math.factorial(args.num_users - len(subset) - 1)) / math.factorial(args.num_users)) * marginal_contribution
                 banzhaf_values[client] += marginal_contribution / len(all_subsets)
 
-    test_acc, test_loss, abv_simple, abv_hessian = results[(1, 2, 3, 4, 5)]
+    longest_client_key = max(results.keys(), key=len)
+    test_acc, test_loss, abv_simple, abv_hessian = results[longest_client_key]
 
     identified_bad_clients_simple = identify_bad_idxs(abv_simple)
     identified_bad_clients_hessian = identify_bad_idxs(abv_hessian)
