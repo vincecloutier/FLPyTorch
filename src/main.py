@@ -62,10 +62,10 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
 
         with multiprocessing.Pool(processes=args.processes) as pool:
             results = pool.map(train_client_partial, idxs_users)
-
+        torch.cuda.memory_summary(device=device)
         pool.close()
         pool.join()
-
+        torch.cuda.memory_summary(device=device)
         for idx, w, delta in results:
             local_weights.append(copy.deepcopy(w))
             delta_t[epoch][idx] = delta
@@ -122,6 +122,8 @@ if __name__ == '__main__':
     device = get_device()
     train_dataset, valid_dataset, test_dataset, user_groups, actual_bad_clients = get_dataset(args)
     
+    torch.cuda.set_per_process_memory_fraction(0.25, device)
+
     # train the global model
     global_model = initialize_model(args)
     global_model.to(device)
