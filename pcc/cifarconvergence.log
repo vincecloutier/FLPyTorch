@@ -137,3 +137,22 @@ MISLABELED:
 2024-11-17 14:48:12,867 INFO Bad Client Accuracy Simple: 0.0
 2024-11-17 14:48:12,867 INFO Bad Client Accuracy Hessian: 1.0
 2024-11-17 14:48:12,867 INFO Total Run Time: 1115.7094073295593
+
+2024-11-17 15:25:23,148 INFO Number Of Clients: 5, Client Selection Fraction: 0.6, Local Epochs: 3, Batch Size: 128
+2024-11-17 15:25:23,149 INFO Dataset: cifar, Setting: 1 Bad Clients with 40.0% Mislabeled Samples Per Bad Client, Number Of Rounds: 50
+2024-11-17 15:25:23,149 INFO Test Accuracy Of Global Model: 66.36999999999999%
+2024-11-17 15:25:23,150 INFO Shapley Values: [-19.25022685329119, -21.277523232499757, -21.546828908721608, -23.08577266136805, -20.40882281263669]
+2024-11-17 15:25:23,150 INFO Banzhaf Values: [-3.404400574043393, -4.724271027371287, -4.565289748832583, -4.435775639489293, -3.7755289170891047]
+2024-11-17 15:25:23,151 INFO Approximate Banzhaf Values Simple: [-0.36896685021929443, -0.33507801103405654, -0.3182834757026285, -0.2369527635164559, -0.3191174070816487]
+2024-11-17 15:25:23,151 INFO Approximate Banzhaf Values Hessian: [-31.687707112170756, 1.1572337541729212, 22.60343938320875, -15.072019539773464, 9.443318340927362]
+2024-11-17 15:25:23,154 INFO Pearson Correlation Between Shapley And Banzhaf Values: PearsonRResult(statistic=0.7763154441610844, pvalue=0.12264529689791959)
+2024-11-17 15:25:23,155 INFO Pearson Correlation Between Shapley And Approximate Banzhaf Values Simple: PearsonRResult(statistic=-0.915656471503243, pvalue=0.029029486374085967)
+2024-11-17 15:25:23,157 INFO Pearson Correlation Between Shapley And Approximate Banzhaf Values Hessian: PearsonRResult(statistic=-0.27116781279697116, pvalue=0.659017653971508)
+2024-11-17 15:25:23,158 INFO Pearson Correlation Between Banzhaf And Approximate Banzhaf Values Simple: PearsonRResult(statistic=-0.46770296425156055, pvalue=0.4269873557977815)
+2024-11-17 15:25:23,159 INFO Pearson Correlation Between Banzhaf And Approximate Banzhaf Values Hessian: PearsonRResult(statistic=-0.5486219403594413, pvalue=0.33829630389524284)
+2024-11-17 15:25:23,160 INFO Actual Bad Clients: [3]
+2024-11-17 15:25:23,161 INFO Identified Bad Clients Simple: []
+2024-11-17 15:25:23,161 INFO Identified Bad Clients Hessian: [1, 4, 2]
+2024-11-17 15:25:23,161 INFO Bad Client Accuracy Simple: 0.0
+2024-11-17 15:25:23,162 INFO Bad Client Accuracy Hessian: 0.0
+2024-11-17 15:25:23,162 INFO Total Run Time: 1438.4170870780945
