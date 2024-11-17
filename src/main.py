@@ -8,7 +8,9 @@ from options import args_parser
 from update import LocalUpdate, test_inference, test_gradient
 from utils import get_dataset, average_weights, setup_logger, get_device, identify_bad_idxs, measure_accuracy, initialize_model
 from estimation import compute_bv_hvp, compute_bv_simple, compute_G_t, compute_G_minus_i_t
+import warnings
 
+warnings.filterwarnings("ignore", category=UserWarning)
 
 def train_global_model(args, model, train_dataset, test_dataset, user_groups, device, bad_clients=None):
     global_weights = model.state_dict()
@@ -20,7 +22,7 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
 
     no_improvement_count = 0
     for epoch in tqdm(range(args.epochs)):
-        local_weights, local_losses = [], []
+        local_weights = []
 
         model.train()
         gradient = test_gradient(args, model, test_dataset)
@@ -35,9 +37,8 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
 
         for idx in idxs_users:
             local_model = LocalUpdate(args=args, dataset=train_dataset, idxs=user_groups[idx])
-            w, loss = local_model.update_weights(model=copy.deepcopy(model), global_round=epoch)
+            w, _ = local_model.update_weights(model=copy.deepcopy(model), global_round=epoch)
             local_weights.append(copy.deepcopy(w))
-            local_losses.append(copy.deepcopy(loss))
             delta_t[epoch][idx] = {key: (global_weights[key] - w[key]).to(device) for key in w.keys()}
 
         global_weights = average_weights(local_weights)
@@ -125,90 +126,3 @@ if __name__ == '__main__':
     logger.info(f'Predicted Bad Clients: {predicted_bad_clients}')
     logger.info(f'Bad Client Accuracy: {bad_client_accuracy}')
     logger.info(f'Total Run Time: {time.time()-start_time}')
-
-
-# import multiprocessing
-# from functools import partial
-
-# def train_global_model(args, model, train_dataset, test_dataset, user_groups, device, bad_clients=None):
-#     global_weights = model.state_dict()
-#     best_test_acc, best_test_loss = 0, float('inf')
-#     approx_banzhaf_values = defaultdict(float)
-#     selection_probabilities = np.full(args.num_users, 1 / args.num_users)
-
-#     no_improvement_count = 0
-#     for epoch in tqdm(range(args.epochs)):
-#         local_weights, local_losses = [], []
-
-#         model.train()
-#         gradient = test_gradient(args, model, test_dataset)
-#         # move gradient to CPU to avoid GPU memory issues
-#         gradient = {key: gradient[key].cpu() for key in gradient.keys()}
-
-#         if bad_clients is not None:
-#             good_clients = [i for i in range(args.num_users) if i not in bad_clients]
-#             m = max(int(args.frac * len(good_clients)), 1)
-#             idxs_users = np.random.choice(good_clients, m, replace=False)
-#         else:
-#             m = max(int(args.frac * args.num_users), 1)
-#             idxs_users = np.random.choice(range(args.num_users), m, replace=False)
-
-#         # prepare arguments for multiprocessing
-#         pool = multiprocessing.Pool(processes=18)
-#         train_client_partial = partial(
-#             train_client,
-#             args=args,
-#             train_dataset=train_dataset,
-#             user_groups=user_groups,
-#             global_weights=global_weights,
-#             gradient=gradient,
-#             epoch=epoch,
-#             device=device
-#         )
-#         results_list = pool.map(train_client_partial, idxs_users)
-#         pool.close()
-#         pool.join()
-
-#         for idx, w, b_value in results_list:
-#             local_weights.append(copy.deepcopy(w))
-#             approx_banzhaf_values[idx] += b_value
-
-#         # update global weights and model
-#         global_weights = average_weights(local_weights)
-#         model.load_state_dict(global_weights)
-
-#         # update selection probabilities based on the Banzhaf values
-#         if bad_clients is not None:
-#             total_banzhaf = sum(approx_banzhaf_values.values())
-#             if total_banzhaf > 0:
-#                 selection_probabilities = np.array([approx_banzhaf_values[i] / total_banzhaf for i in range(args.num_users)])
-#                 selection_probabilities /= selection_probabilities.sum()  # Normalize
-
-#         test_acc, test_loss = test_inference(model, test_dataset)
-#         if test_acc > best_test_acc * 1.01 or test_loss < best_test_loss * 0.99:
-#             best_test_acc = test_acc
-#             best_test_loss = test_loss
-#             no_improvement_count = 0
-#         else:
-#             no_improvement_count += 1
-#             if no_improvement_count > 5:
-#                 print(f'Convergence Reached At Round {epoch + 1}')
-#                 break
-#         print(f'Approximate Banzhaf Values: {approx_banzhaf_values}')
-#         print(f'Best Test Accuracy: {best_test_acc}, Best Test Loss: {best_test_loss}')
-#     convergence_round = epoch + 1 if no_improvement_count > 5 else args.epochs
-#     return model, approx_banzhaf_values, convergence_round
-
-# def train_client(idx, args, global_model, train_dataset, user_groups, global_weights, gradient, epoch, device):
-#     # create local update instance for the client
-#     local_model = LocalUpdate(args=args, dataset=train_dataset, idxs=user_groups[idx], device=device)
-#     # update weights
-#     w, _ = local_model.update_weights(model=copy.deepcopy(global_model), global_round=epoch)
-#     # compute delta_weights on CPU
-#     delta_weights = {key: (w[key].cpu() - global_weights[key].cpu()) for key in w.keys()}
-#     # compute banzhaf value
-#     b_value = sum((-torch.dot(gradient[key].flatten(), delta_weights[key].flatten()) for key in gradient.keys()))
-#     return (idx, w, b_value.item())
-
-# if __name__ == '__main__':
-#     multiprocessing.set_start_method('spawn')
