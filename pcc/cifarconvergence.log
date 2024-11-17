@@ -96,8 +96,6 @@ NON IID:
 2024-11-17 14:14:02,370 INFO Total Run Time: 535.5488615036011
 
 
-
-
 MISLABELED:
 2024-11-17 14:33:50,751 INFO Number Of Clients: 5, Client Selection Fraction: 0.6, Local Epochs: 3, Batch Size: 128
 2024-11-17 14:33:50,752 INFO Dataset: cifar, Setting: 1 Bad Clients with 40.0% Mislabeled Samples Per Bad Client, Number Of Rounds: 50
@@ -117,7 +115,6 @@ MISLABELED:
 2024-11-17 14:33:50,771 INFO Bad Client Accuracy Simple: 0.0
 2024-11-17 14:33:50,771 INFO Bad Client Accuracy Hessian: 0.5
 2024-11-17 14:33:50,772 INFO Total Run Time: 1523.37273812294
-
 
 2024-11-17 14:48:12,847 INFO Number Of Clients: 5, Client Selection Fraction: 0.6, Local Epochs: 3, Batch Size: 128
 2024-11-17 14:48:12,849 INFO Dataset: cifar, Setting: 1 Bad Clients with 40.0% Mislabeled Samples Per Bad Client, Number Of Rounds: 50
@@ -156,3 +153,5 @@ MISLABELED:
 2024-11-17 15:25:23,161 INFO Bad Client Accuracy Simple: 0.0
 2024-11-17 15:25:23,162 INFO Bad Client Accuracy Hessian: 0.0
 2024-11-17 15:25:23,162 INFO Total Run Time: 1438.4170870780945
+
+NOISY:
