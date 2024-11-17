@@ -157,7 +157,7 @@ if __name__ == '__main__':
         setting_str = f"{len(actual_bad_clients)} Bad Clients" + f" with {100*args.alpha}% Alpha For The Noisy Samples"
     logger.info(f'Number Of Clients: {args.num_users}, Client Selection Fraction: {args.frac}, Local Epochs: {args.local_ep}')
     logger.info(f'Batch Size: {args.local_bs}, Learning Rate: {args.lr}, Momentum: {args.momentum}')
-    logger.info(f'Dataset: {args.dataset}, Setting: {setting_str}, Number Of Rounds: {args.epochs}')
+    logger.info(f'Dataset: {args.dataset}, Setting: {setting_str}, Number Of Rounds: {args.epochs}, Hessian: {args.hessian}')
     logger.info(f'Test Accuracy Before Retraining: {100*test_acc}%')
     if args.retrain:
         logger.info(f'Test Accuracy After Retraining: {100*retrain_test_acc}%')
