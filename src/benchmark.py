@@ -101,8 +101,7 @@ if __name__ == '__main__':
     train_dataset, valid_dataset, test_dataset, user_groups, actual_bad_clients = get_dataset(args)
 
     shapley_values, banzhaf_values = defaultdict(float), defaultdict(float)
-    all_subsets = list(itertools.chain.from_iterable(itertools.combinations(range(args.num_users), r) for r in range(args.num_users + 1)))
-
+    all_subsets = reversed(list(itertools.chain.from_iterable(itertools.combinations(range(args.num_users), r) for r in range(args.num_users + 1))))
 
     pool = multiprocessing.Pool(processes=args.processes)
     train_subset_partial = partial(train_subset, args=args, train_dataset=train_dataset, valid_dataset=valid_dataset, test_dataset=test_dataset, user_groups=user_groups)
@@ -140,7 +139,6 @@ if __name__ == '__main__':
     bv = [banzhaf_values[client] for client in shared_clients]
     abv_simple = [abv_simple[client] for client in shared_clients]
     abv_hessian = [abv_hessian[client] for client in shared_clients]
-
 
     # log results
     if args.setting == 0:
