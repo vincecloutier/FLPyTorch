@@ -102,8 +102,8 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
                 print(f'Convergence Reached At Round {epoch + 1}')
                 break
 
-    print(f'Test Accuracy: {test_acc}, Test Loss: {test_loss}')
-    print(torch.cuda.memory_summary(device=device))
+        print(f'Test Accuracy: {test_acc}, Test Loss: {test_loss}')
+        print(torch.cuda.memory_summary(device=device))
             
     return model, approx_banzhaf_values
 
