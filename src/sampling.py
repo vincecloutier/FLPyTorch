@@ -103,7 +103,10 @@ def noisy(dataset, dataset_name, dict_users, badclient_prop, alpha):
             base_image = dataset.data[idx]
             target_image = dataset.data[target_idx]
             noisy_image = alpha * base_image + (1 - alpha) * target_image
-            noisy_image = noisy_image.astype(dataset.data.dtype)
+            if dataset_name == 'fmnist':
+                noisy_image = noisy_image.to(dataset.data.dtype)
+            else:
+                noisy_image = noisy_image.astype(np.uint8)
             dataset.data[idx] = noisy_image
             labels[idx] = labels[target_idx]
     dataset.targets = labels
