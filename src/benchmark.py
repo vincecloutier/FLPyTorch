@@ -122,9 +122,10 @@ def compute_banzhaf_training(args, train_dataset, valid_dataset, test_dataset, u
     test_acc, test_loss = test_inference(model, test_dataset)
     return_dict['test_acc'] = test_acc
     return_dict['test_loss'] = test_loss
-    return_dict['model'] = model
     return_dict['approx_banzhaf_simple'] = approx_banzhaf_values_simple
     return_dict['approx_banzhaf_hessian'] = approx_banzhaf_values_hessian
+    del model
+    torch.cuda.empty_cache()
 
 if __name__ == '__main__':
     multiprocessing.set_start_method('spawn')
