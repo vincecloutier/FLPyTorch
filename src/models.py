@@ -23,6 +23,7 @@ import torch.nn.functional as F
 #         out = self.fc(out)
 #         return out
 
+
 class CNNFashion(nn.Module):
     def __init__(self, args):
         super(CNNFashion, self).__init__()
@@ -99,6 +100,7 @@ class ResNet9(nn.Module):
         out = self.classifier(out)
         # return F.log_softmax(out, dim=1)
         return out # for cross entropy loss
+    
     
 # MobileNetV2 For CIFAR10   
 class Block(nn.Module):
