@@ -23,6 +23,11 @@ def train_client(idx, args, global_weights, train_dataset, user_groups, epoch, d
     local_model = LocalUpdate(args=args, dataset=train_dataset, idxs=user_groups[idx])
     w, _ = local_model.update_weights(model=model, global_round=epoch)
     delta = {key: (global_weights[key] - w[key]).to(device) for key in global_weights.keys()}
+
+    del model
+    del local_model
+    torch.cuda.empty_cache()
+
     return idx, w, delta
 
 
@@ -49,11 +54,13 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
             m = max(int(args.frac * args.num_users), 1)
             idxs_users = np.random.choice(range(args.num_users), m, replace=False)
 
-        pool = multiprocessing.Pool(processes=args.processes)
         train_client_partial = partial(
             train_client, args=args, global_weights=copy.deepcopy(global_weights), train_dataset=train_dataset, user_groups=user_groups, epoch=epoch, device=device
         )
-        results = pool.map(train_client_partial, idxs_users)
+
+        with multiprocessing.Pool(processes=args.processes) as pool:
+            results = pool.map(train_client_partial, idxs_users)
+
         pool.close()
         pool.join()
 
