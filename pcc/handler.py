@@ -67,7 +67,6 @@ def process_and_graph_log(file_path):
 
     plt.subplot(1, 2, 1)
     plt.scatter(data['Shapley'], data['Approx_Simple'], alpha=0.6, c=color_groups)
-    plt.plot([0, 1], [0, 1], color='black', linestyle='--', linewidth=1)
     plt.title(f"Shapley vs Approx Simple (Corr: {corr_shapley_simple:.2f})")
     plt.xlabel("Shapley")
     plt.ylabel("Approx Simple")
@@ -75,7 +74,6 @@ def process_and_graph_log(file_path):
 
     plt.subplot(1, 2, 2)
     plt.scatter(data['Shapley'], data['Approx_Hessian'], alpha=0.6, c=color_groups)
-    plt.plot([0, 1], [0, 1], color='black', linestyle='--', linewidth=1)
     plt.title(f"Shapley vs Approx Hessian (Corr: {corr_shapley_hessian:.2f})")
     plt.xlabel("Shapley")
     plt.ylabel("Approx Hessian")
