@@ -13,9 +13,9 @@ def args_parser():
     parser.add_argument('--dataset', type=str, default='cifar', help="name of dataset")
     parser.add_argument('--setting', type=int, default=0, help= "Set to 0 for IID, 1 for non-iid, 2 for mislabeled, 3 for noisy.")
     parser.add_argument('--retrain', type=int, default=0, help= "Retrain the global model w/ reweighting (default: 0)")
-    parser.add_argument('--badclient_prop', type=float, default=0.3, help= "Proportion of either non-iid or mislabeled or noisy clients.")
+    parser.add_argument('--badclient_prop', type=float, default=0.4, help= "Proportion of either non-iid or mislabeled or noisy clients.")
     parser.add_argument('--num_categories_per_client', type=int, default=4, help= "Number of categories per client in non-iid setting.")
-    parser.add_argument('--mislabel_proportion', type=float, default=0.4, help= "Proportion of mislabeled samples per client in mislabeled setting.")
+    parser.add_argument('--mislabel_proportion', type=float, default=0.5, help= "Proportion of mislabeled samples per client in mislabeled setting.")
     parser.add_argument('--alpha', type=float, default=0.9, help= "Alpha parameter for noisy setting.")
 
     # training arguments
