@@ -21,9 +21,14 @@ def process_and_graph_log(file_path):
     approx_hessian_values = [list(map(float, match.split(','))) for match in re.findall(approx_hessian_pattern, logs)]
 
     # concatenate across runs
-    shapley_all = [val for run in shapley_values for val in run]
-    approx_simple_all = [val for run in approx_simple_values for val in run]
-    approx_hessian_all = [val for run in approx_hessian_values for val in run]
+    shapley_all = np.array([val for run in shapley_values for val in run])
+    approx_simple_all = np.array([val for run in approx_simple_values for val in run])
+    approx_hessian_all = np.array([val for run in approx_hessian_values for val in run])
+
+    # remove the last 30 values
+    # shapley_all = shapley_all[:-30]
+    # approx_simple_all = approx_simple_all[:-30]
+    # approx_hessian_all = approx_hessian_all[:-30]
 
     # min_max scale the data to 0-1
     scaler = MinMaxScaler()
@@ -47,23 +52,41 @@ def process_and_graph_log(file_path):
     print(f"Shapley and Approx Simple: {corr_shapley_simple:.4f}")
     print(f"Shapley and Approx Hessian: {corr_shapley_hessian:.4f}")
 
+    # generate plots with colored groups
+    group_size = 15
+    num_groups = 4
+    colors = plt.cm.tab10(np.arange(num_groups))
+    group_labels = ['IID', 'Non IID', 'Mislabeled', 'Noisy']
+
+    # Assign colors to data points
+    color_groups = [colors[i // group_size] for i in range(len(data))]
+
+    # Generate legend
+    legend_handles = [
+        plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=colors[i], markersize=10, label=group_labels[i])
+        for i in range(num_groups)
+    ]
+
     # generate plots
     plt.figure(figsize=(12, 4))
 
     plt.subplot(1, 2, 1)
-    plt.scatter(data['Shapley'], data['Approx_Simple'], alpha=0.6)
+    plt.scatter(data['Shapley'], data['Approx_Simple'], alpha=0.6, c=color_groups)
     plt.title(f"Shapley vs Approx Simple (Corr: {corr_shapley_simple:.2f})")
     plt.xlabel("Shapley")
     plt.ylabel("Approx Simple")
+    plt.legend(handles=legend_handles, title="Groups", loc="best")
 
     plt.subplot(1, 2, 2)
-    plt.scatter(data['Shapley'], data['Approx_Hessian'], alpha=0.6)
+    plt.scatter(data['Shapley'], data['Approx_Hessian'], alpha=0.6, c=color_groups)
     plt.title(f"Shapley vs Approx Hessian (Corr: {corr_shapley_hessian:.2f})")
     plt.xlabel("Shapley")
     plt.ylabel("Approx Hessian")
-    
+    plt.legend(handles=legend_handles, title="Groups", loc="best")
+
     plt.tight_layout()
     plt.show()
 
 # example usage
 process_and_graph_log('pcc/cifarconvergence.log')
+process_and_graph_log('pcc/fmnist.log')
