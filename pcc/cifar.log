@@ -115,117 +115,117 @@ NON IID:
 
 
 MISLABELED:
-2024-11-17 14:33:50,751 INFO Number Of Clients: 5, Client Selection Fraction: 0.6, Local Epochs: 3, Batch Size: 128
-2024-11-17 14:33:50,752 INFO Dataset: cifar, Setting: 1 Bad Clients with 40.0% Mislabeled Samples Per Bad Client, Number Of Rounds: 50
-2024-11-17 14:33:50,752 INFO Test Accuracy Of Global Model: 66.44%
-2024-11-17 14:33:50,753 INFO Shapley Values: [-20.208389015992488, -20.43079329232376, -21.672366650899257, -20.678431289394695, -22.19175741275151]
-2024-11-17 14:33:50,753 INFO Banzhaf Values: [-3.786082776263356, -3.7034053560346365, -4.443471597507596, -3.73646922968328, -4.792870158329606]
-2024-11-17 14:33:50,754 INFO Approximate Banzhaf Values Simple: [-0.30673281312920153, -0.33458197955042124, -0.3267051917500794, -0.26949214981868863, -0.3212974441703409]
-2024-11-17 14:33:50,754 INFO Approximate Banzhaf Values Hessian: [-1.550166587345302, -27.77011839300394, 12.43648948147893, -8.704493951052427, 6.646915657445788]
-2024-11-17 14:33:50,759 INFO Pearson Correlation Between Shapley And Banzhaf Values: PearsonRResult(statistic=0.9720998074141248, pvalue=0.005570815030358761)
-2024-11-17 14:33:50,761 INFO Pearson Correlation Between Shapley And Approximate Banzhaf Values Simple: PearsonRResult(statistic=0.29569792773008563, pvalue=0.6290666181034088)
-2024-11-17 14:33:50,763 INFO Pearson Correlation Between Shapley And Approximate Banzhaf Values Hessian: PearsonRResult(statistic=-0.6892971119901216, pvalue=0.19792304700394744)
-2024-11-17 14:33:50,766 INFO Pearson Correlation Between Banzhaf And Approximate Banzhaf Values Simple: PearsonRResult(statistic=0.3843744703726144, pvalue=0.5229324745783727)
-2024-11-17 14:33:50,768 INFO Pearson Correlation Between Banzhaf And Approximate Banzhaf Values Hessian: PearsonRResult(statistic=-0.7541983791629963, pvalue=0.1407706472067261)
-2024-11-17 14:33:50,769 INFO Actual Bad Clients: [4]
-2024-11-17 14:33:50,769 INFO Identified Bad Clients Simple: []
-2024-11-17 14:33:50,770 INFO Identified Bad Clients Hessian: [2, 4]
-2024-11-17 14:33:50,771 INFO Bad Client Accuracy Simple: 0.0
-2024-11-17 14:33:50,771 INFO Bad Client Accuracy Hessian: 0.5
-2024-11-17 14:33:50,772 INFO Total Run Time: 1523.37273812294
+2024-11-18 09:11:55,463 INFO Number Of Clients: 5, Client Selection Fraction: 0.6, Local Epochs: 3, Batch Size: 128
+2024-11-18 09:11:55,464 INFO Dataset: cifar, Setting: Mislabeled with 2 Bad Clients and 50.0% Bad Samples Per Bad Client, Number Of Rounds: 50
+2024-11-18 09:11:55,464 INFO Test Accuracy Of Global Model: 64.98%
+2024-11-18 09:11:55,465 INFO Shapley Values: [-19.384888712565104, -17.171326859792075, -21.152886757254596, -22.513810564080877, -21.939832820494964]
+2024-11-18 09:11:55,465 INFO Banzhaf Values: [-4.055857544764876, -3.041651813313365, -4.633358398452401, -5.7312129978090525, -4.4544483628124]
+2024-11-18 09:11:55,465 INFO Approximate Banzhaf Values Simple: [-0.29505019751377404, -0.26753060542978346, -0.3137073536636308, -0.330194313894026, -0.21060548454988748]
+2024-11-18 09:11:55,465 INFO Approximate Banzhaf Values Hessian: [-4.3075868505984545, -10.421271876432002, -2.7610218822956085, 0.30167603492736816, 19.489776892703958]
+2024-11-18 09:11:55,468 INFO Pearson Correlation Between Shapley And Banzhaf Values: PearsonRResult(statistic=0.9238042314734808, pvalue=0.024957619929825894)
+2024-11-18 09:11:55,469 INFO Pearson Correlation Between Shapley And Approximate Banzhaf Values Simple: PearsonRResult(statistic=0.12044673071198325, pvalue=0.8470140741233535)
+2024-11-18 09:11:55,470 INFO Pearson Correlation Between Shapley And Approximate Banzhaf Values Hessian: PearsonRResult(statistic=-0.6758603868891518, pvalue=0.21042557383687976)
+2024-11-18 09:11:55,471 INFO Pearson Correlation Between Banzhaf And Approximate Banzhaf Values Simple: PearsonRResult(statistic=0.4542422894696369, pvalue=0.44219626659824385)
+2024-11-18 09:11:55,472 INFO Pearson Correlation Between Banzhaf And Approximate Banzhaf Values Hessian: PearsonRResult(statistic=-0.37376324313436726, pvalue=0.5354347094005939)
+2024-11-18 09:11:55,472 INFO Actual Bad Clients: [1 3]
+2024-11-18 09:11:55,473 INFO Identified Bad Clients Simple: []
+2024-11-18 09:11:55,473 INFO Identified Bad Clients Hessian: [4, 3]
+2024-11-18 09:11:55,473 INFO Bad Client Accuracy Simple: 0.0
+2024-11-18 09:11:55,473 INFO Bad Client Accuracy Hessian: 0.3333333333333333
+2024-11-18 09:11:55,473 INFO Total Run Time: 1414.0378172397614
 
-2024-11-17 14:48:12,847 INFO Number Of Clients: 5, Client Selection Fraction: 0.6, Local Epochs: 3, Batch Size: 128
-2024-11-17 14:48:12,849 INFO Dataset: cifar, Setting: 1 Bad Clients with 40.0% Mislabeled Samples Per Bad Client, Number Of Rounds: 50
-2024-11-17 14:48:12,849 INFO Test Accuracy Of Global Model: 64.79%
-2024-11-17 14:48:12,850 INFO Shapley Values: [-21.32336734036605, -22.076319419344266, -20.755728660027184, -21.11509440143903, -16.638341742753983]
-2024-11-17 14:48:12,850 INFO Banzhaf Values: [-4.663479471579194, -4.660001898184419, -5.002782924100757, -3.9846578147262335, -2.1544390972703695]
-2024-11-17 14:48:12,851 INFO Approximate Banzhaf Values Simple: [-0.26183422678150237, -0.3264209399931133, -0.21153253922238946, -0.22937510488554835, -0.249622508068569]
-2024-11-17 14:48:12,851 INFO Approximate Banzhaf Values Hessian: [-3.4270955465035513, 4.110725247301161, -2.75443596765399, -2.586051090620458, -14.515810911543667]
-2024-11-17 14:48:12,858 INFO Pearson Correlation Between Shapley And Banzhaf Values: PearsonRResult(statistic=0.9165605899126185, pvalue=0.028567952255926045)
-2024-11-17 14:48:12,860 INFO Pearson Correlation Between Shapley And Approximate Banzhaf Values Simple: PearsonRResult(statistic=0.2982216386436294, pvalue=0.6259982820359428)
-2024-11-17 14:48:12,862 INFO Pearson Correlation Between Shapley And Approximate Banzhaf Values Hessian: PearsonRResult(statistic=-0.9567605040034913, pvalue=0.01072303633343967)
-2024-11-17 14:48:12,864 INFO Pearson Correlation Between Banzhaf And Approximate Banzhaf Values Simple: PearsonRResult(statistic=0.08970332621311052, pvalue=0.8859395369938615)
-2024-11-17 14:48:12,865 INFO Pearson Correlation Between Banzhaf And Approximate Banzhaf Values Hessian: PearsonRResult(statistic=-0.8554494618895863, pvalue=0.06452311714255103)
-2024-11-17 14:48:12,865 INFO Actual Bad Clients: [1]
-2024-11-17 14:48:12,866 INFO Identified Bad Clients Simple: []
-2024-11-17 14:48:12,866 INFO Identified Bad Clients Hessian: [1]
-2024-11-17 14:48:12,867 INFO Bad Client Accuracy Simple: 0.0
-2024-11-17 14:48:12,867 INFO Bad Client Accuracy Hessian: 1.0
-2024-11-17 14:48:12,867 INFO Total Run Time: 1115.7094073295593
+2024-11-18 10:01:07,694 INFO Number Of Clients: 5, Client Selection Fraction: 0.6, Local Epochs: 3, Batch Size: 128
+2024-11-18 10:01:07,695 INFO Dataset: cifar, Setting: Mislabeled with 2 Bad Clients and 50.0% Bad Samples Per Bad Client, Number Of Rounds: 50
+2024-11-18 10:01:07,695 INFO Test Accuracy Of Global Model: 67.47999999999999%
+2024-11-18 10:01:07,695 INFO Shapley Values: [-22.685995385050774, -19.74791443844636, -23.896797155340515, -21.293974200884502, -21.684036965171504]
+2024-11-18 10:01:07,696 INFO Banzhaf Values: [-5.010281121358275, -3.449262944981456, -5.272806605324149, -4.579723516479135, -4.015513142570853]
+2024-11-18 10:01:07,697 INFO Approximate Banzhaf Values Simple: [-0.3854105028876802, -0.20945356716401875, -0.3484031178522855, -0.29914000048302114, -0.3805984049104154]
+2024-11-18 10:01:07,697 INFO Approximate Banzhaf Values Hessian: [31.921983044594526, 1.1445393562316895, 17.328692094655707, 7.379127869848162, -21.128578655887395]
+2024-11-18 10:01:07,700 INFO Pearson Correlation Between Shapley And Banzhaf Values: PearsonRResult(statistic=0.9245248116826124, pvalue=0.02460715116001038)
+2024-11-18 10:01:07,701 INFO Pearson Correlation Between Shapley And Approximate Banzhaf Values Simple: PearsonRResult(statistic=0.764349663112716, pvalue=0.13235962223570383)
+2024-11-18 10:01:07,704 INFO Pearson Correlation Between Shapley And Approximate Banzhaf Values Hessian: PearsonRResult(statistic=-0.4798713342044369, pvalue=0.4133435296721881)
+2024-11-18 10:01:07,706 INFO Pearson Correlation Between Banzhaf And Approximate Banzhaf Values Simple: PearsonRResult(statistic=0.652893363035207, pvalue=0.23227982947485323)
+2024-11-18 10:01:07,707 INFO Pearson Correlation Between Banzhaf And Approximate Banzhaf Values Hessian: PearsonRResult(statistic=-0.6945506672600619, pvalue=0.1930937823255649)
+2024-11-18 10:01:07,707 INFO Actual Bad Clients: [0 4]
+2024-11-18 10:01:07,708 INFO Identified Bad Clients Simple: []
+2024-11-18 10:01:07,708 INFO Identified Bad Clients Hessian: [2, 3, 0]
+2024-11-18 10:01:07,708 INFO Bad Client Accuracy Simple: 0.0
+2024-11-18 10:01:07,709 INFO Bad Client Accuracy Hessian: 0.25
+2024-11-18 10:01:07,709 INFO Total Run Time: 1577.3726570606232
 
-2024-11-17 15:25:23,148 INFO Number Of Clients: 5, Client Selection Fraction: 0.6, Local Epochs: 3, Batch Size: 128
-2024-11-17 15:25:23,149 INFO Dataset: cifar, Setting: 1 Bad Clients with 40.0% Mislabeled Samples Per Bad Client, Number Of Rounds: 50
-2024-11-17 15:25:23,149 INFO Test Accuracy Of Global Model: 66.36999999999999%
-2024-11-17 15:25:23,150 INFO Shapley Values: [-19.25022685329119, -21.277523232499757, -21.546828908721608, -23.08577266136805, -20.40882281263669]
-2024-11-17 15:25:23,150 INFO Banzhaf Values: [-3.404400574043393, -4.724271027371287, -4.565289748832583, -4.435775639489293, -3.7755289170891047]
-2024-11-17 15:25:23,151 INFO Approximate Banzhaf Values Simple: [-0.36896685021929443, -0.33507801103405654, -0.3182834757026285, -0.2369527635164559, -0.3191174070816487]
-2024-11-17 15:25:23,151 INFO Approximate Banzhaf Values Hessian: [-31.687707112170756, 1.1572337541729212, 22.60343938320875, -15.072019539773464, 9.443318340927362]
-2024-11-17 15:25:23,154 INFO Pearson Correlation Between Shapley And Banzhaf Values: PearsonRResult(statistic=0.7763154441610844, pvalue=0.12264529689791959)
-2024-11-17 15:25:23,155 INFO Pearson Correlation Between Shapley And Approximate Banzhaf Values Simple: PearsonRResult(statistic=-0.915656471503243, pvalue=0.029029486374085967)
-2024-11-17 15:25:23,157 INFO Pearson Correlation Between Shapley And Approximate Banzhaf Values Hessian: PearsonRResult(statistic=-0.27116781279697116, pvalue=0.659017653971508)
-2024-11-17 15:25:23,158 INFO Pearson Correlation Between Banzhaf And Approximate Banzhaf Values Simple: PearsonRResult(statistic=-0.46770296425156055, pvalue=0.4269873557977815)
-2024-11-17 15:25:23,159 INFO Pearson Correlation Between Banzhaf And Approximate Banzhaf Values Hessian: PearsonRResult(statistic=-0.5486219403594413, pvalue=0.33829630389524284)
-2024-11-17 15:25:23,160 INFO Actual Bad Clients: [3]
-2024-11-17 15:25:23,161 INFO Identified Bad Clients Simple: []
-2024-11-17 15:25:23,161 INFO Identified Bad Clients Hessian: [1, 4, 2]
-2024-11-17 15:25:23,161 INFO Bad Client Accuracy Simple: 0.0
-2024-11-17 15:25:23,162 INFO Bad Client Accuracy Hessian: 0.0
-2024-11-17 15:25:23,162 INFO Total Run Time: 1438.4170870780945
+2024-11-18 10:51:30,389 INFO Number Of Clients: 5, Client Selection Fraction: 0.6, Local Epochs: 3, Batch Size: 128
+2024-11-18 10:51:30,390 INFO Dataset: cifar, Setting: Mislabeled with 2 Bad Clients and 50.0% Bad Samples Per Bad Client, Number Of Rounds: 50
+2024-11-18 10:51:30,391 INFO Test Accuracy Of Global Model: 66.63%
+2024-11-18 10:51:30,391 INFO Shapley Values: [-22.16584124465783, -23.363028921683632, -21.50724093914032, -18.697720247507096, -21.070948116978013]
+2024-11-18 10:51:30,392 INFO Banzhaf Values: [-4.573603531345725, -5.5265940222889185, -4.918842615559697, -3.2673257756978273, -3.7633091118186712]
+2024-11-18 10:51:30,392 INFO Approximate Banzhaf Values Simple: [-0.38379106274805963, -0.294985503598582, -0.31143744103610516, -0.2789568135049194, -0.32714685099199414]
+2024-11-18 10:51:30,393 INFO Approximate Banzhaf Values Hessian: [16.824846893548965, 4.329940272495151, 10.026031378656626, -3.2284545795992017, 9.474734846502542]
+2024-11-18 10:51:30,396 INFO Pearson Correlation Between Shapley And Banzhaf Values: PearsonRResult(statistic=0.9129697803873695, pvalue=0.030414922926004093)
+2024-11-18 10:51:30,397 INFO Pearson Correlation Between Shapley And Approximate Banzhaf Values Simple: PearsonRResult(statistic=0.38631545848690124, pvalue=0.5206519876471555)
+2024-11-18 10:51:30,398 INFO Pearson Correlation Between Shapley And Approximate Banzhaf Values Hessian: PearsonRResult(statistic=-0.575100491159191, pvalue=0.31040914293866273)
+2024-11-18 10:51:30,403 INFO Pearson Correlation Between Banzhaf And Approximate Banzhaf Values Simple: PearsonRResult(statistic=0.14037945027402804, pvalue=0.8218521226612564)
+2024-11-18 10:51:30,405 INFO Pearson Correlation Between Banzhaf And Approximate Banzhaf Values Hessian: PearsonRResult(statistic=-0.38102083946080323, pvalue=0.5268773898496416)
+2024-11-18 10:51:30,405 INFO Actual Bad Clients: [4 3]
+2024-11-18 10:51:30,406 INFO Identified Bad Clients Simple: []
+2024-11-18 10:51:30,406 INFO Identified Bad Clients Hessian: [2, 4, 0]
+2024-11-18 10:51:30,407 INFO Bad Client Accuracy Simple: 0.0
+2024-11-18 10:51:30,407 INFO Bad Client Accuracy Hessian: 0.25
+2024-11-18 10:51:30,407 INFO Total Run Time: 1592.672330379486
 
 NOISY:
-2024-11-17 16:10:41,500 INFO Number Of Clients: 5, Client Selection Fraction: 0.6, Local Epochs: 3, Batch Size: 128
-2024-11-17 16:10:41,503 INFO Dataset: cifar, Setting: 1 Bad Clients with 90.0% Alpha For The Noisy Samples, Number Of Rounds: 50
-2024-11-17 16:10:41,504 INFO Test Accuracy Of Global Model: 66.96%
-2024-11-17 16:10:41,504 INFO Shapley Values: [-23.044189279278115, -19.4501786629359, -23.158121486504875, -20.75346596539021, -21.42350939909617]
-2024-11-17 16:10:41,505 INFO Banzhaf Values: [-4.922005474567413, -4.152379494160414, -4.8733732514083385, -4.076363176107407, -4.484770346432924]
-2024-11-17 16:10:41,505 INFO Approximate Banzhaf Values Simple: [-0.3128779619000852, -0.25098274066112936, -0.32507582183461636, -0.3648894755169749, -0.33102776715531945]
-2024-11-17 16:10:41,505 INFO Approximate Banzhaf Values Hessian: [-9.611205986700952, 2.3779501486569643, 34.73950079921633, -12.823389992117882, 0.061822463758289814]
-2024-11-17 16:10:41,510 INFO Pearson Correlation Between Shapley And Banzhaf Values: PearsonRResult(statistic=0.9309799154712728, pvalue=0.021540164372204896)
-2024-11-17 16:10:41,513 INFO Pearson Correlation Between Shapley And Approximate Banzhaf Values Simple: PearsonRResult(statistic=0.4033596700791145, pvalue=0.5007141775111229)
-2024-11-17 16:10:41,515 INFO Pearson Correlation Between Shapley And Approximate Banzhaf Values Hessian: PearsonRResult(statistic=-0.39169510362137894, pvalue=0.5143419246245132)
-2024-11-17 16:10:41,517 INFO Pearson Correlation Between Banzhaf And Approximate Banzhaf Values Simple: PearsonRResult(statistic=0.05689505109704066, pvalue=0.9275980725429132)
-2024-11-17 16:10:41,519 INFO Pearson Correlation Between Banzhaf And Approximate Banzhaf Values Hessian: PearsonRResult(statistic=-0.4545585366762776, pvalue=0.44183757944276925)
-2024-11-17 16:10:41,520 INFO Actual Bad Clients: [2]
-2024-11-17 16:10:41,520 INFO Identified Bad Clients Simple: []
-2024-11-17 16:10:41,521 INFO Identified Bad Clients Hessian: [1, 2, 4]
-2024-11-17 16:10:41,522 INFO Bad Client Accuracy Simple: 0.0
-2024-11-17 16:10:41,522 INFO Bad Client Accuracy Hessian: 0.3333333333333333
-2024-11-17 16:10:41,522 INFO Total Run Time: 1558.990659236908
+2024-11-18 09:34:47,386 INFO Number Of Clients: 5, Client Selection Fraction: 0.6, Local Epochs: 3, Batch Size: 128
+2024-11-18 09:34:47,387 INFO Dataset: cifar, Setting: Noisy with 2 Bad Clients and 50.0% Bad Samples Per Bad Client, Number Of Rounds: 50
+2024-11-18 09:34:47,388 INFO Test Accuracy Of Global Model: 65.23%
+2024-11-18 09:34:47,388 INFO Shapley Values: [-21.49628832240899, -19.967042324940365, -22.95477181474368, -20.79563303093115, -19.789572624365483]
+2024-11-18 09:34:47,389 INFO Banzhaf Values: [-4.719211965799332, -4.128072153776884, -5.123154800385237, -4.442150861024857, -3.4375609941780567]
+2024-11-18 09:34:47,389 INFO Approximate Banzhaf Values Simple: [-0.3383491886779666, -0.2674410683102906, -0.3001736656296998, -0.24948158580809832, -0.24206700804643333]
+2024-11-18 09:34:47,390 INFO Approximate Banzhaf Values Hessian: [-12.576282802037895, -12.702093679457903, 7.309939068276435, 10.476986549794674, -0.2087632119655609]
+2024-11-18 09:34:47,394 INFO Pearson Correlation Between Shapley And Banzhaf Values: PearsonRResult(statistic=0.916794253689396, pvalue=0.028449058968594895)
+2024-11-18 09:34:47,397 INFO Pearson Correlation Between Shapley And Approximate Banzhaf Values Simple: PearsonRResult(statistic=0.6507706276862892, pvalue=0.23432949544359433)
+2024-11-18 09:34:47,399 INFO Pearson Correlation Between Shapley And Approximate Banzhaf Values Hessian: PearsonRResult(statistic=-0.34485323889238284, pvalue=0.5697843245579667)
+2024-11-18 09:34:47,401 INFO Pearson Correlation Between Banzhaf And Approximate Banzhaf Values Simple: PearsonRResult(statistic=0.7078160552128981, pvalue=0.18105186331606715)
+2024-11-18 09:34:47,409 INFO Pearson Correlation Between Banzhaf And Approximate Banzhaf Values Hessian: PearsonRResult(statistic=-0.1858739297327586, pvalue=0.7647078573050323)
+2024-11-18 09:34:47,410 INFO Actual Bad Clients: [4 0]
+2024-11-18 09:34:47,411 INFO Identified Bad Clients Simple: []
+2024-11-18 09:34:47,412 INFO Identified Bad Clients Hessian: [2, 3]
+2024-11-18 09:34:47,412 INFO Bad Client Accuracy Simple: 0.0
+2024-11-18 09:34:47,413 INFO Bad Client Accuracy Hessian: 0.0
+2024-11-18 09:34:47,413 INFO Total Run Time: 1369.0723786354065
 
-2024-11-17 16:31:35,550 INFO Number Of Clients: 5, Client Selection Fraction: 0.6, Local Epochs: 3, Batch Size: 128
-2024-11-17 16:31:35,552 INFO Dataset: cifar, Setting: 1 Bad Clients with 90.0% Alpha For The Noisy Samples, Number Of Rounds: 50
-2024-11-17 16:31:35,553 INFO Test Accuracy Of Global Model: 65.51%
-2024-11-17 16:31:35,553 INFO Shapley Values: [-20.90357618729274, -21.28489653964838, -21.27518444955349, -21.223994018634166, -19.202658853928245]
-2024-11-17 16:31:35,553 INFO Banzhaf Values: [-4.272470809519291, -4.315494757145643, -4.805638741701841, -4.072825096547604, -3.5541560873389244]
-2024-11-17 16:31:35,554 INFO Approximate Banzhaf Values Simple: [-0.3129097514320165, -0.23569881729781628, -0.235184329590993, -0.28315285593271255, -0.25523819914087653]
-2024-11-17 16:31:35,554 INFO Approximate Banzhaf Values Hessian: [5.738042728742585, 13.884560122154653, 4.37774855887983, -8.073346542660147, 15.833796987310052]
-2024-11-17 16:31:35,563 INFO Pearson Correlation Between Shapley And Banzhaf Values: PearsonRResult(statistic=0.8213575665034037, pvalue=0.0881691791029925)
-2024-11-17 16:31:35,565 INFO Pearson Correlation Between Shapley And Approximate Banzhaf Values Simple: PearsonRResult(statistic=-0.0015542849433264755, pvalue=0.9980210237431731)
-2024-11-17 16:31:35,567 INFO Pearson Correlation Between Shapley And Approximate Banzhaf Values Hessian: PearsonRResult(statistic=0.5490472540643363, pvalue=0.33784362535773715)
-2024-11-17 16:31:35,569 INFO Pearson Correlation Between Banzhaf And Approximate Banzhaf Values Simple: PearsonRResult(statistic=-0.23091324302189095, pvalue=0.7086262290024822)
-2024-11-17 16:31:35,571 INFO Pearson Correlation Between Banzhaf And Approximate Banzhaf Values Hessian: PearsonRResult(statistic=0.2717978284954552, pvalue=0.6582456196131005)
-2024-11-17 16:31:35,572 INFO Actual Bad Clients: [4]
-2024-11-17 16:31:35,572 INFO Identified Bad Clients Simple: []
-2024-11-17 16:31:35,573 INFO Identified Bad Clients Hessian: [0, 1, 4, 2]
-2024-11-17 16:31:35,573 INFO Bad Client Accuracy Simple: 0.0
-2024-11-17 16:31:35,574 INFO Bad Client Accuracy Hessian: 0.25
-2024-11-17 16:31:35,574 INFO Total Run Time: 1250.884959936142
+2024-11-18 10:24:54,799 INFO Number Of Clients: 5, Client Selection Fraction: 0.6, Local Epochs: 3, Batch Size: 128
+2024-11-18 10:24:54,801 INFO Dataset: cifar, Setting: Noisy with 2 Bad Clients and 50.0% Bad Samples Per Bad Client, Number Of Rounds: 50
+2024-11-18 10:24:54,804 INFO Test Accuracy Of Global Model: 65.58%
+2024-11-18 10:24:54,804 INFO Shapley Values: [-20.782780086994173, -22.154112230738, -19.43263850212097, -21.33748800655206, -20.15864333113035]
+2024-11-18 10:24:54,805 INFO Banzhaf Values: [-4.180062815546989, -4.3498453088104725, -4.555685080587864, -3.8483868800103664, -4.286714889109135]
+2024-11-18 10:24:54,805 INFO Approximate Banzhaf Values Simple: [-0.35585358808748424, -0.3116994535084814, -0.23127485252916813, -0.3229666259139776, -0.1994790049502626]
+2024-11-18 10:24:54,806 INFO Approximate Banzhaf Values Hessian: [6.951600002124906, 15.949331819079816, -3.908022414892912, 20.873343938961625, -0.822521320078522]
+2024-11-18 10:24:54,811 INFO Pearson Correlation Between Shapley And Banzhaf Values: PearsonRResult(statistic=-0.4780153171264882, pvalue=0.41541801433916165)
+2024-11-18 10:24:54,813 INFO Pearson Correlation Between Shapley And Approximate Banzhaf Values Simple: PearsonRResult(statistic=0.6638900007998662, pvalue=0.2217415188988875)
+2024-11-18 10:24:54,815 INFO Pearson Correlation Between Shapley And Approximate Banzhaf Values Hessian: PearsonRResult(statistic=-0.8908268165991222, pvalue=0.04258581087050936)
+2024-11-18 10:24:54,818 INFO Pearson Correlation Between Banzhaf And Approximate Banzhaf Values Simple: PearsonRResult(statistic=-0.5412584799239418, pvalue=0.3461573466895372)
+2024-11-18 10:24:54,820 INFO Pearson Correlation Between Banzhaf And Approximate Banzhaf Values Hessian: PearsonRResult(statistic=0.7498856273721318, pvalue=0.14438994331461374)
+2024-11-18 10:24:54,821 INFO Actual Bad Clients: [4 2]
+2024-11-18 10:24:54,822 INFO Identified Bad Clients Simple: []
+2024-11-18 10:24:54,823 INFO Identified Bad Clients Hessian: [0, 1, 3]
+2024-11-18 10:24:54,823 INFO Bad Client Accuracy Simple: 0.0
+2024-11-18 10:24:54,824 INFO Bad Client Accuracy Hessian: 0.0
+2024-11-18 10:24:54,824 INFO Total Run Time: 1424.2342562675476
 
-2024-11-17 16:51:43,817 INFO Number Of Clients: 5, Client Selection Fraction: 0.6, Local Epochs: 3, Batch Size: 128
-2024-11-17 16:51:43,818 INFO Dataset: cifar, Setting: 1 Bad Clients with 90.0% Alpha For The Noisy Samples, Number Of Rounds: 50
-2024-11-17 16:51:43,818 INFO Test Accuracy Of Global Model: 64.45%
-2024-11-17 16:51:43,819 INFO Shapley Values: [-20.715535430113473, -19.32644038200378, -20.71147767007351, -18.42547121445339, -23.200620157519978]
-2024-11-17 16:51:43,819 INFO Banzhaf Values: [-3.9141633063554764, -4.1610516011714935, -4.140242222696543, -4.511015564203262, -5.178006570786238]
-2024-11-17 16:51:43,820 INFO Approximate Banzhaf Values Simple: [-0.2703151050955057, -0.36436435114592314, -0.2159506423631683, -0.27785790618509054, -0.17290440064971335]
-2024-11-17 16:51:43,820 INFO Approximate Banzhaf Values Hessian: [-1.0639831721782684, 8.143013438675553, -12.074904411099851, -9.85639631561935, 2.1361903809010983]
-2024-11-17 16:51:43,823 INFO Pearson Correlation Between Shapley And Banzhaf Values: PearsonRResult(statistic=0.5570124530082203, pvalue=0.3293940764484353)
-2024-11-17 16:51:43,825 INFO Pearson Correlation Between Shapley And Approximate Banzhaf Values Simple: PearsonRResult(statistic=-0.7700391035868914, pvalue=0.12771323818331826)
-2024-11-17 16:51:43,826 INFO Pearson Correlation Between Shapley And Approximate Banzhaf Values Hessian: PearsonRResult(statistic=-0.2233547457074688, pvalue=0.7179984501711746)
-2024-11-17 16:51:43,828 INFO Pearson Correlation Between Banzhaf And Approximate Banzhaf Values Simple: PearsonRResult(statistic=-0.5906400523947584, pvalue=0.2943324365851588)
-2024-11-17 16:51:43,829 INFO Pearson Correlation Between Banzhaf And Approximate Banzhaf Values Hessian: PearsonRResult(statistic=-0.12235626499581458, pvalue=0.8446007630481474)
-2024-11-17 16:51:43,830 INFO Actual Bad Clients: [0]
-2024-11-17 16:51:43,830 INFO Identified Bad Clients Simple: []
-2024-11-17 16:51:43,831 INFO Identified Bad Clients Hessian: [1, 4]
-2024-11-17 16:51:43,831 INFO Bad Client Accuracy Simple: 0.0
-2024-11-17 16:51:43,832 INFO Bad Client Accuracy Hessian: 0.0
-2024-11-17 16:51:43,832 INFO Total Run Time: 1205.080335855484
+2024-11-18 11:17:32,039 INFO Number Of Clients: 5, Client Selection Fraction: 0.6, Local Epochs: 3, Batch Size: 128
+2024-11-18 11:17:32,040 INFO Dataset: cifar, Setting: Noisy with 2 Bad Clients and 50.0% Bad Samples Per Bad Client, Number Of Rounds: 50
+2024-11-18 11:17:32,041 INFO Test Accuracy Of Global Model: 65.68%
+2024-11-18 11:17:32,041 INFO Shapley Values: [-22.314435837666196, -20.19770137270292, -20.478480769197148, -21.31773421963056, -21.60782960355282]
+2024-11-18 11:17:32,041 INFO Banzhaf Values: [-4.6422029286623, -3.7266400903463364, -4.227838825434446, -4.246132306754589, -4.628283265978098]
+2024-11-18 11:17:32,042 INFO Approximate Banzhaf Values Simple: [-0.2889999351464212, -0.3158038378460333, -0.3335704864002764, -0.31249371636658907, -0.2589186376426369]
+2024-11-18 11:17:32,042 INFO Approximate Banzhaf Values Hessian: [5.733316206838936, -10.064884222112596, 3.0495761716738343, 5.314846125431359, 5.577771117910743]
+2024-11-18 11:17:32,048 INFO Pearson Correlation Between Shapley And Banzhaf Values: PearsonRResult(statistic=0.882571463520244, pvalue=0.04744525624856431)
+2024-11-18 11:17:32,050 INFO Pearson Correlation Between Shapley And Approximate Banzhaf Values Simple: PearsonRResult(statistic=-0.6816828005956426, pvalue=0.20498162735314898)
+2024-11-18 11:17:32,052 INFO Pearson Correlation Between Shapley And Approximate Banzhaf Values Hessian: PearsonRResult(statistic=-0.7440003659737126, pvalue=0.14937214398756699)
+2024-11-18 11:17:32,054 INFO Pearson Correlation Between Banzhaf And Approximate Banzhaf Values Simple: PearsonRResult(statistic=-0.6795165593378096, pvalue=0.2070023953659999)
+2024-11-18 11:17:32,056 INFO Pearson Correlation Between Banzhaf And Approximate Banzhaf Values Hessian: PearsonRResult(statistic=-0.8956422614135989, pvalue=0.0398293371468942)
+2024-11-18 11:17:32,056 INFO Actual Bad Clients: [3 0]
+2024-11-18 11:17:32,057 INFO Identified Bad Clients Simple: []
+2024-11-18 11:17:32,057 INFO Identified Bad Clients Hessian: [0, 3, 2, 4]
+2024-11-18 11:17:32,057 INFO Bad Client Accuracy Simple: 0.0
+2024-11-18 11:17:32,058 INFO Bad Client Accuracy Hessian: 0.5
+2024-11-18 11:17:32,058 INFO Total Run Time: 1558.5535390377045

@@ -5,7 +5,7 @@ from scipy.stats import pearsonr
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 
-def process_and_graph_log(file_path):
+def process_and_graph_log(file_path, plot=False):
     # read the log file
     with open(file_path, 'r') as file:
         logs = file.read()
@@ -46,44 +46,45 @@ def process_and_graph_log(file_path):
     print("Pearson Correlation Coefficients:")
     print(f"Shapley and Approx Simple: {corr_shapley_simple:.4f}")
     print(f"Shapley and Approx Hessian: {corr_shapley_hessian:.4f}")
+    
+    if plot:    
+        # generate plots with colored groups
+        group_size = 15
+        num_groups = 4
+        colors = plt.cm.tab10(np.arange(num_groups))
+        group_labels = ['IID', 'Non IID', 'Mislabeled', 'Noisy']
 
-    # generate plots with colored groups
-    group_size = 15
-    num_groups = 4
-    colors = plt.cm.tab10(np.arange(num_groups))
-    group_labels = ['IID', 'Non IID', 'Mislabeled', 'Noisy']
+        # Assign colors to data points
+        color_groups = [colors[i // group_size] for i in range(len(data))]
 
-    # Assign colors to data points
-    color_groups = [colors[i // group_size] for i in range(len(data))]
+        # Generate legend
+        legend_handles = [
+            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=colors[i], markersize=10, label=group_labels[i])
+            for i in range(num_groups)
+        ]
 
-    # Generate legend
-    legend_handles = [
-        plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=colors[i], markersize=10, label=group_labels[i])
-        for i in range(num_groups)
-    ]
+        # generate plots
+        plt.figure(figsize=(12, 4))
 
-    # generate plots
-    plt.figure(figsize=(12, 4))
+        plt.subplot(1, 2, 1)
+        plt.scatter(data['Shapley'], data['Approx_Simple'], alpha=0.6, c=color_groups)
+        plt.title(f"Shapley vs Approx Simple (Corr: {corr_shapley_simple:.2f})")
+        plt.xlabel("Shapley")
+        plt.ylabel("Approx Simple")
+        plt.legend(handles=legend_handles, title="Groups", loc="best")
 
-    plt.subplot(1, 2, 1)
-    plt.scatter(data['Shapley'], data['Approx_Simple'], alpha=0.6, c=color_groups)
-    plt.title(f"Shapley vs Approx Simple (Corr: {corr_shapley_simple:.2f})")
-    plt.xlabel("Shapley")
-    plt.ylabel("Approx Simple")
-    plt.legend(handles=legend_handles, title="Groups", loc="best")
+        plt.subplot(1, 2, 2)
+        plt.scatter(data['Shapley'], data['Approx_Hessian'], alpha=0.6, c=color_groups)
+        plt.title(f"Shapley vs Approx Hessian (Corr: {corr_shapley_hessian:.2f})")
+        plt.xlabel("Shapley")
+        plt.ylabel("Approx Hessian")
+        plt.legend(handles=legend_handles, title="Groups", loc="best")
 
-    plt.subplot(1, 2, 2)
-    plt.scatter(data['Shapley'], data['Approx_Hessian'], alpha=0.6, c=color_groups)
-    plt.title(f"Shapley vs Approx Hessian (Corr: {corr_shapley_hessian:.2f})")
-    plt.xlabel("Shapley")
-    plt.ylabel("Approx Hessian")
-    plt.legend(handles=legend_handles, title="Groups", loc="best")
-
-    plt.tight_layout()
-    plt.show()
+        plt.tight_layout()
+        plt.show()
 
 # example usage
-process_and_graph_log('pcc/cifar.log')
-process_and_graph_log('pcc/fmnist.log')
+process_and_graph_log('pcc/cifar.log', plot=False)
+process_and_graph_log('pcc/fmnist.log', plot=False)
 
 # todo only colour the actual bad clients as bad clients.
