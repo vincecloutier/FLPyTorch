@@ -5,11 +5,11 @@ for i in {1..3}
 do
 
     # CIFAR commands
-    echo "Run $i for CIFAR"
-    # python benchmark.py --dataset cifar --setting 0 --processes 30 --local_ep 10
-    # python benchmark.py --dataset cifar --setting 1 --processes 30 --local_ep 3
-    python benchmark.py --dataset cifar --setting 2 --processes 30 --local_ep 3
-    python benchmark.py --dataset cifar --setting 3 --processes 30 --local_ep 3
+    # echo "Run $i for CIFAR"
+    # # python benchmark.py --dataset cifar --setting 0 --processes 30 --local_ep 10
+    # # python benchmark.py --dataset cifar --setting 1 --processes 30 --local_ep 3
+    # python benchmark.py --dataset cifar --setting 2 --processes 30 --local_ep 3
+    # python benchmark.py --dataset cifar --setting 3 --processes 30 --local_ep 3
 
     # FMNIST commands
     echo "Run $i for FMNIST"
