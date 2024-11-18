@@ -98,7 +98,7 @@ def get_dataset(args):
         return train_dataset, valid_dataset, test_dataset, user_groups, bad_clients
     elif args.setting == 3:
         iid_user_groups = iid(train_dataset, args.num_users)
-        user_groups, bad_clients = noisy(train_dataset, args.dataset, iid_user_groups, args.badclient_prop, args.alpha)
+        user_groups, bad_clients = noisy(train_dataset, args.dataset, iid_user_groups, args.badclient_prop, args.alpha, [5, 6, 7, 8, 9])
         return train_dataset, valid_dataset, test_dataset, user_groups, bad_clients 
     else:
         raise ValueError("Invalid value for --setting. Please use 0, 1, 2, or 3.")

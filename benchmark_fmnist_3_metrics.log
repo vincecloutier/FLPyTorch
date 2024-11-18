@@ -1,0 +1,7 @@
+2024-11-18 08:54:24,762 INFO Number Of Clients: 2, Client Selection Fraction: 0.6, Local Epochs: 10, Batch Size: 128
+2024-11-18 08:54:24,763 INFO Dataset: fmnist, Setting: 0 Bad Clients with 90.0% Alpha For The Noisy Samples, Number Of Rounds: 1
+2024-11-18 08:54:24,763 INFO Test Accuracy Of Global Model: 87.91%
+2024-11-18 08:54:24,763 INFO Shapley Values: []
+2024-11-18 08:54:24,763 INFO Banzhaf Values: []
+2024-11-18 08:54:24,763 INFO Approximate Banzhaf Values Simple: []
+2024-11-18 08:54:24,763 INFO Approximate Banzhaf Values Hessian: []

@@ -6,7 +6,7 @@ import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 
 def process_and_graph_log(file_path):
-    # Read the log file
+    # read the log file
     with open(file_path, 'r') as file:
         logs = file.read()
 
@@ -24,11 +24,6 @@ def process_and_graph_log(file_path):
     shapley_all = np.array([val for run in shapley_values for val in run])
     approx_simple_all = np.array([val for run in approx_simple_values for val in run])
     approx_hessian_all = np.array([val for run in approx_hessian_values for val in run])
-
-    # remove the last 30 values
-    # shapley_all = shapley_all[:-30]
-    # approx_simple_all = approx_simple_all[:-30]
-    # approx_hessian_all = approx_hessian_all[:-30]
 
     # min_max scale the data to 0-1
     scaler = MinMaxScaler()
@@ -72,6 +67,7 @@ def process_and_graph_log(file_path):
 
     plt.subplot(1, 2, 1)
     plt.scatter(data['Shapley'], data['Approx_Simple'], alpha=0.6, c=color_groups)
+    plt.plot([0, 1], [0, 1], color='black', linestyle='--', linewidth=1)
     plt.title(f"Shapley vs Approx Simple (Corr: {corr_shapley_simple:.2f})")
     plt.xlabel("Shapley")
     plt.ylabel("Approx Simple")
@@ -79,6 +75,7 @@ def process_and_graph_log(file_path):
 
     plt.subplot(1, 2, 2)
     plt.scatter(data['Shapley'], data['Approx_Hessian'], alpha=0.6, c=color_groups)
+    plt.plot([0, 1], [0, 1], color='black', linestyle='--', linewidth=1)
     plt.title(f"Shapley vs Approx Hessian (Corr: {corr_shapley_hessian:.2f})")
     plt.xlabel("Shapley")
     plt.ylabel("Approx Hessian")
@@ -88,5 +85,7 @@ def process_and_graph_log(file_path):
     plt.show()
 
 # example usage
-process_and_graph_log('pcc/cifarconvergence.log')
+process_and_graph_log('pcc/cifar.log')
 process_and_graph_log('pcc/fmnist.log')
+
+# todo only colour the actual bad clients as bad clients.
