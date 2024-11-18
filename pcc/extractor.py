@@ -29,11 +29,11 @@ def process_and_graph_log(file_path):
     approx_hessian_all = [val for run in approx_hessian_values for val in run]
 
     # min max scale the data
-    scaler = MinMaxScaler()
-    shapley_all = scaler.fit_transform(np.array(shapley_all).reshape(-1, 1))
-    banzhaf_all = scaler.fit_transform(np.array(banzhaf_all).reshape(-1, 1))
-    approx_simple_all = scaler.fit_transform(np.array(approx_simple_all).reshape(-1, 1))
-    approx_hessian_all = scaler.fit_transform(np.array(approx_hessian_all).reshape(-1, 1))
+    # scaler = MinMaxScaler()
+    # shapley_all = scaler.fit_transform(np.array(shapley_all).reshape(-1, 1))
+    # banzhaf_all = scaler.fit_transform(np.array(banzhaf_all).reshape(-1, 1))
+    # approx_simple_all = scaler.fit_transform(np.array(approx_simple_all).reshape(-1, 1))
+    # approx_hessian_all = scaler.fit_transform(np.array(approx_hessian_all).reshape(-1, 1))
 
     # Create a DataFrame for easier processing
     data = pd.DataFrame({
