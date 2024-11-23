@@ -27,7 +27,7 @@ ray.init(
     num_cpus=36
 )
 
-# Define a Ray actor for client training with GPU constraints
+# define a ray actor for client training with gpu constraints
 @ray.remote(num_gpus=1)
 class ClientTrainer:
     def __init__(self, args, trainloader):
@@ -68,9 +68,9 @@ class ClientTrainer:
             epoch_loss.append(sum(batch_loss) / len(batch_loss))
         return self.model.state_dict()
 
-# Define the train_subset function without nested remote calls
+# define the train_subset function without nested remote calls
 @ray.remote
-def train_subset(args, global_weights, client_trainer_ids, subset_key, isBanzhaf, test_dataset_ref, valid_dataset_ref):
+def train_subset(args, global_weights, client_trainer_ids, subset_key, isBanzhaf):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     if not subset_key:
@@ -204,9 +204,8 @@ if __name__ == '__main__':
     # Adjust this condition based on your specific Banzhaf subset criteria
     # For example, mark a specific subset as Banzhaf or use another logic
     # Here, we assume all subsets are not Banzhaf except a specific one for demonstration
-    banzhaf_subset = tuple(range(5))  # Example: first 5 clients
     subset_info = {
-        subset: (subset == banzhaf_subset)
+        subset: (subset == (0, 1, 2, 3, 4))
         for subset in all_subsets
     }
 
