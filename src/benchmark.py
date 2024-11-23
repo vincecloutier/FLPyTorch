@@ -48,7 +48,7 @@ def train_subset(args, global_weights, train_loaders, valid_dataset, test_datase
             idxs_users = np.random.choice(subset_key, m, replace=False)
 
             for idx in idxs_users:
-                w = train_client(args, global_weights, train_loaders[idx], device, (1 / (len(idxs_users) * args.local_ep)).item(), pbar)
+                w = train_client(args, global_weights, train_loaders[idx], device, (1 / (len(idxs_users) * args.local_ep)), pbar)
                 local_weights.append(w)
                 if isBanzhaf:
                     delta_t[epoch][idx] = {key: (global_weights[key] - w[key]).to(device) for key in w.keys()}
