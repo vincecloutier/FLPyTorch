@@ -74,7 +74,7 @@ def test_inference(model, test_dataset):
         # inference
         outputs = model(images)
         batch_loss = criterion(outputs, labels)
-        # loss += batch_loss.item() * len(labels)
+        loss += batch_loss.item() * len(labels)
         loss += batch_loss.item()
 
         # prediction
@@ -84,7 +84,7 @@ def test_inference(model, test_dataset):
         total += len(labels)
 
     accuracy = correct / total
-    # loss = loss / total
+    loss = loss / total
     return accuracy, loss
 
 
