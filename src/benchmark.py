@@ -14,6 +14,7 @@ from scipy.stats import pearsonr
 import ray
 import copy
 from torch import nn
+from tqdm import tqdm  
 
 @ray.remote(num_gpus=0.5)
 def train_subset(args, global_model, train_loaders, valid_dataset, test_dataset, global_weights, clients=None):
@@ -34,7 +35,7 @@ def train_subset(args, global_model, train_loaders, valid_dataset, test_dataset,
         delta_g = defaultdict(lambda: {key: torch.zeros_like(global_weights[key]) for key in global_weights.keys()})
 
     no_improvement_count = 0
-    for epoch in range(args.epochs):
+    for epoch in tqdm(range(args.epochs)):
         local_weights = []
         model.train()
         if isBanzhaf:
@@ -163,4 +164,41 @@ if __name__ == '__main__':
                 shapley_values[client] += ((fact(len(subset)) * fact(args.num_users - len(subset) - 1)) / fact(args.num_users)) * mc
                 banzhaf_values[client] += mc / len(all_subsets)
 
+    longest_client_key = max(results.keys(), key=len)
+    test_loss, test_acc, abv_simple, abv_hessian = results[longest_client_key]
+
+    identified_bad_clients_simple = identify_bad_idxs(abv_simple)
+    identified_bad_clients_hessian = identify_bad_idxs(abv_hessian)
+    bad_client_accuracy_simple = measure_accuracy(actual_bad_clients, identified_bad_clients_simple)
+    bad_client_accuracy_hessian = measure_accuracy(actual_bad_clients, identified_bad_clients_hessian)
+
+    shared_clients = set(shapley_values.keys()) & set(banzhaf_values.keys()) & set(abv_simple.keys()) & set(abv_hessian.keys())
+    sv = [shapley_values[client] for client in shared_clients]
+    bv = [banzhaf_values[client] for client in shared_clients]
+    abv_simple = [abv_simple[client] for client in shared_clients]
+    abv_hessian = [abv_hessian[client] for client in shared_clients]
+
+    setting_str = {
+        0: "IID",
+        1: f"Non IID with {len(actual_bad_clients)} Bad Clients and {args.num_categories_per_client} Categories Per Bad Client",
+        2: f"Mislabeled with {len(actual_bad_clients)} Bad Clients and {100 * args.badsample_prop}% Bad Samples Per Bad Client",
+        3: f"Noisy with {len(actual_bad_clients)} Bad Clients and {100 * args.badsample_prop}% Bad Samples Per Bad Client"
+    }.get(args.setting, "Unknown Setting")
+    logger.info(f'Number Of Clients: {args.num_users}, Client Selection Fraction: {args.frac}, Local Epochs: {args.local_ep}, Batch Size: {args.local_bs}')
+    logger.info(f'Dataset: {args.dataset}, Setting: {setting_str}, Number Of Rounds: {args.epochs}')
+    logger.info(f'Test Accuracy Of Global Model: {100 * test_acc}%')
+    logger.info(f'Shapley Values: {sv}')
+    logger.info(f'Banzhaf Values: {bv}')
+    logger.info(f'Approximate Banzhaf Values Simple: {abv_simple}')
+    logger.info(f'Approximate Banzhaf Values Hessian: {abv_hessian}')
+    logger.info(f'Pearson Correlation Between Shapley And Banzhaf Values: {pearsonr(sv, bv)}')
+    logger.info(f'Pearson Correlation Between Shapley And Approximate Banzhaf Values Simple: {pearsonr(sv, abv_simple)}')
+    logger.info(f'Pearson Correlation Between Shapley And Approximate Banzhaf Values Hessian: {pearsonr(sv, abv_hessian)}')
+    logger.info(f'Pearson Correlation Between Banzhaf And Approximate Banzhaf Values Simple: {pearsonr(bv, abv_simple)}')
+    logger.info(f'Pearson Correlation Between Banzhaf And Approximate Banzhaf Values Hessian: {pearsonr(bv, abv_hessian)}')
+    logger.info(f'Actual Bad Clients: {actual_bad_clients}')
+    logger.info(f'Identified Bad Clients Simple: {identified_bad_clients_simple}')
+    logger.info(f'Identified Bad Clients Hessian: {identified_bad_clients_hessian}')
+    logger.info(f'Bad Client Accuracy Simple: {bad_client_accuracy_simple}')
+    logger.info(f'Bad Client Accuracy Hessian: {bad_client_accuracy_hessian}')
     logger.info(f'Total Run Time: {time.time() - start_time}')
