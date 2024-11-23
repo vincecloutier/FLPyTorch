@@ -32,7 +32,7 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
 
         model.train()
         if isBanzhaf:
-            gradient = test_gradient(args, model, valid_dataset)
+            gradient = test_gradient(args, model, valid_dataset, device)
 
         m = max(int(args.frac * len(clients)), 1)
         idxs_users = np.random.choice(clients, m, replace=False)
