@@ -87,8 +87,7 @@ def get_dataset(args):
         ])
 
         # download the dataset if it doesn't exist
-        if not os.path.exists(data_dir):
-            download_imagenet(data_dir) 
+        download_imagenet(data_dir) 
 
         # load the full training dataset
         full_train_dataset = datasets.ImageNet(data_dir, train=True, transform=train_transform)
