@@ -116,7 +116,7 @@ def train_client(args, global_weights, trainloader, device):
 
 
 if __name__ == '__main__':
-    ray.init(include_dashboard=True, logging_level="DEBUG", object_store_memory=20 * 1024**3, num_gpus=torch.cuda.available, num_cpus=36)
+    ray.init(include_dashboard=True, logging_level="DEBUG", object_store_memory=20 * 1024**3, num_gpus=3, num_cpus=36)
     start_time = time.time()
 
     args = args_parser()
