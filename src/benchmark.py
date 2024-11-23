@@ -16,53 +16,16 @@ from torch import nn
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-# Define the ClientTrainer as a standard class
-class ClientTrainer:
-    def __init__(self, args, trainloader, device):
-        self.args = args
-        self.trainloader = trainloader
-        self.device = device
-        print(f"Trainer using GPU: {self.device}")
-        self.model = initialize_model(args).to(self.device)
-        self.optimizer = self._get_optimizer()
-        self.criterion = nn.CrossEntropyLoss()
 
-    def _get_optimizer(self):
-        if self.args.optimizer == 'sgd':
-            return torch.optim.SGD(self.model.parameters(), lr=self.args.lr, momentum=self.args.momentum)
-        elif self.args.optimizer == 'adam':
-            return torch.optim.Adam(self.model.parameters(), lr=self.args.lr, weight_decay=1e-4)
-        else:
-            raise ValueError(f"Unsupported optimizer: {self.args.optimizer}")
+def train_subset(args, global_weights, train_loaders, valid_dataset, test_dataset, clients, device):
 
-    def update_weights(self, global_weights):
-        self.model.load_state_dict(global_weights)
+    global_model = initialize_model(args)
+    global_model.to(device)
+    global_model.load_state_dict(global_weights)
+    global_model.train()
 
-    def train(self, global_weights, local_ep):
-        self.update_weights(global_weights)
-        self.model.train()
-        epoch_loss = []
-        for _ in range(local_ep):
-            batch_loss = []
-            for images, labels in self.trainloader:
-                images, labels = images.to(self.device), labels.to(self.device)
-                self.optimizer.zero_grad()
-                log_probs = self.model(images)
-                loss = self.criterion(log_probs, labels)
-                loss.backward()
-                torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
-                self.optimizer.step()
-                batch_loss.append(loss.item())
-            epoch_loss.append(sum(batch_loss) / len(batch_loss))
-        return self.model.state_dict()
-
-# deine the train_subset function without Ray
-def train_subset(args, global_weights, client_trainers, valid_dataset, test_dataset, clients):
-    model = initialize_model(args).to(device)
-
-    # sort the clients
     subset_key = tuple(sorted(clients))
-    isBanzhaf = subset_key == (0, 1, 2, 3, 4)
+    isBanzhaf = subset_key == (0, 1, 2, 3, 4) 
     best_test_acc, best_test_loss = 0, float('inf')
     approx_banzhaf_values_hessian = defaultdict(float)
     approx_banzhaf_values_simple = defaultdict(float)
@@ -77,116 +40,122 @@ def train_subset(args, global_weights, client_trainers, valid_dataset, test_data
         m = max(int(args.frac * len(subset_key)), 1)
         idxs_users = np.random.choice(subset_key, m, replace=False)
 
-        
-        training_futures = []
         for idx in idxs_users:
-            local_weights.append(client_trainers[idx].train(global_weights, args.local_ep))
+            w = train_client(args, global_weights, train_loaders[idx], device)
+            local_weights.append(w)
+            if isBanzhaf:
+                delta_t[epoch][idx] = {key: (global_weights[key] - w[key]).to(device) for key in w.keys() }
 
-        # if using banzhaf, compute values
         if isBanzhaf:
-            grad = gradient(args, initialize_model(args).to(device), valid_dataset, device)  # Adjusted for example
+            grad = gradient(args, global_model, valid_dataset, device)
             G_t = compute_G_t(delta_t[epoch], global_weights.keys())
             for idx in idxs_users:
                 G_t_minus_i = compute_G_minus_i_t(delta_t[epoch], global_weights.keys(), idx)
                 if epoch > 0:
                     for key in global_weights.keys():
                         delta_g[idx][key] += G_t_minus_i[key] - G_t[key]
-                approx_banzhaf_values_hessian[idx] += compute_bv_hvp(args, initialize_model(args).to(device), test_dataset, grad, delta_t[epoch][idx], delta_g[idx], device)
+                approx_banzhaf_values_hessian[idx] += compute_bv_hvp(args, global_model, test_dataset, grad, delta_t[epoch][idx], delta_g[idx], device)
                 approx_banzhaf_values_simple[idx] += compute_bv_simple(args, grad, delta_t[epoch][idx])
 
-        # average the local weights to update global weights
-        global_weights = average_weights(local_weights)
+            # average the local weights to update global weights
+            global_weights = average_weights(local_weights)
+            global_model.load_state_dict(global_weights)
 
-        # update global weights across all trainers
-        for trainer in client_trainers.values():
-            trainer.update_weights(global_weights)
-
-        # evaluate the global model using one of the trainers
-        test_acc, test_loss = inference(args, initialize_model(args).to(device), test_dataset, device)
-        if test_acc > best_test_acc * 1.01 or test_loss < best_test_loss * 0.99:
-            best_test_acc = test_acc
-            best_test_loss = test_loss
-            no_improvement_count = 0
-        else:
-            no_improvement_count += 1
-            if no_improvement_count > 3:
-                break
+            # evaluate the global model
+            test_acc, test_loss = inference(args, global_model, test_dataset, device)
+            if test_acc > best_test_acc * 1.01 or test_loss < best_test_loss * 0.99:
+                best_test_acc = test_acc
+                best_test_loss = test_loss
+                no_improvement_count = 0
+            else:
+                no_improvement_count += 1
+                if no_improvement_count > 3:
+                    print(f"No improvement for {no_improvement_count} consecutive epochs. Stopping early.")
+                    break
 
     torch.cuda.empty_cache()
     return subset_key, best_test_loss, best_test_acc, approx_banzhaf_values_simple, approx_banzhaf_values_hessian
 
-# main execution block
+
+def train_client(args, global_weights, trainloader, device):
+    model = initialize_model(args)
+    model.to(device)
+    model.load_state_dict(global_weights)
+    model.train()
+
+    epoch_loss = []
+
+    criterion = nn.CrossEntropyLoss().to(device)
+
+    # set optimizer 
+    if args.optimizer == 'sgd':
+        optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
+    elif args.optimizer == 'adam':
+        optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=1e-4)
+    else:
+        raise ValueError(f"Unsupported optimizer: {args.optimizer}")
+
+    for epoch in range(args.local_ep):
+        batch_loss = []
+        for images, labels in trainloader:
+            images, labels = images.to(device), labels.to(device)
+
+            optimizer.zero_grad()
+            log_probs = model(images)
+            loss = criterion(log_probs, labels)
+            loss.backward()
+
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+
+            optimizer.step()
+            batch_loss.append(loss.item())
+        epoch_loss.append(sum(batch_loss) / len(batch_loss))
+        if args.verbose:
+            print(f'Local Epoch {epoch} - Loss: {epoch_loss[-1]}')
+
+    return model.state_dict()
+
+
 if __name__ == '__main__':
     start_time = time.time()
 
     args = args_parser()
     logger = setup_logger(f'benchmark_{args.dataset}_{args.setting}')
 
-    # Load datasets
+    # load datasets
     train_dataset, valid_dataset, test_dataset, user_groups, actual_bad_clients = get_dataset(args)
 
-    # Initialize global model
+    # initialize global model
     global_model = initialize_model(args)
     global_weights = global_model.state_dict()
 
-    # prepare dataloaders
-    train_loaders = {user_id: DataLoader(SubsetSplit(train_dataset, indices), batch_size=args.local_bs, shuffle=True, num_workers=args.num_workers) for user_id, indices in user_groups.items()}
+    # prepare dataloaders for each client
+    train_loaders = {
+        user_id: DataLoader(SubsetSplit(train_dataset, indices), batch_size=args.local_bs, shuffle=True, num_workers=args.num_workers)
+        for user_id, indices in user_groups.items()
+    }
 
-    # check available GPUs
-    available_gpus = [torch.device(f"cuda:{i}") for i in range(torch.cuda.device_count())] if torch.cuda.is_available() else [torch.device("cpu")]
-
-    num_trainers = min(5, len(available_gpus))  # limit to available GPUs
-    client_trainers = {}
-    for trainer_id in range(num_trainers):
-        # assign clients to each trainer (simple distribution)
-        assigned_clients = [user_id for user_id in user_groups.keys() if user_id % num_trainers == trainer_id]
-        # combine their trainloaders
-        if assigned_clients:
-            combined_dataset = torch.utils.data.ConcatDataset([SubsetSplit(train_dataset, user_groups[user_id]) for user_id in assigned_clients])
-            combined_loader = DataLoader(
-                combined_dataset,
-                batch_size=args.local_bs,
-                shuffle=True,
-                num_workers=args.num_workers
-            )
-        else:
-            # If no clients are assigned, use an empty dataset
-            combined_loader = DataLoader(
-                torch.utils.data.TensorDataset(torch.empty(0), torch.empty(0)),
-                batch_size=args.local_bs,
-                shuffle=True,
-                num_workers=args.num_workers
-            )
-        # assign GPU or CPU
-        device = available_gpus[trainer_id] if trainer_id < len(available_gpus) else torch.device("cpu")
-        # initialize the trainer
-        trainer = ClientTrainer(args, combined_loader, device)
-        client_trainers[trainer_id] = trainer
-
-    # broadcast initial global weights to all trainers
-    for trainer in client_trainers.values():
-        trainer.update_weights(global_weights)
-
-    # references to datasets
-    valid_dataset_ref = valid_dataset
-    test_dataset_ref = test_dataset
-
-    # generate all possible subsets (consider limiting this if num_users is large)
     all_subsets = list(itertools.chain.from_iterable(itertools.combinations(range(args.num_users), r) for r in range(args.num_users, -1, -1)))
+
+    # distribute subsets evenly across devices
+    available_gpus = [torch.device(f"cuda:{i}") for i in range(torch.cuda.device_count())] if torch.cuda.is_available() else [torch.device("cpu")]
+    subset_device_mapping = {subset: available_gpus[i % len(available_gpus)] for i, subset in enumerate(all_subsets)}
+
+    print(f"Available devices: {available_gpus}")
 
     # launch train_subset tasks in parallel with controlled concurrency
     results_list = []
     with ThreadPoolExecutor(max_workers=args.processes) as executor:
-        future_to_subset = {executor.submit(train_subset, args, copy.deepcopy(global_weights), client_trainers, clients, valid_dataset_ref, test_dataset_ref
-            ): clients for clients in all_subsets
-        }
+        # create a future for each subset
+        future_to_subset = {executor.submit(train_subset, args, global_weights, train_loaders, valid_dataset, test_dataset, subset, subset_device_mapping[subset]): subset for subset in all_subsets}
 
-        for future in tqdm(as_completed(future_to_subset), total=len(future_to_subset), desc="Processing subsets"):
+        # process the results as they complete
+        for future in tqdm(as_completed(future_to_subset), total=len(future_to_subset), desc="Processing Subsets"):
+            subset = future_to_subset[future]
             try:
                 result = future.result()
                 results_list.append(result)
             except Exception as exc:
-                subset = future_to_subset[future]
                 print(f'Subset {subset} generated an exception: {exc}')
 
     results = {subset_key: (loss, accuracy, abv_simple, abv_hessian) for subset_key, loss, accuracy, abv_simple, abv_hessian in results_list}
@@ -200,14 +169,14 @@ if __name__ == '__main__':
                 subset_with_client_key = tuple(sorted(subset + (client,)))
                 if subset_key in results and subset_with_client_key in results:
                     mc = results[subset_key][0] - results[subset_with_client_key][0]
-                    shapley_values[client] += ((fact(len(subset)) * fact(args.num_users - len(subset) - 1)) / fact(args.num_users)) * mc
+                    shapley_values[client] += mc * ((fact(len(subset)) * fact(args.num_users - len(subset) - 1)) / fact(args.num_users))
                     banzhaf_values[client] += mc / len(all_subsets)
 
     # identify the subset with the longest key (assuming it's the full set)
     longest_client_key = max(results.keys(), key=lambda x: len(x))
     test_loss, test_acc, abv_simple, abv_hessian = results[longest_client_key]
 
-    # identify bad clients using approximate banzhaf values
+    # identify bad clients using approximate Banzhaf values
     identified_bad_clients_simple = identify_bad_idxs(abv_simple)
     identified_bad_clients_hessian = identify_bad_idxs(abv_hessian)
     bad_client_accuracy_simple = measure_accuracy(actual_bad_clients, identified_bad_clients_simple)
