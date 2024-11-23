@@ -17,7 +17,7 @@ import ray
 from ray.util.iter import from_items
 from torch import nn
 
-@ray.remote
+@ray.remote(num_gpus=0.2)
 def train_subset(args, train_loaders, valid_dataset, test_dataset, clients=None):
     model = initialize_model(args)
     subset_key = tuple(sorted(clients))
@@ -40,7 +40,7 @@ def train_subset(args, train_loaders, valid_dataset, test_dataset, clients=None)
         local_weights = []
         model.train()
         if isBanzhaf:
-            gradient = gradient(args, model, valid_dataset)
+            global_gradient = gradient(args, model, valid_dataset)
 
         m = max(int(args.frac * len(clients)), 1)
         idxs_users = np.random.choice(clients, m, replace=False)
@@ -60,8 +60,8 @@ def train_subset(args, train_loaders, valid_dataset, test_dataset, clients=None)
                 if epoch > 0:
                     for key in global_weights.keys():
                         delta_g[idx][key] += G_t_minus_i[key] - G_t[key]
-                approx_banzhaf_values_hessian[idx] += compute_bv_hvp(args, model, test_dataset, gradient, delta_t[epoch][idx], delta_g[idx], device)
-                approx_banzhaf_values_simple[idx] += compute_bv_simple(args, gradient, delta_t[epoch][idx])
+                approx_banzhaf_values_hessian[idx] += compute_bv_hvp(args, model, test_dataset, global_gradient, delta_t[epoch][idx], delta_g[idx], device)
+                approx_banzhaf_values_simple[idx] += compute_bv_simple(args, global_gradient, delta_t[epoch][idx])
 
         global_weights = average_weights(local_weights)
         model.load_state_dict(global_weights)
@@ -80,9 +80,11 @@ def train_subset(args, train_loaders, valid_dataset, test_dataset, clients=None)
     return subset_key, best_test_loss, best_test_acc, approx_banzhaf_values_simple, approx_banzhaf_values_hessian
 
 
-@ray.remote
+@ray.remote(num_gpus=0.1)
 def train_client(args, model, trainloader, device):
-    # set mode to train
+    # model.load_state_dict(global_weights)
+
+    # set model to train
     model.train()
     epoch_loss = []
 
