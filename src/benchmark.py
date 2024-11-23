@@ -28,7 +28,7 @@ ray.init(
 )
 
 # Define a Ray actor for client training
-@ray.remote
+@ray.remote(num_gpus=1)
 class ClientTrainer:
     def __init__(self, args, trainloader, device):
         self.args = args
@@ -72,7 +72,7 @@ class ClientTrainer:
         return self.model.state_dict()
 
 # Define the train_subset function without nested remote calls
-@ray.remote
+@ray.remote(num_cpus=1)
 def train_subset(args, global_weights, client_trainers, subset_key, isBanzhaf, valid_dataset_ref, test_dataset_ref):
     device = get_device()
 
@@ -138,21 +138,21 @@ def train_subset(args, global_weights, client_trainers, subset_key, isBanzhaf, v
     torch.cuda.empty_cache()
     return subset_key, best_test_loss, best_test_acc, approx_banzhaf_values_simple, approx_banzhaf_values_hessian
 
-# Main execution block
+# main execution block
 if __name__ == '__main__':
     start_time = time.time()
 
     args = args_parser()
     logger = setup_logger(f'benchmark_{args.dataset}_{args.setting}')
 
-    # Load datasets
+    # load datasets
     train_dataset, valid_dataset, test_dataset, user_groups, actual_bad_clients = get_dataset(args)
 
-    # Initialize global model
+    # initialize global model
     global_model = initialize_model(args)
     global_weights = global_model.state_dict()
 
-    # Prepare DataLoaders
+    # prepare dataloaders
     train_loaders = {
         user_id: DataLoader(
             SubsetSplit(train_dataset, indices),
@@ -163,7 +163,7 @@ if __name__ == '__main__':
         for user_id, indices in user_groups.items()
     }
 
-    # Create Ray actors for each client
+    # create ray actors for each client
     client_trainers = {
         user_id: ClientTrainer.remote(
             args, 
@@ -173,24 +173,24 @@ if __name__ == '__main__':
         for user_id in user_groups.keys()
     }
 
-    # Broadcast initial global weights to all clients
+    # broadcast initial global weights to all clients
     update_futures = [trainer.update_weights.remote(global_weights) for trainer in client_trainers.values()]
     ray.get(update_futures)
 
-    # References to datasets to avoid data copying
+    # references to datasets to avo d data copying
     valid_dataset_ref = ray.put(valid_dataset)
     test_dataset_ref = ray.put(test_dataset)
 
-    # Generate all possible subsets (consider limiting this if num_users is large)
+    # generate all possible subsets (consider limiting this if num_users is large)
     all_subsets = list(itertools.chain.from_iterable(itertools.combinations(range(args.num_users), r) for r in range(args.num_users, -1, -1)))
 
-    # Prepare a dictionary to map subset keys to whether they are the Banzhaf subset
+    # prepare a dictionary to map subset keys to whether they are the Banzhaf subset
     subset_info = {
         subset: (subset == (0, 1, 2, 3, 4))  # Modify this condition based on your specific Banzhaf subset criteria
         for subset in all_subsets
     }
 
-    # Launch train_subset tasks in parallel with controlled concurrency
+    # launch train_subset tasks in parallel with controlled concurrency
     futures = [
         train_subset.remote(
             args, 
@@ -202,14 +202,14 @@ if __name__ == '__main__':
         for clients, isBanzhaf in subset_info.items()
     ]
 
-    # Collect results
+    # collect results
     results_list = ray.get(futures)
     results = {
         subset_key: (loss, accuracy, abv_simple, abv_hessian)
         for subset_key, loss, accuracy, abv_simple, abv_hessian in results_list
     }
 
-    # Compute Shapley and Banzhaf values
+    # compute shapley and banzhaf values
     shapley_values, banzhaf_values = defaultdict(float), defaultdict(float)
     for client in range(args.num_users):
         for r in range(args.num_users):
@@ -221,10 +221,10 @@ if __name__ == '__main__':
                     shapley_values[client] += ((fact(len(subset)) * fact(args.num_users - len(subset) - 1)) / fact(args.num_users)) * mc
                     banzhaf_values[client] += mc / len(all_subsets)
 
-    # Identify the subset with the longest key (assuming it's the full set)
+    # identify the subset with the longest key (assuming it's the full set)
     longest_client_key = max(results.keys(), key=len)
     test_loss, test_acc, abv_simple, abv_hessian = results[longest_client_key]
-
+    
     # Identify bad clients using approximate Banzhaf values
     identified_bad_clients_simple = identify_bad_idxs(abv_simple)
     identified_bad_clients_hessian = identify_bad_idxs(abv_hessian)
