@@ -6,6 +6,9 @@ from sampling import iid, noniid, mislabeled, noisy
 import logging
 import numpy as np
 from models import CNNFashion, CNNCifar, ResNet9, MobileNetV2
+import os
+import json
+import subprocess
 
 class SubsetSplit(Dataset):
     """An abstract Dataset class wrapped around Pytorch Dataset class."""
@@ -29,26 +32,26 @@ def get_dataset(args):
     """
     if args.dataset == 'cifar' or args.dataset == 'resnet' or args.dataset == 'mobilenet':
         data_dir = './data/cifar/'
-        transform_train = transforms.Compose([
+        train_transform = transforms.Compose([
             transforms.RandomCrop(32, padding=4),
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
             transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
         ])
 
-        transform_test = transforms.Compose([
+        test_transform = transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
         ])
         
         # load the full training dataset
-        full_train_dataset = datasets.CIFAR10(data_dir, train=True, download=True, transform=transform_train)
+        full_train_dataset = datasets.CIFAR10(data_dir, train=True, download=True, transform=train_transform)
 
         # allocate 10% of the training set as validation set
         train_dataset, valid_dataset = train_val_split(full_train_dataset, 0.1)
 
         # load the test dataset
-        test_dataset = datasets.CIFAR10(data_dir, train=False, download=True, transform=transform_test)
+        test_dataset = datasets.CIFAR10(data_dir, train=False, download=True, transform=test_transform)
     elif args.dataset == 'fmnist':
         data_dir = './data/fmnist/'
         train_transform = transforms.Compose([
@@ -70,20 +73,31 @@ def get_dataset(args):
         test_dataset = datasets.FashionMNIST(data_dir, train=False, download=True, transform=test_transform)
     else:
         data_dir = './data/imagenet/'
-        # transform_train = transforms.Compose([
-        #     transforms.RandomResizedCrop(224),
-        #     transforms.RandomHorizontalFlip(),
-        #     transforms.ToTensor(),
-        #     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        # ])
-        # full_train_dataset = datasets.ImageNet(data_dir, train=True, download=True, transform=transform_train)
+        train_transform = transforms.Compose([
+            transforms.RandomResizedCrop(224),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ])
+        test_transform = transforms.Compose([
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ])
 
-        # # allocate 10% of the training set as validation set
-        # train_dataset, valid_dataset = train_val_split(full_train_dataset, 0.1)
+        # download the dataset if it doesn't exist
+        if not os.path.exists(data_dir):
+            download_imagenet(data_dir) 
 
-        # # load the test dataset
-        # test_dataset = datasets.ImageNet(data_dir, train=False, download=True, transform=transform_test)
+        # load the full training dataset
+        full_train_dataset = datasets.ImageNet(data_dir, train=True, transform=train_transform)
 
+        # allocate 10% of the training set as validation set
+        train_dataset, valid_dataset = train_val_split(full_train_dataset, 0.1)
+
+        # load the test dataset
+        test_dataset = datasets.ImageNet(data_dir, train=False, transform=test_transform)
 
     # handle different settings
     if args.setting == 0:
@@ -102,6 +116,37 @@ def get_dataset(args):
         return train_dataset, valid_dataset, test_dataset, user_groups, bad_clients 
     else:
         raise ValueError("Invalid value for --setting. Please use 0, 1, 2, or 3.")
+
+
+def download_imagenet(data_dir: str):
+    # create the data directory if it doesn't exist
+    os.makedirs(data_dir, exist_ok=True)
+
+    # fetch the kaggle key from the environment variable
+    kaggle_api_key = os.getenv('KAGGLE_API_KEY')
+    if not kaggle_api_key:
+        raise ValueError("KAGGLE_API_KEY is not set as an environment variable")
+
+    # parse the key
+    kaggle_json = json.loads(kaggle_api_key)
+
+    # create the ~/.kaggle directory if it doesn't exist
+    kaggle_dir = os.path.expanduser("~/.kaggle")
+    os.makedirs(kaggle_dir, exist_ok=True)
+
+    # write the kaggle.json file
+    kaggle_json_path = os.path.join(kaggle_dir, "kaggle.json")
+    with open(kaggle_json_path, 'w') as f:
+        json.dump(kaggle_json, f)
+
+    # set correct permissions
+    os.chmod(kaggle_json_path, 0600)
+
+    # ensure kaggle cli is installed
+    subprocess.run(["pip", "install", "--quiet", "kaggle"], check=True)
+
+    # download the dataset using kaggle cli
+    subprocess.run(["kaggle", "competitions", "download", "-c", "imagenet-object-localization-challenge", "-p", data_dir], check=True)
 
 
 def train_val_split(full_train_dataset, val_prop):
