@@ -1,7 +1,7 @@
 import torch
-from update import compute_hessian
+from update import hessian
 
-def compute_bv_simple(args, gradient, delta_t_i, device):
+def compute_bv_simple(args, gradient, delta_t_i):
     """Computes the simplified banzhaf value for client i at epoch t."""
     # compute delta term
     delta_term = {key: (1.0 / args.num_users) * delta_t_i[key] for key in delta_t_i}
@@ -24,7 +24,7 @@ def compute_bv_hvp(args, model, train_dataset, gradient, delta_t_i, accumulated_
             accumulated_Delta_G_i_list.append(accumulated_Delta_G_i[name].to(device))
 
     # compute Hessian-vector product
-    hessian_term = compute_hessian(model, train_dataset, accumulated_Delta_G_i_list)
+    hessian_term = hessian(model, train_dataset, accumulated_Delta_G_i_list)
 
     # multiply by alpha
     # hessian_term = {name: args.alpha * hvp_dict[name] for name in hvp_dict}
@@ -40,7 +40,7 @@ def compute_bv_hvp(args, model, train_dataset, gradient, delta_t_i, accumulated_
         final_term += torch.dot(gradient[name].view(-1), total_term[name].view(-1))
     return final_term.item()
 
-def compute_G_t(delta_t_i_dict, keys, device):
+def compute_G_t(delta_t_i_dict, keys):
     """Computes G_t = (1/n) sum_{k=1}^{n} delta_{t,k}"""
     num_clients = len(delta_t_i_dict)
     G_t = {}
@@ -49,7 +49,7 @@ def compute_G_t(delta_t_i_dict, keys, device):
         G_t[key] = delta_sum / num_clients
     return G_t
 
-def compute_G_minus_i_t(delta_t_i_dict, keys, idx_to_exclude, device):
+def compute_G_minus_i_t(delta_t_i_dict, keys, idx_to_exclude):
     """Computes G_{-i}^t = (1/(n-1)) sum_{k != i} delta_{t,k}"""
     num_clients = len(delta_t_i_dict) - 1
     if num_clients == 0:
