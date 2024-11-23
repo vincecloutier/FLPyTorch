@@ -39,7 +39,7 @@ def train_subset(args, global_model, train_loaders, valid_dataset, test_dataset,
         local_weights = []
         model.train()
         if isBanzhaf:
-            grad = gradient(args, model, valid_dataset)
+            grad = gradient(args, model, valid_dataset, device)
 
         m = max(int(args.frac * len(clients)), 1)
         idxs_users = np.random.choice(clients, m, replace=False)
