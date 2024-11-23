@@ -13,6 +13,7 @@ from utils import get_dataset, average_weights, setup_logger, get_device, identi
 import multiprocessing
 from scipy.stats import pearsonr
 from functools import partial
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, user_groups, device, clients=None, isBanzhaf=False):
     if clients is None or len(clients) == 0:
@@ -36,14 +37,21 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
         m = max(int(args.frac * len(clients)), 1)
         idxs_users = np.random.choice(clients, m, replace=False)
 
-        for idx in idxs_users:
+        # parallelize local updates
+        def local_update_task(idx):
             local_model = LocalUpdate(args=args, dataset=train_dataset, idxs=user_groups[idx], device=device)
             w, loss = local_model.update_weights(model=copy.deepcopy(model), global_round=epoch)
-            local_weights.append(copy.deepcopy(w))
-            local_losses.append(loss)
+            return idx, w, loss
 
-            if isBanzhaf:
-                delta_t[epoch][idx] = {key: (global_weights[key] - w[key]).to(device) for key in w.keys()}
+        with ThreadPoolExecutor(max_workers=args.num_threads_per_gpu) as executor:
+            futures = {executor.submit(local_update_task, idx): idx for idx in idxs_users}
+            for future in as_completed(futures):
+                idx, w, loss = future.result()
+                local_weights.append(copy.deepcopy(w))
+                local_losses.append(loss)
+
+                if isBanzhaf:
+                    delta_t[epoch][idx] = {key: (global_weights[key] - w[key]).to(device) for key in w.keys()}
 
         if isBanzhaf:
             G_t = compute_G_t(delta_t[epoch], global_weights.keys(), device)
@@ -70,11 +78,14 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
 
     return model, approx_banzhaf_values_simple, approx_banzhaf_values_hessian
 
-def worker(gpu_id, task_queue, args, train_dataset, valid_dataset, test_dataset, user_groups, results_list):
+def worker(gpu_id, task_queue, args, train_dataset, valid_dataset, test_dataset, user_groups, results_list, thread_pool_size):
     device = torch.device(f'cuda:{gpu_id}' if torch.cuda.is_available() else 'cpu')
     global_model = initialize_model(args)
     global_model.to(device)
     global_model.train()
+
+    # Assign a number of threads per GPU worker
+    args.num_threads_per_gpu = thread_pool_size
 
     while True:
         try:
@@ -105,13 +116,14 @@ def main():
     n_gpus = torch.cuda.device_count()
     print(f"Number of GPUs available: {n_gpus}")
 
-    processes = min(args.processes if args.processes > 0 else multiprocessing.cpu_count(), n_gpus)
-    print(f"Number of GPU processes: {processes}")
+    total_cpu_threads = 36
+    thread_pool_size = total_cpu_threads // n_gpus if n_gpus > 0 else 1
+    print(f"Number of CPU threads per GPU: {thread_pool_size}")
 
     train_dataset, valid_dataset, test_dataset, user_groups, actual_bad_clients = get_dataset(args)
 
     all_subsets = list(itertools.chain.from_iterable(
-        itertools.combinations(range(args.num_users), r) for r in range(args.num_users, -1, -1)
+        itertools.combinations(range(args.num_users), r) for r in range(1, args.num_users + 1)
     ))
 
     task_queue = multiprocessing.Queue()
@@ -124,7 +136,7 @@ def main():
     workers = []
     for gpu_id in range(n_gpus):
         p = multiprocessing.Process(target=worker, args=(
-            gpu_id, task_queue, args, train_dataset, valid_dataset, test_dataset, user_groups, results_list
+            gpu_id, task_queue, args, train_dataset, valid_dataset, test_dataset, user_groups, results_list, thread_pool_size
         ))
         p.start()
         workers.append(p)
@@ -157,7 +169,7 @@ def main():
     bad_client_accuracy_simple = measure_accuracy(actual_bad_clients, identified_bad_clients_simple)
     bad_client_accuracy_hessian = measure_accuracy(actual_bad_clients, identified_bad_clients_hessian)
 
-    # remove clients not present in all metrics
+    # Remove clients not present in all metrics
     shared_clients = set(shapley_values.keys()) & set(banzhaf_values.keys()) & set(abv_simple.keys()) & set(abv_hessian.keys())
     sv = [shapley_values[client] for client in shared_clients]
     bv = [banzhaf_values[client] for client in shared_clients]
