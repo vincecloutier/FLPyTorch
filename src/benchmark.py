@@ -72,13 +72,8 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
 
     return model, approx_banzhaf_values_simple, approx_banzhaf_values_hessian
 
-
 def train_subset(subset, gpu_id, args, train_dataset, valid_dataset, test_dataset, user_groups):
     device = torch.device(f'cuda:{gpu_id}' if torch.cuda.is_available() else 'cpu')
-    if device.type == 'cuda':
-        torch.cuda.set_device(device)
-    else:
-        print("Using CPU")
 
     global_model = initialize_model(args)
     global_model.to(device)
@@ -122,15 +117,15 @@ if __name__ == '__main__':
     # assign gpu ids to subsets by cycling through available gpus
     tasks = []
     for i, subset in enumerate(all_subsets):
-        gpu_id = i % n_gpus  # Cycle through GPU IDs (0, 1, 2)
+        gpu_id = i % n_gpus
         tasks.append((subset, gpu_id, args, train_dataset, valid_dataset, test_dataset, user_groups))
 
-    # Create a multiprocessing pool
+    # create a multiprocessing pool
     results_list = []
     with ThreadPoolExecutor(max_workers=processes) as executor:
-        # Submit all tasks
+        # submit all tasks
         future_to_task = {executor.submit(train_subset, *task): task for task in tasks}
-        # Optionally, use tqdm for progress
+        # optionally, use tqdm for progress
         for future in tqdm(as_completed(future_to_task), total=len(tasks), desc="Training Subsets"):
             try:
                 result = future.result()

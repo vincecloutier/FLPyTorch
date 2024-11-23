@@ -144,9 +144,8 @@ def download_imagenet(data_dir: str):
     # ensure kaggle cli is installed
     subprocess.run(["pip", "install", "--quiet", "kaggle"], check=True)
 
-    # download the dataset using kaggle cli
-    subprocess.run(["kaggle", "competitions", "download", "-c", "imagenet-object-localization-challenge", "-p", data_dir], check=True)
-
+    # download data in parallel
+    subprocess.run(["kaggle", "competitions", "download", "-c", "imagenet-object-localization-challenge", "-p", data_dir, "--force"], check=True)
 
 def train_val_split(full_train_dataset, val_prop):
     num_train = len(full_train_dataset)
