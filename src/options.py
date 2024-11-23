@@ -26,6 +26,8 @@ def args_parser():
 
     # simulation arguments
     parser.add_argument('--processes', type=int, default=8, help="number of processes")
+    parser.add_argument('--processes_per_gpu', type=int, default=2, help="number of processes per gpu")
+    parser.add_argument('--num_workers', type=int, default=1, help="number of workers")
     parser.add_argument('--verbose', type=int, default=1, help='verbose')
 
     args = parser.parse_args()

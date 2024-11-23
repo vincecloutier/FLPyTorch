@@ -72,8 +72,17 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
     return model, approx_banzhaf_values_simple, approx_banzhaf_values_hessian
 
 
-def train_subset(subset, args, train_dataset, valid_dataset, test_dataset, user_groups):
-    device = get_device()
+def train_subset(subset, args, train_dataset, valid_dataset, test_dataset, user_groups, gpu_manager):
+    # get a gpu id from the gpu manager
+    gpu_id = gpu_manager.acquire_gpu()
+    if gpu_id is not None:
+        device = torch.device(f'cuda:{gpu_id}')
+        torch.cuda.set_device(device)
+        print(f"Process {multiprocessing.current_process().name} assigned to GPU {gpu_id}")
+    else:
+        device = torch.device('cpu')
+        print(f"Process {multiprocessing.current_process().name} assigned to CPU")
+
     global_model = initialize_model(args)
     global_model.to(device)
     global_model.train()
@@ -84,10 +93,33 @@ def train_subset(subset, args, train_dataset, valid_dataset, test_dataset, user_
         isBanzhaf = True
     else:
         isBanzhaf = False
-    model, abv_simple, abv_hessian = train_global_model(args, global_model, train_dataset, valid_dataset, test_dataset, user_groups, device, subset, isBanzhaf)
-    accuracy, loss = test_inference(model, test_dataset)
-    torch.cuda.empty_cache()
+
+    try:
+        model, abv_simple, abv_hessian = train_global_model(args, global_model, train_dataset, valid_dataset, test_dataset, user_groups, device, subset, isBanzhaf)
+        accuracy, loss = test_inference(model, test_dataset)
+    finally:
+        # release the gpu back to the manager
+        if gpu_id is not None:
+            gpu_manager.release_gpu(gpu_id)
+        torch.cuda.empty_cache()
+
     return (subset_key, loss, accuracy, abv_simple, abv_hessian)
+
+
+class GPUManager:
+    def __init__(self, max_processes_per_gpu=2):
+        self.gpu_count = torch.cuda.device_count()
+        self.semaphores = [multiprocessing.Semaphore(max_processes_per_gpu) for _ in range(self.gpu_count)]
+        self.lock = multiprocessing.Lock()
+
+    def acquire_gpu(self):
+        for i in range(self.gpu_count):
+            if self.semaphores[i].acquire(block=False):
+                return i
+        return None
+
+    def release_gpu(self, gpu_id):
+        self.semaphores[gpu_id].release()
 
 
 if __name__ == '__main__':
@@ -97,14 +129,17 @@ if __name__ == '__main__':
     logger = setup_logger(f'benchmark_{args.dataset}_{args.setting}')
     print(args)
 
-    device = get_device()
+    n_gpus = torch.cuda.device_count()
+    print(f"Number of GPUs available: {n_gpus}")
+    max_processes_per_gpu = args.processes_per_gpu if args.processes_per_gpu > 0 else 2  # adjust based on your gpu memory
+    gpu_manager = GPUManager(max_processes_per_gpu=max_processes_per_gpu)
     train_dataset, valid_dataset, test_dataset, user_groups, actual_bad_clients = get_dataset(args)
 
     shapley_values, banzhaf_values = defaultdict(float), defaultdict(float)
     all_subsets = list(itertools.chain.from_iterable(itertools.combinations(range(args.num_users), r) for r in range(args.num_users, -1, -1)))
 
     pool = multiprocessing.Pool(processes=args.processes)
-    train_subset_partial = partial(train_subset, args=args, train_dataset=train_dataset, valid_dataset=valid_dataset, test_dataset=test_dataset, user_groups=user_groups)
+    train_subset_partial = partial(train_subset, args=args, train_dataset=train_dataset, valid_dataset=valid_dataset, test_dataset=test_dataset, user_groups=user_groups, gpu_manager=gpu_manager)
     results_list = pool.map(train_subset_partial, all_subsets)
     pool.close()
     pool.join()

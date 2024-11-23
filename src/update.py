@@ -21,7 +21,7 @@ class ClientSplit(Dataset):
 class LocalUpdate(object):
     def __init__(self, args, dataset, idxs):
         self.args = args
-        self.trainloader = DataLoader(ClientSplit(dataset, idxs), batch_size=self.args.local_bs, shuffle=True)
+        self.trainloader = DataLoader(ClientSplit(dataset, idxs), batch_size=self.args.local_bs, shuffle=True, num_workers=self.args.num_workers)
         self.device = get_device()
         self.criterion = nn.CrossEntropyLoss().to(self.device)
 
@@ -88,43 +88,6 @@ def test_inference(model, test_dataset):
     return accuracy, loss
 
 
-# def test_gradient(model, test_dataset):
-#     """Returns the average gradient of the loss with respect to the model parameters on the test dataset."""
-    
-#     model.eval()
-#     for param in model.parameters():
-#         if param.grad is not None:
-#             param.grad.zero_()
-
-#     device = get_device()
-
-#     criterion = nn.NLLLoss().to(device)
-#     testloader = DataLoader(test_dataset, batch_size=128, shuffle=False)
-    
-#     total_batches = len(testloader)
-    
-#     for batch_idx, (images, labels) in enumerate(testloader):
-#         images, labels = images.to(device), labels.to(device)
-
-#         # forward pass
-#         outputs = model(images)
-#         loss = criterion(outputs, labels) / total_batches
-
-#         # backward pass to compute gradients
-#         loss.backward()
-
-#     # collect average gradients
-#     gradients = {}
-#     for name, param in model.named_parameters():
-#         if param.requires_grad:
-#             gradients[name] = param.grad.clone().detach() if param.grad is not None else None
-
-#     for key in gradients:
-#         gradients[key] = gradients[key].detach().to(device)
-
-#     return gradients
-
-
 def test_gradient(args, model, dataset):
     """Computes the gradient of the validation loss with respect to the model parameters."""
 
@@ -134,7 +97,7 @@ def test_gradient(args, model, dataset):
     device = get_device()
 
     criterion = nn.CrossEntropyLoss().to(device)
-    data_loader = DataLoader(dataset, batch_size=len(dataset), shuffle=False) # top insight to use full dataset
+    data_loader = DataLoader(dataset, batch_size=len(dataset), shuffle=False, num_workers=args.num_workers) # top insight to use full dataset
     
     inputs, targets = next(iter(data_loader))
     inputs, targets = inputs.to(device), targets.to(device)
