@@ -14,8 +14,12 @@ class ClientSplit(Dataset):
 
     def __getitem__(self, item):
         image, label = self.dataset[self.idxs[item]]
-        return image, torch.tensor(label, dtype=torch.long)
-
+        # return image, torch.tensor(label, dtype=torch.long)
+        if isinstance(label, torch.Tensor):
+            label = label.clone().detach().long()
+        else:
+            label = torch.as_tensor(label, dtype=torch.long, device = image.device)
+        return image, label
 
 class LocalUpdate(object):
     def __init__(self, args, dataset, idxs, device):
