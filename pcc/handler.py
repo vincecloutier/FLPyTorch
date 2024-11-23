@@ -27,7 +27,6 @@ def process_and_graph_log(file_path, plot=False):
     approx_simple_all = np.array([val for run in approx_simple_values for val in run])
     approx_hessian_all = np.array([val for run in approx_hessian_values for val in run])
     bad_idxs_all = np.array([i + 15 + (5 * idx) for idx, subarray in enumerate(bad_idxs) for i in subarray])
-    print(bad_idxs_all)
 
     # min_max scale the data to 0-1
     scaler = MinMaxScaler()
@@ -58,12 +57,13 @@ def process_and_graph_log(file_path, plot=False):
         colors = plt.cm.tab10(np.arange(num_groups))
         group_labels = ['IID', 'Non IID', 'Mislabeled', 'Noisy']
 
-        # color all the data points blue unless they are actual bad clients
+        # establish the color groups
         color_groups = [colors[i // group_size] for i in range(len(data))]
-        # color the actual bad clients according to if they are in the first 15 or last 15
-        # color_actual_bad_clients = [colors[i] for i in actual_bad_clients_all]
+        good_clients = [i for i in range(len(data)) if i not in bad_idxs_all]
+        for i in good_clients:
+            color_groups[i] = colors[0]
 
-        # Generate legend
+        # generate legend
         legend_handles = [
             plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=colors[i], markersize=10, label=group_labels[i])
             for i in range(num_groups)
@@ -89,8 +89,5 @@ def process_and_graph_log(file_path, plot=False):
         plt.tight_layout()
         plt.show()
 
-# example usage
 process_and_graph_log('pcc/cifar.log', plot=True)
 process_and_graph_log('pcc/fmnist.log', plot=True)
-
-# todo only colour the actual bad clients as bad clients.
