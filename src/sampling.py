@@ -1,4 +1,172 @@
 import numpy as np
+from torchvision import datasets, transforms
+from torch.utils.data import Dataset
+from sampling import iid, noniid, mislabeled, noisy
+import numpy as np
+import os
+import json
+import subprocess
+import torch
+from torch.utils.data import DataLoader
+
+
+class SubsetSplit(Dataset):
+    """An abstract Dataset class wrapped around Pytorch Dataset class."""
+    def __init__(self, dataset, idxs):
+        self.dataset = dataset
+        self.data = dataset.data
+        self.idxs = [int(i) for i in idxs]
+        self.targets = np.array(self.dataset.targets)[self.idxs]
+
+    def __len__(self):
+        return len(self.idxs)
+
+    def __getitem__(self, item):
+        image, label = self.dataset[self.idxs[item]]
+        if isinstance(label, torch.Tensor):
+            label = label.clone().detach().long()
+        else:
+            label = torch.as_tensor(label, dtype=torch.long, device = image.device)
+        return image, label
+
+
+def get_dataset(args):
+    """ Returns train, validation, and test datasets along with a user group,
+    which is a dict where the keys are the user index and the values are the
+    corresponding data for each of those users.
+    """
+    if args.dataset == 'cifar' or args.dataset == 'resnet' or args.dataset == 'mobilenet':
+        data_dir = './data/cifar/'
+        train_transform = transforms.Compose([
+            transforms.RandomCrop(32, padding=4),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+        ])
+
+        test_transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+        ])
+        
+        # load the full training dataset
+        full_train_dataset = datasets.CIFAR10(data_dir, train=True, download=True, transform=train_transform)
+
+        # allocate 10% of the training set as validation set
+        train_dataset, valid_dataset = train_val_split(full_train_dataset, 0.1)
+
+        # load the test dataset
+        test_dataset = datasets.CIFAR10(data_dir, train=False, download=True, transform=test_transform)
+
+    elif args.dataset == 'fmnist':
+        data_dir = './data/fmnist/'
+        train_transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.1307,), (0.3081,))
+        ])
+        test_transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.1307,), (0.3081,))
+        ])
+
+        # load the full training dataset
+        full_train_dataset = datasets.FashionMNIST(data_dir, train=True, download=True, transform=train_transform)
+
+        # create train and validation datasets
+        train_dataset, valid_dataset = train_val_split(full_train_dataset, 0.1)
+
+        # load the test dataset
+        test_dataset = datasets.FashionMNIST(data_dir, train=False, download=True, transform=test_transform)
+        
+    else:
+        data_dir = './data/imagenet/'
+        train_transform = transforms.Compose([
+            transforms.RandomResizedCrop(224),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ])
+        test_transform = transforms.Compose([
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ])
+
+        # download the dataset if it doesn't exist
+        download_imagenet(data_dir) 
+
+        # load the full training dataset
+        full_train_dataset = datasets.ImageNet(data_dir, train=True, transform=train_transform)
+
+        # allocate 10% of the training set as validation set
+        train_dataset, valid_dataset = train_val_split(full_train_dataset, 0.1)
+
+        # load the test dataset
+        test_dataset = datasets.ImageNet(data_dir, train=False, transform=test_transform)
+
+    # handle different settings
+    if args.setting == 0:
+        user_groups = iid(train_dataset, args.num_users)
+        return train_dataset, valid_dataset, test_dataset, user_groups, None
+    elif args.setting == 1:
+        user_groups, bad_clients = noniid(train_dataset, args.dataset, args.num_users, args.badclient_prop, args.num_categories_per_client)
+        return train_dataset, valid_dataset, test_dataset, user_groups, bad_clients
+    elif args.setting == 2:
+        iid_user_groups = iid(train_dataset, args.num_users)
+        user_groups, bad_clients = mislabeled(train_dataset, args.dataset, iid_user_groups, args.badclient_prop, args.badsample_prop)
+        return train_dataset, valid_dataset, test_dataset, user_groups, bad_clients
+    elif args.setting == 3:
+        iid_user_groups = iid(train_dataset, args.num_users)
+        user_groups, bad_clients = noisy(train_dataset, args.dataset, iid_user_groups, args.badclient_prop, args.badsample_prop)
+        return train_dataset, valid_dataset, test_dataset, user_groups, bad_clients 
+    else:
+        raise ValueError("Invalid value for --setting. Please use 0, 1, 2, or 3.")
+
+
+def download_imagenet(data_dir: str):
+    # create the data directory if it doesn't exist
+    os.makedirs(data_dir, exist_ok=True)
+
+    # fetch the kaggle key from the environment variable
+    kaggle_api_key = os.getenv('KAGGLE_API_KEY')
+    if not kaggle_api_key:
+        raise ValueError("KAGGLE_API_KEY is not set as an environment variable")
+
+    # parse the key
+    kaggle_json = json.loads(kaggle_api_key)
+
+    # create the ~/.kaggle directory if it doesn't exist
+    kaggle_dir = os.path.expanduser("~/.kaggle")
+    os.makedirs(kaggle_dir, exist_ok=True)
+
+    # write the kaggle.json file
+    kaggle_json_path = os.path.join(kaggle_dir, "kaggle.json")
+    with open(kaggle_json_path, 'w') as f:
+        json.dump(kaggle_json, f)
+
+    # set correct permissions
+    os.chmod(kaggle_json_path, 0o600)
+
+    # ensure kaggle cli is installed
+    subprocess.run(["pip", "install", "--quiet", "kaggle"], check=True)
+
+    # download data in parallel
+    subprocess.run(["kaggle", "competitions", "download", "-c", "imagenet-object-localization-challenge", "-p", data_dir, "--force"], check=True)
+
+def train_val_split(full_train_dataset, val_prop):
+    num_train = len(full_train_dataset)
+    split = int(np.floor(val_prop * num_train))
+    indices = list(range(num_train))
+    np.random.shuffle(indices)
+    train_idx, valid_idx = indices[split:], indices[:split]
+    return SubsetSplit(full_train_dataset, train_idx), SubsetSplit(full_train_dataset, valid_idx)
+
+
+def create_train_loaders(args, dataset, user_groups):
+    return {idx: DataLoader(SubsetSplit(dataset, user_groups[idx]), batch_size=args.local_bs, shuffle=True, num_workers=args.num_workers) for idx in user_groups}
+
+
 
 def iid(dataset, num_users):
     """Sample iid client data."""
