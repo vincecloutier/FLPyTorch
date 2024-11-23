@@ -15,10 +15,15 @@ import copy
 from torch import nn
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import threading
 
+# Initialize a lock for tqdm to prevent overlapping prints
+tqdm_lock = threading.Lock()
 
-def train_subset(args, global_weights, train_loaders, valid_dataset, test_dataset, clients, device):
-
+def train_subset(args, global_weights, train_loaders, valid_dataset, test_dataset, clients, device, position):
+    if len(clients) == 0:
+        return (), 0, 0, {}, {}
+    
     global_model = initialize_model(args)
     global_model.to(device)
     global_model.load_state_dict(global_weights)
@@ -33,46 +38,52 @@ def train_subset(args, global_weights, train_loaders, valid_dataset, test_datase
     delta_g = defaultdict(lambda: {key: torch.zeros_like(global_weights[key]) for key in global_weights.keys()}) if isBanzhaf else None
     no_improvement_count = 0
 
-    for epoch in tqdm(range(args.epochs), desc=f"Training for subset: {subset_key}"):
-        local_weights = []
+    # Initialize a tqdm progress bar for this subset
+    with tqdm(total=args.epochs, desc=f"Subset: {subset_key}", position=position, leave=True) as pbar:
+        for epoch in range(args.epochs):
+            local_weights = []
 
-        # sample a fraction of clients
-        m = max(int(args.frac * len(subset_key)), 1)
-        idxs_users = np.random.choice(subset_key, m, replace=False)
+            # sample a fraction of clients
+            m = max(int(args.frac * len(subset_key)), 1)
+            idxs_users = np.random.choice(subset_key, m, replace=False)
 
-        for idx in idxs_users:
-            w = train_client(args, global_weights, train_loaders[idx], device)
-            local_weights.append(w)
-            if isBanzhaf:
-                delta_t[epoch][idx] = {key: (global_weights[key] - w[key]).to(device) for key in w.keys() }
-
-        if isBanzhaf:
-            grad = gradient(args, global_model, valid_dataset, device)
-            G_t = compute_G_t(delta_t[epoch], global_weights.keys())
             for idx in idxs_users:
-                G_t_minus_i = compute_G_minus_i_t(delta_t[epoch], global_weights.keys(), idx)
-                if epoch > 0:
-                    for key in global_weights.keys():
-                        delta_g[idx][key] += G_t_minus_i[key] - G_t[key]
-                approx_banzhaf_values_hessian[idx] += compute_bv_hvp(args, global_model, test_dataset, grad, delta_t[epoch][idx], delta_g[idx], device)
-                approx_banzhaf_values_simple[idx] += compute_bv_simple(args, grad, delta_t[epoch][idx])
+                w = train_client(args, global_weights, train_loaders[idx], device)
+                local_weights.append(w)
+                if isBanzhaf:
+                    delta_t[epoch][idx] = {key: (global_weights[key] - w[key]).to(device) for key in w.keys() }
 
-            # average the local weights to update global weights
-            global_weights = average_weights(local_weights)
-            global_model.load_state_dict(global_weights)
+            if isBanzhaf:
+                grad = gradient(args, global_model, valid_dataset, device)
+                G_t = compute_G_t(delta_t[epoch], global_weights.keys())
+                for idx in idxs_users:
+                    G_t_minus_i = compute_G_minus_i_t(delta_t[epoch], global_weights.keys(), idx)
+                    if epoch > 0:
+                        for key in global_weights.keys():
+                            delta_g[idx][key] += G_t_minus_i[key] - G_t[key]
+                    approx_banzhaf_values_hessian[idx] += compute_bv_hvp(args, global_model, test_dataset, grad, delta_t[epoch][idx], delta_g[idx], device)
+                    approx_banzhaf_values_simple[idx] += compute_bv_simple(args, grad, delta_t[epoch][idx])
 
-            # evaluate the global model
-            test_acc, test_loss = inference(args, global_model, test_dataset, device)
-            if test_acc > best_test_acc * 1.01 or test_loss < best_test_loss * 0.99:
-                best_test_acc = test_acc
-                best_test_loss = test_loss
-                no_improvement_count = 0
-            else:
-                no_improvement_count += 1
-                if no_improvement_count > 3:
-                    print(f"No improvement for {no_improvement_count} consecutive epochs. Stopping early.")
-                    break
+                # average the local weights to update global weights
+                global_weights = average_weights(local_weights)
+                global_model.load_state_dict(global_weights)
 
+                # evaluate the global model
+                test_acc, test_loss = inference(args, global_model, test_dataset, device)
+                if test_acc > best_test_acc * 1.01 or test_loss < best_test_loss * 0.99:
+                    best_test_acc = test_acc
+                    best_test_loss = test_loss
+                    no_improvement_count = 0
+                else:
+                    no_improvement_count += 1
+                    if no_improvement_count > 3:
+                        print(f"No improvement for {no_improvement_count} consecutive epochs. Stopping early.")
+                        break
+
+            # Update the progress bar
+            with tqdm_lock:
+                pbar.update(1)
+    
     torch.cuda.empty_cache()
     return subset_key, best_test_loss, best_test_acc, approx_banzhaf_values_simple, approx_banzhaf_values_hessian
 
@@ -143,20 +154,34 @@ if __name__ == '__main__':
 
     print(f"Available devices: {available_gpus}")
 
+    # Assign a unique position to each subset for tqdm
+    # To prevent excessive positions, you might limit the number of concurrent progress bars
+    # Here, we'll assign positions based on the subset's index
+    # Note: Terminal height limits how many progress bars can be displayed effectively
+    max_visible_bars = 20  # Adjust based on your terminal's capability
+    position_mapping = {subset: idx % max_visible_bars for idx, subset in enumerate(all_subsets)}
+
     # launch train_subset tasks in parallel with controlled concurrency
     results_list = []
     with ThreadPoolExecutor(max_workers=args.processes) as executor:
-        # create a future for each subset
-        future_to_subset = {executor.submit(train_subset, args, global_weights, train_loaders, valid_dataset, test_dataset, subset, subset_device_mapping[subset]): subset for subset in all_subsets}
+        # create a future for each subset with its position
+        future_to_subset = {
+            executor.submit(train_subset, args, global_weights, train_loaders, valid_dataset, test_dataset, subset, subset_device_mapping[subset], position_mapping[subset]): subset
+            for subset in all_subsets
+        }
 
-        # process the results as they complete
-        for future in tqdm(as_completed(future_to_subset), total=len(future_to_subset), desc="Processing Subsets"):
-            subset = future_to_subset[future]
-            try:
-                result = future.result()
-                results_list.append(result)
-            except Exception as exc:
-                print(f'Subset {subset} generated an exception: {exc}')
+        # Optionally, add a main progress bar to track overall completion
+        with tqdm(total=len(future_to_subset), desc="Processing Subsets", position=max_visible_bars, leave=True) as main_pbar:
+            for future in as_completed(future_to_subset):
+                subset = future_to_subset[future]
+                try:
+                    result = future.result()
+                    results_list.append(result)
+                except Exception as exc:
+                    print(f'Subset {subset} generated an exception: {exc}')
+                finally:
+                    with tqdm_lock:
+                        main_pbar.update(1)
 
     results = {subset_key: (loss, accuracy, abv_simple, abv_hessian) for subset_key, loss, accuracy, abv_simple, abv_hessian in results_list}
 
