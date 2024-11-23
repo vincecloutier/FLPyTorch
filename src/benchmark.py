@@ -7,18 +7,22 @@ import torch
 import numpy as np
 from tqdm import tqdm
 from options import args_parser
-from update import LocalUpdate, test_inference, test_gradient
+from update import inference, gradient
+from torch.utils.data import DataLoader
 from estimation import compute_bv_simple, compute_bv_hvp, compute_G_t, compute_G_minus_i_t
-from utils import get_dataset, average_weights, setup_logger, get_device, identify_bad_idxs, measure_accuracy, initialize_model
+from utils import average_weights, setup_logger, get_device, identify_bad_idxs, measure_accuracy, initialize_model
+from sampling import get_dataset, SubsetSplit
 from scipy.stats import pearsonr
 import ray
 from ray.util.iter import from_items
-
+from torch import nn
 
 @ray.remote
-def train_subset(args, model, train_dataset, valid_dataset, test_dataset, user_groups, clients=None):
+def train_subset(args, train_loaders, valid_dataset, test_dataset, clients=None):
+    model = initialize_model(args)
     subset_key = tuple(sorted(clients))
     isBanzhaf = (subset_key == (0, 1, 2, 3, 4))
+    device = get_device()
 
     if clients is None or len(clients) == 0:
         return subset_key, float('inf'), 0, defaultdict(float), defaultdict(float)
@@ -36,16 +40,16 @@ def train_subset(args, model, train_dataset, valid_dataset, test_dataset, user_g
         local_weights = []
         model.train()
         if isBanzhaf:
-            gradient = test_gradient(args, model, valid_dataset)
+            gradient = gradient(args, model, valid_dataset)
 
         m = max(int(args.frac * len(clients)), 1)
         idxs_users = np.random.choice(clients, m, replace=False)
 
-        for idx in idxs_users:
-            local_model = LocalUpdate(args=args, dataset=train_dataset, idxs=user_groups[idx])
-            w, loss = local_model.update_weights(model=copy.deepcopy(model), global_round=epoch)
-            local_weights.append(copy.deepcopy(w))
+        client_futures = [train_client.remote(args, copy.deepcopy(model), train_loaders[idx], device) for idx in idxs_users]
+        client_results = ray.get(client_futures)
 
+        for w in client_results:
+            local_weights.append(copy.deepcopy(w))
             if isBanzhaf:
                 delta_t[epoch][idx] = {key: (global_weights[key] - w[key]) for key in w.keys()}
 
@@ -56,13 +60,13 @@ def train_subset(args, model, train_dataset, valid_dataset, test_dataset, user_g
                 if epoch > 0:
                     for key in global_weights.keys():
                         delta_g[idx][key] += G_t_minus_i[key] - G_t[key]
-                approx_banzhaf_values_hessian[idx] += compute_bv_hvp(args, model, test_dataset, gradient, delta_t[epoch][idx], delta_g[idx])
+                approx_banzhaf_values_hessian[idx] += compute_bv_hvp(args, model, test_dataset, gradient, delta_t[epoch][idx], delta_g[idx], device)
                 approx_banzhaf_values_simple[idx] += compute_bv_simple(args, gradient, delta_t[epoch][idx])
 
         global_weights = average_weights(local_weights)
         model.load_state_dict(global_weights)
 
-        test_acc, test_loss = test_inference(model, test_dataset)
+        test_acc, test_loss = inference(args, model, test_dataset, device)
         if test_acc > best_test_acc * 1.01 or test_loss < best_test_loss * 0.99:
             best_test_acc = test_acc
             best_test_loss = test_loss
@@ -75,8 +79,44 @@ def train_subset(args, model, train_dataset, valid_dataset, test_dataset, user_g
     torch.cuda.empty_cache()
     return subset_key, best_test_loss, best_test_acc, approx_banzhaf_values_simple, approx_banzhaf_values_hessian
 
+
+@ray.remote
+def train_client(args, model, trainloader, device):
+    # set mode to train
+    model.train()
+    epoch_loss = []
+
+    criterion = nn.CrossEntropyLoss().to(device)
+
+    # set optimizer for the local updates
+    if args.optimizer == 'sgd':
+        optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
+    elif args.optimizer == 'adam':
+        optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=1e-4)
+
+    for iter in range(args.local_ep):
+        batch_loss = []
+        for images, labels in trainloader:
+            images, labels = images.to(device), labels.to(device)
+
+            model.zero_grad()
+            log_probs = model(images)
+            loss = criterion(log_probs, labels)
+            loss.backward()
+
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+
+            optimizer.step()
+            batch_loss.append(loss.item())
+        epoch_loss.append(sum(batch_loss)/len(batch_loss))
+        if args.verbose:
+            print(f'| Local Epoch : {iter+1} | Loss: {sum(batch_loss) / len(batch_loss):.6f}')
+
+    return model.state_dict()
+
+
 if __name__ == '__main__':
-    ray.init(include_dashboard=True, logging_level="DEBUG")
+    ray.init(include_dashboard=True, logging_level="DEBUG", object_store_memory=20 * 1024**3)
     start_time = time.time()
     args = args_parser()
     logger = setup_logger(f'benchmark_{args.dataset}_{args.setting}')
@@ -85,14 +125,19 @@ if __name__ == '__main__':
 
     all_subsets = list(itertools.chain.from_iterable(itertools.combinations(range(args.num_users), r) for r in range(args.num_users + 1)))
 
-    model = initialize_model(args)
-    model_ref = ray.put(model)
     train_dataset_ref = ray.put(train_dataset)
     valid_dataset_ref = ray.put(valid_dataset)
     test_dataset_ref = ray.put(test_dataset)
     user_groups_ref = ray.put(user_groups)
 
-    futures = [train_subset.remote(args, model_ref, train_dataset_ref, valid_dataset_ref, test_dataset_ref, user_groups_ref, clients) for clients in all_subsets]
+    train_loaders = {}
+    for user_id, indices in user_groups.items():
+        train_loader = DataLoader(SubsetSplit(train_dataset, indices), batch_size=args.local_bs, shuffle=True, num_workers=args.num_workers)
+        train_loaders[user_id] = train_loader
+
+    train_loaders_ref = ray.put(train_loaders)
+
+    futures = [train_subset.remote(args, train_loaders_ref, valid_dataset_ref, test_dataset_ref, clients) for clients in all_subsets]
     results_list = ray.get(futures)
     results = {subset_key: (loss, accuracy, abv_simple, abv_hessian) for subset_key, loss, accuracy, abv_simple, abv_hessian in from_items(results_list)}
     shapley_values, banzhaf_values = defaultdict(float), defaultdict(float)

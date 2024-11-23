@@ -24,7 +24,7 @@ def compute_bv_hvp(args, model, train_dataset, gradient, delta_t_i, accumulated_
             accumulated_Delta_G_i_list.append(accumulated_Delta_G_i[name].to(device))
 
     # compute Hessian-vector product
-    hessian_term = hessian(model, train_dataset, accumulated_Delta_G_i_list)
+    hessian_term = hessian(args, model, train_dataset, accumulated_Delta_G_i_list)
 
     # multiply by alpha
     # hessian_term = {name: args.alpha * hvp_dict[name] for name in hvp_dict}

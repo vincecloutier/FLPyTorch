@@ -3,9 +3,8 @@ import json
 import subprocess
 import numpy as np
 import torch
-from torch.utils.data import Dataset, DataLoader, Subset
+from torch.utils.data import Dataset
 from torchvision import datasets, transforms
-from sampling import iid, noniid, mislabeled, noisy
 
 
 class SubsetSplit(Dataset):
