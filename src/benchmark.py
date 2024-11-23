@@ -28,7 +28,6 @@ ray.init(
 )
 
 # Define a Ray actor for client training
-@ray.remote(num_gpus=0.1)
 class ClientTrainer:
     def __init__(self, args, trainloader, device):
         self.args = args
