@@ -15,6 +15,7 @@ import ray
 import copy
 from torch import nn
 from tqdm import tqdm  
+import ray.train.torch
 
 @ray.remote(num_cpus=1, num_gpus=0.09)
 def train_subset(args, global_model, train_loaders, valid_dataset, test_dataset, global_weights, clients=None):
