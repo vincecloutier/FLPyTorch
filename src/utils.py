@@ -156,8 +156,9 @@ def train_val_split(full_train_dataset, val_prop):
     return SubsetSplit(full_train_dataset, train_idx), SubsetSplit(full_train_dataset, valid_idx)
 
 
-def average_weights(w):
+def average_weights(w, device):
     """Returns the average of the weights."""
+    w = [w_i.to(device) for w_i in w]
     w_avg = copy.deepcopy(w[0])
     for key in w_avg.keys():
         for i in range(1, len(w)):

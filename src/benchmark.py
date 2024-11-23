@@ -13,7 +13,7 @@ from utils import get_dataset, average_weights, setup_logger, get_device, identi
 import multiprocessing
 from scipy.stats import pearsonr
 from functools import partial
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor, as_completed  # Changed to ProcessPoolExecutor
 
 def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, user_groups, device, clients=None, isBanzhaf=False):
     if clients is None or len(clients) == 0:
@@ -26,6 +26,7 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
         delta_t = defaultdict(dict)
         delta_g = defaultdict(lambda: {key: torch.zeros_like(global_weights[key]) for key in global_weights.keys()})
 
+    no_improvement_count = 0
     for epoch in tqdm(range(args.epochs), desc=f"Global Training For Subset {clients}"):
         local_weights, local_losses = [], []
 
@@ -37,7 +38,7 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
         idxs_users = np.random.choice(clients, m, replace=False)
 
         for idx in idxs_users:
-            local_model = LocalUpdate(args=args, dataset=train_dataset, idxs=user_groups[idx])
+            local_model = LocalUpdate(args=args, dataset=train_dataset, idxs=user_groups[idx], device=device)  # Ensure LocalUpdate uses the correct device
             w, loss = local_model.update_weights(model=copy.deepcopy(model), global_round=epoch)
             local_weights.append(copy.deepcopy(w))
             local_losses.append(loss)
@@ -47,20 +48,20 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
                 delta_t[epoch][idx] = {key: (global_weights[key] - w[key]).to(device) for key in w.keys()}
 
         if isBanzhaf:
-            G_t = compute_G_t(delta_t[epoch], global_weights.keys())
+            G_t = compute_G_t(delta_t[epoch], global_weights.keys(), device)
             for idx in idxs_users:
-                G_t_minus_i = compute_G_minus_i_t(delta_t[epoch], global_weights.keys(), idx)
+                G_t_minus_i = compute_G_minus_i_t(delta_t[epoch], global_weights.keys(), idx, device)
                 if epoch > 0:
                     for key in global_weights.keys():
                         delta_g[idx][key] += G_t_minus_i[key] - G_t[key]
-                approx_banzhaf_values_hessian[idx] += compute_bv_hvp(args, model, test_dataset, gradient, delta_t[epoch][idx], delta_g[idx])
-                approx_banzhaf_values_simple[idx] += compute_bv_simple(args, gradient, delta_t[epoch][idx])
+                approx_banzhaf_values_hessian[idx] += compute_bv_hvp(args, model, test_dataset, gradient, delta_t[epoch][idx], delta_g[idx], device)
+                approx_banzhaf_values_simple[idx] += compute_bv_simple(args, gradient, delta_t[epoch][idx], device)
 
         # update global weights and model
-        global_weights = average_weights(local_weights)
+        global_weights = average_weights(local_weights, device)  # Ensure average_weights places tensors on the correct device
         model.load_state_dict(global_weights)
 
-        test_acc, test_loss = test_inference(model, test_dataset)
+        test_acc, test_loss = test_inference(model, test_dataset, device)  # Ensure test_inference uses the correct device
         if test_acc > best_test_acc * 1.01 or test_loss < best_test_loss * 0.99:
             best_test_acc = test_acc
             best_test_loss = test_loss
@@ -87,11 +88,10 @@ def train_subset(subset, gpu_id, args, train_dataset, valid_dataset, test_datase
     
     # train the global model
     model, abv_simple, abv_hessian = train_global_model(args, global_model, train_dataset, valid_dataset, test_dataset, user_groups, device, clients=subset, isBanzhaf=isBanzhaf)
-    accuracy, loss = test_inference(model, test_dataset)
+    accuracy, loss = test_inference(model, test_dataset, device)
     torch.cuda.empty_cache()
     
     return (subset_key, loss, accuracy, abv_simple, abv_hessian)
-
 
 if __name__ == '__main__':
     multiprocessing.set_start_method('spawn') 
@@ -120,9 +120,9 @@ if __name__ == '__main__':
         gpu_id = i % n_gpus
         tasks.append((subset, gpu_id, args, train_dataset, valid_dataset, test_dataset, user_groups))
 
-    # create a multiprocessing pool
+    # create a multiprocessing pool using ProcessPoolExecutor
     results_list = []
-    with ThreadPoolExecutor(max_workers=processes) as executor:
+    with ProcessPoolExecutor(max_workers=processes) as executor:  # Changed to ProcessPoolExecutor
         # submit all tasks
         future_to_task = {executor.submit(train_subset, *task): task for task in tasks}
         # optionally, use tqdm for progress
@@ -156,11 +156,6 @@ if __name__ == '__main__':
     identified_bad_clients_hessian = identify_bad_idxs(abv_hessian)
     bad_client_accuracy_simple = measure_accuracy(actual_bad_clients, identified_bad_clients_simple)
     bad_client_accuracy_hessian = measure_accuracy(actual_bad_clients, identified_bad_clients_hessian)
-
-    print(shapley_values)
-    print(banzhaf_values)
-    print(abv_simple)
-    print(abv_hessian)
 
     # remove any clients that are not in all metrics
     shared_clients = set(shapley_values.keys()) & set(banzhaf_values.keys()) & set(abv_simple.keys()) & set(abv_hessian.keys())

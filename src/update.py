@@ -1,7 +1,6 @@
 import torch
 from torch import nn
 from torch.utils.data import DataLoader, Dataset
-from utils import get_device
 
 
 class ClientSplit(Dataset):
@@ -19,10 +18,10 @@ class ClientSplit(Dataset):
 
 
 class LocalUpdate(object):
-    def __init__(self, args, dataset, idxs):
+    def __init__(self, args, dataset, idxs, device):
         self.args = args
         self.trainloader = DataLoader(ClientSplit(dataset, idxs), batch_size=self.args.local_bs, shuffle=True, num_workers=self.args.num_workers)
-        self.device = get_device()
+        self.device = device
         self.criterion = nn.CrossEntropyLoss().to(self.device)
 
     def update_weights(self, model, global_round):
@@ -57,13 +56,11 @@ class LocalUpdate(object):
         return model.state_dict(), sum(epoch_loss) / len(epoch_loss)
 
 
-def test_inference(model, test_dataset):
+def test_inference(model, test_dataset, device):
     """Returns the test accuracy and loss on the global model trained on the entire dataset."""
 
     model.eval()
     loss, total, correct = 0.0, 0.0, 0.0
-
-    device = get_device()
 
     criterion = nn.CrossEntropyLoss().to(device)
     testloader = DataLoader(test_dataset, batch_size=128, shuffle=False)
@@ -88,13 +85,11 @@ def test_inference(model, test_dataset):
     return accuracy, loss
 
 
-def test_gradient(args, model, dataset):
+def test_gradient(args, model, dataset, device):
     """Computes the gradient of the validation loss with respect to the model parameters."""
 
     model.eval()
     model.zero_grad()  # clear existing gradients
-
-    device = get_device()
 
     criterion = nn.CrossEntropyLoss().to(device)
     data_loader = DataLoader(dataset, batch_size=len(dataset), shuffle=False, num_workers=args.num_workers) # top insight to use full dataset
@@ -121,9 +116,8 @@ def test_gradient(args, model, dataset):
     return gradient
 
 
-def compute_hessian(model, dataset, v_list):
+def compute_hessian(model, dataset, v_list, device):
     """Computes the Hessian-vector product Hv, where H is the Hessian of loss w.r.t. model parameters."""
-    device = get_device()
     model.eval()
     criterion = nn.CrossEntropyLoss().to(device)
     data_loader = DataLoader(dataset, batch_size=len(dataset), shuffle=False)
