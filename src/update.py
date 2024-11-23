@@ -57,7 +57,7 @@ def gradient(args, model, test_dataset, device):
     gradient = {}
     for (name, param), grad in zip(model.named_parameters(), grad_params):
         if param.requires_grad:
-            gradient[name] = grad.clone().detach()
+            gradient[name] = grad.clone().detach().to(device)
 
     return gradient
 
@@ -67,7 +67,7 @@ def hessian(args, model, test_dataset, v_list, device):
     
     model.eval()
     model.zero_grad()
-    
+
     criterion = nn.CrossEntropyLoss().to(device)
     data_loader = DataLoader(test_dataset, batch_size=len(test_dataset), shuffle=False)
     
@@ -96,5 +96,5 @@ def hessian(args, model, test_dataset, v_list, device):
     hv_dict = {}
     for (name, param), hv in zip(model.named_parameters(), hvp):
         if param.requires_grad:
-            hv_dict[name] = hv.clone().detach()
+            hv_dict[name] = hv.clone().detach().to(device)
     return hv_dict
