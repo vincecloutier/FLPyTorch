@@ -1,22 +1,22 @@
 #!/bin/bash
 
-# loop to run each command 3 times
+# loop to run each command three times
 for i in {1..3}
 do
 
     # CIFAR commands
-    echo "Run $i for CIFAR"
+    # echo "Run $i for CIFAR"
     # python benchmark.py --dataset cifar --setting 0 --processes 30 --local_ep 10
     # python benchmark.py --dataset cifar --setting 1 --processes 30 --local_ep 3
-    python benchmark.py --dataset cifar --setting 2 --processes 30 --local_ep 3
-    python benchmark.py --dataset cifar --setting 3 --processes 30 --local_ep 3
+    # python benchmark.py --dataset cifar --setting 2 --processes 30 --local_ep 3
+    # python benchmark.py --dataset cifar --setting 3 --processes 30 --local_ep 3
 
     # FMNIST commands
-    # echo "Run $i for FMNIST"
-    # python benchmark.py --dataset fmnist --setting 0 --processes 30 --local_ep 10
-    # python benchmark.py --dataset fmnist --setting 1 --processes 30 --local_ep 3
-    # python benchmark.py --dataset fmnist --setting 2 --processes 30 --local_ep 3
-    # python benchmark.py --dataset fmnist --setting 3 --processes 30 --local_ep 3
+    echo "Run $i for FMNIST"
+    python benchmark.py --dataset fmnist --setting 0 --processes 30 --local_ep 10
+    python benchmark.py --dataset fmnist --setting 1 --processes 30 --local_ep 3
+    python benchmark.py --dataset fmnist --setting 2 --processes 30 --local_ep 3
+    python benchmark.py --dataset fmnist --setting 3 --processes 30 --local_ep 3
 
     # IMAGENET commands
     # echo "Run $i for IMAGENET"

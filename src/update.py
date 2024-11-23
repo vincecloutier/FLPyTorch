@@ -74,6 +74,7 @@ def test_inference(model, test_dataset):
         # inference
         outputs = model(images)
         batch_loss = criterion(outputs, labels)
+        # loss += batch_loss.item() * len(labels)
         loss += batch_loss.item()
 
         # prediction
@@ -82,7 +83,8 @@ def test_inference(model, test_dataset):
         correct += torch.sum(torch.eq(pred_labels, labels)).item()
         total += len(labels)
 
-    accuracy = correct/total
+    accuracy = correct / total
+    # loss = loss / total
     return accuracy, loss
 
 

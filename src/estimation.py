@@ -5,7 +5,7 @@ from update import compute_hessian
 def compute_bv_simple(args, gradient, delta_t_i):
     """Computes the simplified banzhaf value for client i at epoch t."""
     # compute delta term
-    delta_term = {key: (-1.0 / args.num_users) * delta_t_i[key] for key in delta_t_i}
+    delta_term = {key: (1.0 / args.num_users) * delta_t_i[key] for key in delta_t_i}
 
     # compute gradient dot product delta_term
     bv = 0.0
@@ -17,7 +17,7 @@ def compute_bv_hvp(args, model, train_dataset, gradient, delta_t_i, accumulated_
     """Computes the banzhaf value component for client i at epoch t."""
     device = get_device()
     # compute delta term
-    delta_term = {key: (-1.0 / args.num_users) * delta_t_i[key] for key in delta_t_i}
+    delta_term = {key: (1.0 / args.num_users) * delta_t_i[key] for key in delta_t_i}
 
     # prepare accumulated_Delta_G_i as a list matching model parameters
     accumulated_Delta_G_i_list = []
@@ -34,7 +34,7 @@ def compute_bv_hvp(args, model, train_dataset, gradient, delta_t_i, accumulated_
     # compute total_term = delta_term + hessian_term
     total_term = {}
     for name in delta_term:
-        total_term[name] = delta_term[name] + hessian_term.get(name, torch.zeros_like(delta_term[name], device=device))
+        total_term[name] = delta_term[name] - hessian_term.get(name, torch.zeros_like(delta_term[name], device=device))
 
     # compute gradient dot product total_term
     final_term = 0.0
