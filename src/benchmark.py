@@ -38,8 +38,7 @@ def train_subset(args, global_weights, train_loaders, valid_dataset, test_datase
     delta_g = defaultdict(lambda: {key: torch.zeros_like(global_weights[key]) for key in global_weights.keys()}) if isBanzhaf else None
     no_improvement_count = 0
 
-    # Initialize a tqdm progress bar for this subset
-    with tqdm(total=args.epochs, desc=f"Subset: {subset_key}", position=position, leave=True, bar_format="{l_bar}{bar:20}| {percentage:3.1f}% [{n_fmt}/{total_fmt} epochs, {elapsed}<{remaining}]") as pbar:
+    with tqdm(total=args.epochs, desc=f"Subset {subset_key}".ljust(22), position=position, leave=True, bar_format="{l_bar}{bar} | {percentage:3.1f}% [{elapsed}<{remaining}]") as pbar:
         for epoch in range(args.epochs):
             local_weights = []
 
