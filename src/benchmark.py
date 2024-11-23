@@ -39,7 +39,7 @@ def train_subset(args, global_weights, train_loaders, valid_dataset, test_datase
     no_improvement_count = 0
 
     # Initialize a tqdm progress bar for this subset
-    with tqdm(total=args.epochs, desc=f"Subset: {subset_key}", position=position, leave=True) as pbar:
+    with tqdm(total=args.epochs, desc=f"Subset: {subset_key}", position=position, leave=True, unit_scale=True, smoothing=0.1) as pbar:
         for epoch in range(args.epochs):
             local_weights = []
 
@@ -48,7 +48,7 @@ def train_subset(args, global_weights, train_loaders, valid_dataset, test_datase
             idxs_users = np.random.choice(subset_key, m, replace=False)
 
             for idx in idxs_users:
-                w = train_client(args, global_weights, train_loaders[idx], device, 1 / (len(idxs_users) * args.local_ep), pbar)
+                w = train_client(args, global_weights, train_loaders[idx], device, (1 / (len(idxs_users) * args.local_ep)).item(), pbar)
                 local_weights.append(w)
                 if isBanzhaf:
                     delta_t[epoch][idx] = {key: (global_weights[key] - w[key]).to(device) for key in w.keys()}
