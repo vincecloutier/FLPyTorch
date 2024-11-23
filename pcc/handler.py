@@ -14,16 +14,20 @@ def process_and_graph_log(file_path, plot=False):
     shapley_pattern = r"Shapley Values: \[([-\d.,\s]+)\]"
     approx_simple_pattern = r"Approximate Banzhaf Values Simple: \[([-\d.,\s]+)\]"
     approx_hessian_pattern = r"Approximate Banzhaf Values Hessian: \[([-\d.,\s]+)\]"
+    bad_clients_pattern = r"Actual Bad Clients: \[([-\d\s,]*)\]"
 
     # extract values
     shapley_values = [list(map(float, match.split(','))) for match in re.findall(shapley_pattern, logs)]
     approx_simple_values = [list(map(float, match.split(','))) for match in re.findall(approx_simple_pattern, logs)]
     approx_hessian_values = [list(map(float, match.split(','))) for match in re.findall(approx_hessian_pattern, logs)]
+    bad_idxs = [list(map(int, match.split(' '))) for match in re.findall(bad_clients_pattern, logs) if match]
 
     # concatenate across runs
     shapley_all = np.array([val for run in shapley_values for val in run])
     approx_simple_all = np.array([val for run in approx_simple_values for val in run])
     approx_hessian_all = np.array([val for run in approx_hessian_values for val in run])
+    bad_idxs_all = np.array([i + 15 + (5 * idx) for idx, subarray in enumerate(bad_idxs) for i in subarray])
+    print(bad_idxs_all)
 
     # min_max scale the data to 0-1
     scaler = MinMaxScaler()
@@ -54,8 +58,10 @@ def process_and_graph_log(file_path, plot=False):
         colors = plt.cm.tab10(np.arange(num_groups))
         group_labels = ['IID', 'Non IID', 'Mislabeled', 'Noisy']
 
-        # Assign colors to data points
+        # color all the data points blue unless they are actual bad clients
         color_groups = [colors[i // group_size] for i in range(len(data))]
+        # color the actual bad clients according to if they are in the first 15 or last 15
+        # color_actual_bad_clients = [colors[i] for i in actual_bad_clients_all]
 
         # Generate legend
         legend_handles = [
@@ -84,7 +90,7 @@ def process_and_graph_log(file_path, plot=False):
         plt.show()
 
 # example usage
-process_and_graph_log('pcc/cifar.log', plot=False)
-process_and_graph_log('pcc/fmnist.log', plot=False)
+process_and_graph_log('pcc/cifar.log', plot=True)
+process_and_graph_log('pcc/fmnist.log', plot=True)
 
 # todo only colour the actual bad clients as bad clients.
