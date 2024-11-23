@@ -78,7 +78,7 @@ def train_subset(args, global_weights, client_trainers, subset_key, isBanzhaf):
     if not subset_key:
         return subset_key, float('inf'), 0, defaultdict(float), defaultdict(float)
 
-    # Initialize local variables
+    # initialize local variables
     best_test_acc, best_test_loss = 0, float('inf')
     approx_banzhaf_values_hessian = defaultdict(float)
     approx_banzhaf_values_simple = defaultdict(float)
@@ -91,15 +91,13 @@ def train_subset(args, global_weights, client_trainers, subset_key, isBanzhaf):
     for epoch in tqdm(range(epochs), desc=f"Training for subset: {subset_key}"):
         local_weights = []
         
-        # Sample a fraction of clients
+        # sample a fraction of clients
         m = max(int(args.frac * len(subset_key)), 1)
         idxs_users = np.random.choice(subset_key, m, replace=False)
 
-        # Parallel training using Ray's remote calls
-        client_futures = [client_trainers[idx].train.remote(global_weights, args.local_ep) for idx in idxs_users]
-        client_results = ray.get(client_futures)
-
-        for idx, w in zip(idxs_users, client_results):
+        # parallel training using ray's remote calls
+        for idx in idxs_users:  
+            w = client_trainers[idx].train(global_weights, args.local_ep)
             local_weights.append(copy.deepcopy(w))
             if isBanzhaf:
                 delta_t[epoch][idx] = {key: (global_weights[key] - w[key]) for key in w.keys()}
@@ -120,7 +118,7 @@ def train_subset(args, global_weights, client_trainers, subset_key, isBanzhaf):
         global_weights = average_weights(local_weights)
 
         # Update global weights across all clients
-        update_futures = [trainer.update_weights.remote(global_weights) for trainer in client_trainers.values()]
+        update_futures = [trainer.update_weights(global_weights) for trainer in client_trainers.values()]
         ray.get(update_futures)
 
         # Evaluate the global model
@@ -164,17 +162,17 @@ if __name__ == '__main__':
 
     # create ray actors for each client
     client_trainers = {
-        user_id: ClientTrainer.remote(
+        user_id: ClientTrainer(
             args, 
-            ray.put(train_loaders[user_id]), 
+            train_loaders[user_id], 
             get_device()
         )
         for user_id in user_groups.keys()
     }
 
     # broadcast initial global weights to all clients
-    update_futures = [trainer.update_weights.remote(global_weights) for trainer in client_trainers.values()]
-    ray.get(update_futures)
+    update_futures = [trainer.update_weights(global_weights) for trainer in client_trainers.values()]
+    # ray.get(update_futures)
 
     # references to datasets to avo d data copying
     valid_dataset_ref = ray.put(valid_dataset)
