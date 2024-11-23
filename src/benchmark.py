@@ -28,7 +28,7 @@ ray.init(
 )
 
 # Define a Ray actor for client training
-@ray.remote(num_gpus=1)
+@ray.remote(num_gpus=0.1)
 class ClientTrainer:
     def __init__(self, args, trainloader, device):
         self.args = args
@@ -73,7 +73,7 @@ class ClientTrainer:
 
 # Define the train_subset function without nested remote calls
 @ray.remote(num_cpus=1)
-def train_subset(args, global_weights, client_trainers, subset_key, isBanzhaf, valid_dataset_ref, test_dataset_ref):
+def train_subset(args, global_weights, client_trainers, subset_key, isBanzhaf):
     device = get_device()
 
     if not subset_key:
