@@ -13,6 +13,7 @@ from utils import get_dataset, average_weights, setup_logger, get_device, identi
 import multiprocessing
 from scipy.stats import pearsonr
 from functools import partial
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, user_groups, device, clients=None, isBanzhaf=False):
     if clients is None or len(clients) == 0:
@@ -107,11 +108,7 @@ if __name__ == '__main__':
     # determine the number of available gpus
     n_gpus = torch.cuda.device_count()
     print(f"Number of GPUs available: {n_gpus}")
-    
-    # max number of processes that can use GPUs
-    max_processes_per_gpu = args.processes_per_gpu  # e.g., 6
-    total_gpu_processes = n_gpus * max_processes_per_gpu  # e.g., 3 * 6 = 18
-    
+        
     # total number of processes to run (CPU-bound processes)
     processes = args.processes if args.processes > 0 else multiprocessing.cpu_count()
     print(f"Number of CPU processes: {processes}")
@@ -129,16 +126,18 @@ if __name__ == '__main__':
         tasks.append((subset, gpu_id, args, train_dataset, valid_dataset, test_dataset, user_groups))
 
     # Create a multiprocessing pool
-    pool = multiprocessing.Pool(processes=processes)
-    
-    try:
-        # Use starmap to pass multiple arguments to train_subset
-        results_list = pool.starmap(train_subset, tasks)
-    except Exception as e:
-        print(f"An error occurred during multiprocessing: {e}")
-    finally:
-        pool.close()
-        pool.join()
+    results_list = []
+    with ThreadPoolExecutor(max_workers=processes) as executor:
+        # Submit all tasks
+        future_to_task = {executor.submit(train_subset, *task): task for task in tasks}
+        # Optionally, use tqdm for progress
+        for future in tqdm(as_completed(future_to_task), total=len(tasks), desc="Training Subsets"):
+            try:
+                result = future.result()
+                results_list.append(result)
+            except Exception as e:
+                task = future_to_task[future]
+                print(f"An error occurred while processing subset {task[0]}: {e}")
 
     # aggregate results
     results = {}
