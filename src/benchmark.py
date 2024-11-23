@@ -16,7 +16,7 @@ import copy
 from torch import nn
 from tqdm import tqdm  
 
-@ray.remote(num_gpus=0.5)
+@ray.remote(num_gpus=1)
 def train_subset(args, global_model, train_loaders, valid_dataset, test_dataset, global_weights, clients=None):
     subset_key = tuple(sorted(clients))
     isBanzhaf = (subset_key == (0, 1, 2, 3, 4))
@@ -78,7 +78,7 @@ def train_subset(args, global_model, train_loaders, valid_dataset, test_dataset,
     torch.cuda.empty_cache()
     return subset_key, best_test_loss, best_test_acc, approx_banzhaf_values_simple, approx_banzhaf_values_hessian
 
-@ray.remote(num_gpus=0.25)
+@ray.remote(num_gpus=1)
 def train_client(args, global_weights, trainloader, device):
     # create a model and load global weights
     model = initialize_model(args).to(device)
