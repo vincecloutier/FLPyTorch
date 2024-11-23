@@ -26,7 +26,7 @@ def train_subset(args, global_model, train_loaders, valid_dataset, test_dataset,
         return subset_key, float('inf'), 0, defaultdict(float), defaultdict(float)
 
     global_model.load_state_dict(global_weights)
-    model = global_model.to(device)
+    model = ray.train.torch.prepare_model(global_model)
     best_test_acc, best_test_loss = 0, float('inf')
     approx_banzhaf_values_hessian = defaultdict(float)
     approx_banzhaf_values_simple = defaultdict(float)
@@ -81,14 +81,15 @@ def train_subset(args, global_model, train_loaders, valid_dataset, test_dataset,
 @ray.remote
 def train_client(args, global_weights, trainloader, device):
     # create a model and load global weights
-    model = initialize_model(args).to(device)
+    model = initialize_model(args)
     model.load_state_dict(global_weights)
+    model = ray.train.torch.prepare_model(model)
 
     # set model to train
     model.train()
     epoch_loss = []
 
-    criterion = nn.CrossEntropyLoss().to(device)
+    criterion = nn.CrossEntropyLoss()
 
     # set optimizer for the local updates
     if args.optimizer == 'sgd':
@@ -99,7 +100,7 @@ def train_client(args, global_weights, trainloader, device):
     for _ in range(args.local_ep):
         batch_loss = []
         for images, labels in trainloader:
-            images, labels = images.to(device), labels.to(device)
+            # images, labels = images.to(device), labels.to(device)
 
             optimizer.zero_grad()
             log_probs = model(images)
@@ -125,14 +126,17 @@ if __name__ == '__main__':
     train_dataset, valid_dataset, test_dataset, user_groups, actual_bad_clients = get_dataset(args)
 
     global_model = initialize_model(args)
+    global_model = ray.train.torch.prepare_model(global_model)
     global_weights = global_model.state_dict()
 
     train_loaders = {
-        user_id: DataLoader(
-            SubsetSplit(train_dataset, indices),
-            batch_size=args.local_bs,
-            shuffle=True,
-            num_workers=args.num_workers
+        user_id: ray.train.torch.prepare_data_loader(
+            DataLoader(
+                SubsetSplit(train_dataset, indices),
+                batch_size=args.local_bs,
+                shuffle=True,
+                num_workers=args.num_workers
+            )
         )
         for user_id, indices in user_groups.items()
     }
