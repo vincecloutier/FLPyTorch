@@ -78,7 +78,7 @@ def train_subset(args, global_model, train_loaders, valid_dataset, test_dataset,
     torch.cuda.empty_cache()
     return subset_key, best_test_loss, best_test_acc, approx_banzhaf_values_simple, approx_banzhaf_values_hessian
 
-@ray.remote()
+@ray.remote
 def train_client(args, global_weights, trainloader, device):
     # create a model and load global weights
     model = initialize_model(args).to(device)
