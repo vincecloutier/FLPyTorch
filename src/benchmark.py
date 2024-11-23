@@ -125,7 +125,7 @@ def train_client(args, global_weights, trainloader, device, fractional_update, g
         with tqdm_lock:
             global_pbar.update(fractional_update)
 
-    return model.state_dict()
+    return model.state_dict().to(device)
 
 
 if __name__ == '__main__':
