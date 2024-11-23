@@ -106,7 +106,7 @@ def train_client(args, global_weights, trainloader, device):
     else:
         raise ValueError(f"Unsupported optimizer: {args.optimizer}")
 
-    for epoch in range(args.local_ep):
+    for _ in range(args.local_ep):
         batch_loss = []
         for images, labels in trainloader:
             images, labels = images.to(device), labels.to(device)
@@ -121,8 +121,6 @@ def train_client(args, global_weights, trainloader, device):
             optimizer.step()
             batch_loss.append(loss.item())
         epoch_loss.append(sum(batch_loss) / len(batch_loss))
-        if args.verbose:
-            print(f'Local Epoch {epoch} - Loss: {epoch_loss[-1]}')
 
     return model.state_dict()
 
@@ -158,7 +156,7 @@ if __name__ == '__main__':
     # To prevent excessive positions, you might limit the number of concurrent progress bars
     # Here, we'll assign positions based on the subset's index
     # Note: Terminal height limits how many progress bars can be displayed effectively
-    max_visible_bars = 20  # Adjust based on your terminal's capability
+    max_visible_bars = 35  # Adjust based on your terminal's capability
     position_mapping = {subset: idx % max_visible_bars for idx, subset in enumerate(all_subsets)}
 
     # launch train_subset tasks in parallel with controlled concurrency
