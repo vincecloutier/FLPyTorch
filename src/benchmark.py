@@ -16,7 +16,7 @@ import copy
 from torch import nn
 from tqdm import tqdm  
 
-@ray.remote(num_gpus=1)
+@ray.remote(num_cpus=1, num_gpus=0.25)
 def train_subset(args, global_model, train_loaders, valid_dataset, test_dataset, global_weights, clients=None):
     subset_key = tuple(sorted(clients))
     isBanzhaf = (subset_key == (0, 1, 2, 3, 4))
@@ -78,7 +78,7 @@ def train_subset(args, global_model, train_loaders, valid_dataset, test_dataset,
     torch.cuda.empty_cache()
     return subset_key, best_test_loss, best_test_acc, approx_banzhaf_values_simple, approx_banzhaf_values_hessian
 
-@ray.remote(num_gpus=1)
+@ray.remote(num_cpus=1, num_gpus=0.25)
 def train_client(args, global_weights, trainloader, device):
     # create a model and load global weights
     model = initialize_model(args).to(device)
@@ -116,7 +116,7 @@ def train_client(args, global_weights, trainloader, device):
 
 
 if __name__ == '__main__':
-    ray.init(include_dashboard=True, logging_level="DEBUG", object_store_memory=20 * 1024**3)
+    ray.init(include_dashboard=True, logging_level="DEBUG", object_store_memory=20 * 1024**3, num_gpus=torch.cuda.available, num_cpus=36)
     start_time = time.time()
 
     args = args_parser()
@@ -141,7 +141,7 @@ if __name__ == '__main__':
     valid_dataset_ref = ray.put(valid_dataset)
     test_dataset_ref = ray.put(test_dataset)
 
-    all_subsets = list(itertools.chain.from_iterable(itertools.combinations(range(args.num_users), r) for r in range(args.num_users + 1)))
+    all_subsets = list(itertools.chain.from_iterable(itertools.combinations(range(args.num_users), r) for r in range(args.num_users, -1, -1)))
 
     futures = [
         train_subset.remote(args, global_model, train_loaders_ref, valid_dataset_ref, test_dataset_ref, global_weights, clients)
