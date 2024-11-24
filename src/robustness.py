@@ -160,7 +160,7 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
             approx_banzhaf_values_simple[idx] += compute_bv_simple(args, gradient, delta_t[epoch][idx])
 
         # compute mc shapley values and influence functions periodically
-        shapley = compute_monte_carlo_shapley(args, global_weights, train_dataset, user_groups, device, num_samples=50)
+        shapley = compute_monte_carlo_shapley(args, global_weights, train_dataset, user_groups, device, num_samples=25)
         influence = compute_influence_functions(args, model, train_dataset, user_groups, device)
         for k, v in shapley.items():
             shapley_values[k] += v  
