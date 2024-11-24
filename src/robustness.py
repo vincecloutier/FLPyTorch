@@ -89,7 +89,7 @@ def compute_influence_functions(args, model, train_dataset, user_groups, device)
     model.eval()
     
     # compute the gradient of the test loss w.r.t. model parameters
-    test_loss_grad = test_gradient(args, model, test_dataset, device)
+    test_loss_grad = test_gradient(args, model, test_dataset)
     
     # solve Hx = grad_test_loss to get x = H^{-1} grad_test_loss
     x = conjugate_gradient(model, train_dataset, test_loss_grad, num_iterations=20, tol=1e-4)
@@ -106,7 +106,7 @@ def compute_influence_functions(args, model, train_dataset, user_groups, device)
     # iterate over each client to compute their influence
     for client_idx in tqdm(range(args.num_users), desc="Computing Influence Functions"):
         client_data = LocalUpdate(args=args, dataset=train_dataset, idxs=user_groups[client_idx]).get_data()
-        client_grad = test_gradient(args, model, client_data, device)
+        client_grad = test_gradient(args, model, client_data)
         client_grad_flat = torch.cat([g.contiguous().view(-1) for g in client_grad])
         influence = -torch.dot(client_grad_flat, x).item()        
         influence_values[client_idx] = influence
@@ -128,7 +128,7 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
         local_weights = []
 
         model.train()
-        gradient = test_gradient(args, model, test_dataset, device)
+        gradient = test_gradient(args, model, test_dataset)
         
         m = max(int(args.frac * args.num_users), 1)
         idxs_users = np.random.choice(range(args.num_users), m, replace=False)
