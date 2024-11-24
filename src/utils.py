@@ -31,98 +31,64 @@ class SubsetSplit(Dataset):
         return image, torch.tensor(label, dtype=torch.long)
 
 def get_dataset(args):
-    """ Returns train, validation, and test datasets along with a user group,
+    """Returns train, validation, and test datasets along with a user group,
     which is a dict where the keys are the user index and the values are the
     corresponding data for each of those users.
     """
-    if args.dataset == 'cifar' or args.dataset == 'resnet' or args.dataset == 'mobilenet':
+    # define transformations based on dataset
+    t_dict = {
+        'fmnist': {
+            'train': transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]),
+            'test': transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]),
+        },
+        'cifar': {
+            'train': transforms.Compose([transforms.RandomCrop(32, padding=4), transforms.RandomHorizontalFlip(), transforms.ToTensor(), transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))]),
+            'test': transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))]),
+        },
+        'imagenet': {
+            'train': transforms.Compose([transforms.RandomResizedCrop(224), transforms.RandomHorizontalFlip(), transforms.ToTensor(), transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])]),
+            'test': transforms.Compose([transforms.Resize(256), transforms.CenterCrop(224), transforms.ToTensor(), transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])]),
+        }
+    }
+    
+    # select dataset-specific configurations
+    if args.dataset in ['cifar', 'resnet', 'mobilenet']:
+        dataset_name = 'cifar'
         data_dir = './data/cifar/'
-        train_transform = transforms.Compose([
-            transforms.RandomCrop(32, padding=4),
-            transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-        ])
-
-        test_transform = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-        ])
-        
-        # load the full training dataset
-        full_train_dataset = datasets.CIFAR10(data_dir, train=True, download=True, transform=train_transform)
-
-        # allocate 10% of the training set as validation set
-        train_dataset, valid_dataset = train_val_split(full_train_dataset, 0.1)
-
-        # load the test dataset
-        test_dataset = datasets.CIFAR10(data_dir, train=False, download=True, transform=test_transform)
+        dataset_class = datasets.CIFAR10
     elif args.dataset == 'fmnist':
+        dataset_name = 'fmnist'
         data_dir = './data/fmnist/'
-        train_transform = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize((0.1307,), (0.3081,))
-        ])
-        test_transform = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize((0.1307,), (0.3081,))
-        ])
-
-        # load the full training dataset
-        full_train_dataset = datasets.FashionMNIST(data_dir, train=True, download=True, transform=train_transform)
-
-        # create train and validation datasets
-        train_dataset, valid_dataset = train_val_split(full_train_dataset, 0.1)
-
-        # load the test dataset
-        test_dataset = datasets.FashionMNIST(data_dir, train=False, download=True, transform=test_transform)
+        dataset_class = datasets.FashionMNIST
     else:
+        dataset_name = 'imagenet'
         data_dir = './data/imagenet/'
-        train_transform = transforms.Compose([
-            transforms.RandomResizedCrop(224),
-            transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        ])
-        test_transform = transforms.Compose([
-            transforms.Resize(256),
-            transforms.CenterCrop(224),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        ])
+        dataset_class = datasets.ImageNet
 
-        # download the dataset if it doesn't exist
-        if not os.path.exists(data_dir):
-            download_imagenet(data_dir) 
+    # ensure data directory exists
+    os.makedirs(data_dir, exist_ok=True)
 
-        # load the full training dataset
-        full_train_dataset = datasets.ImageNet(data_dir, train=True, transform=train_transform)
+    # load training dataset
+    full_train_dataset = dataset_class(data_dir, True, download=True if dataset_name != 'imagenet' else False, transform=t_dict[dataset_name]['train'])
 
-        # allocate 10% of the training set as validation set
-        train_dataset, valid_dataset = train_val_split(full_train_dataset, 0.1)
+    # allocate 10% of the training set as validation set
+    train_dataset, valid_dataset = train_val_split(full_train_dataset, 0.1)
 
-        # load the test dataset
-        test_dataset = datasets.ImageNet(data_dir, train=False, transform=test_transform)
+    # load test dataset
+    test_dataset = dataset_class(data_dir, False, download=True if dataset_name != 'imagenet' else False, transform=t_dict[dataset_name]['test'])
 
     # handle different settings
     if args.setting == 0:
-        user_groups = iid(train_dataset, args.num_users), None
+        user_groups = iid(train_dataset, args.num_users)
+        bad_clients = None
     elif args.setting == 1:
-        user_groups, bad_clients = noniid(train_dataset, args.dataset, args.num_users, args.badclient_prop, args.num_categories_per_client)
+        user_groups, bad_clients = noniid(train_dataset, dataset_name, args.num_users, args.badclient_prop, args.num_categories_per_client)
     elif args.setting == 2:
         iid_user_groups = iid(train_dataset, args.num_users)
-        original_targets = np.array(train_dataset.targets)
-        user_groups, bad_clients = mislabeled(train_dataset, args.dataset, iid_user_groups, args.badclient_prop, args.badsample_prop)
-        for client in bad_clients:
-            indices = list(user_groups[client])
-            for idx in indices:
-                orig_label = original_targets[idx]  # Original label
-                mod_label = train_dataset[idx][1]  # Modified label
-                if orig_label != mod_label:
-                    print(f"Label changed: Index {idx} from {orig_label} to {mod_label}")
+        user_groups, bad_clients = mislabeled(train_dataset, dataset_name, iid_user_groups, args.badclient_prop, args.badsample_prop)
     elif args.setting == 3:
         iid_user_groups = iid(train_dataset, args.num_users)
-        user_groups, bad_clients = noisy(train_dataset, args.dataset, iid_user_groups, args.badclient_prop, args.badsample_prop)
+        user_groups, bad_clients = noisy(train_dataset, dataset_name, iid_user_groups, args.badclient_prop, args.badsample_prop)
     else:
         raise ValueError("Invalid value for --setting. Please use 0, 1, 2, or 3.")
     return train_dataset, valid_dataset, test_dataset, user_groups, bad_clients
