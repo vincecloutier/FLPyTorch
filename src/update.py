@@ -98,7 +98,7 @@ def test_inference(model, test_dataset):
 def test_gradient(args, model, dataset):
     """Computes the gradient of the validation loss with respect to the model parameters."""
 
-    model.eval()
+    model.train()
     model.zero_grad()  # clear existing gradients
 
     device = get_device()
