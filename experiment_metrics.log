@@ -139,3 +139,19 @@ FMNIST STUFF:
 2024-11-17 13:18:37,780 INFO Predicted Bad Clients: [17, 48, 49, 42, 7, 22, 28, 29, 1, 33, 32, 11, 5, 38, 26, 14, 27, 36, 41]
 2024-11-17 13:18:37,781 INFO Bad Client Accuracy: 0.0
 2024-11-17 13:18:37,781 INFO Total Run Time: 496.32799792289734
+
+
+SHAPLEY SITUATION:
+| Global Round : 100 | Local Epoch : 3 | Loss: 0.537169
+Shapley Permutations: 100%|█████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [19:11<00:00, 11.52s/it]
+Training Epochs:  67%|███████████████████████████████████████████████████████████████████▎                                 | 4/6 [25:02<12:31, 375.56s/it]
+Traceback (most recent call last):
+  File "/workspace/FLPyTorch/src/robustness.py", line 247, in <module>
+    global_model, approx_banzhaf_values_simple, approx_banzhaf_values_hvp, shapley_values, influence_values = train_global_model(args, global_model, train_dataset, test_dataset, user_groups, device)
+  File "/workspace/FLPyTorch/src/robustness.py", line 196, in train_global_model
+    influence = compute_influence_functions(args, model, train_dataset, user_groups, device, test_dataset)
+  File "/workspace/FLPyTorch/src/robustness.py", line 122, in compute_influence_functions
+    x = conjugate_gradient(model, train_dataset, test_loss_grad, num_iterations=20, tol=1e-4)
+  File "/workspace/FLPyTorch/src/update.py", line 167, in conjugate_gradient
+    x = torch.zeros_like(b).to(device)
+TypeError: zeros_like(): argument 'input' (position 1) must be Tensor, not dict
