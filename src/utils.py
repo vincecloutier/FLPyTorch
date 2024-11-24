@@ -137,7 +137,7 @@ def download_imagenet(data_dir: str):
         json.dump(kaggle_json, f)
 
     # set correct permissions
-    os.chmod(kaggle_json_path, 0600)
+    os.chmod(kaggle_json_path, 0o600)
 
     # ensure kaggle cli is installed
     subprocess.run(["pip", "install", "--quiet", "kaggle"], check=True)
