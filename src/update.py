@@ -1,8 +1,7 @@
 import torch
-from torch import nn
+from torch import nn, autocast, GradScaler
 from torch.utils.data import DataLoader, Dataset
 from utils import get_device
-from torch.cuda.amp import autocast, GradScaler
 
 
 class ClientSplit(Dataset):
