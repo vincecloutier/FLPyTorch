@@ -17,24 +17,24 @@ do
 
     # CIFAR commands
     echo "Run $i for CIFAR with noise_std=$NOISE_STD"
-    python robustness.py --dataset cifar --setting 0 --processes $PROCESSES --noise_std $NOISE_STD
-    python robustness.py --dataset cifar --setting 1 --processes $PROCESSES --noise_std $NOISE_STD
-    python robustness.py --dataset cifar --setting 2 --processes $PROCESSES --noise_std $NOISE_STD
-    python robustness.py --dataset cifar --setting 3 --processes $PROCESSES --noise_std $NOISE_STD
+    python robustness.py --dataset cifar --setting 0 --processes $PROCESSES --noise_std $NOISE_STD --num_users 50 --local_ep 3
+    python robustness.py --dataset cifar --setting 1 --processes $PROCESSES --noise_std $NOISE_STD --num_users 50 --local_ep 3
+    python robustness.py --dataset cifar --setting 2 --processes $PROCESSES --noise_std $NOISE_STD --num_users 50 --local_ep 3
+    python robustness.py --dataset cifar --setting 3 --processes $PROCESSES --noise_std $NOISE_STD --num_users 50 --local_ep 3
 
     # FMNIST commands
     echo "Run $i for FMNIST with noise_std=$NOISE_STD"
-    python robustness.py --dataset fmnist --setting 0 --processes $PROCESSES --noise_std $NOISE_STD
-    python robustness.py --dataset fmnist --setting 1 --processes $PROCESSES --noise_std $NOISE_STD
-    python robustness.py --dataset fmnist --setting 2 --processes $PROCESSES --noise_std $NOISE_STD
-    python robustness.py --dataset fmnist --setting 3 --processes $PROCESSES --noise_std $NOISE_STD
+    python robustness.py --dataset fmnist --setting 0 --processes $PROCESSES --noise_std $NOISE_STD --num_users 50 --local_ep 3
+    python robustness.py --dataset fmnist --setting 1 --processes $PROCESSES --noise_std $NOISE_STD --num_users 50 --local_ep 3
+    python robustness.py --dataset fmnist --setting 2 --processes $PROCESSES --noise_std $NOISE_STD --num_users 50 --local_ep 3
+    python robustness.py --dataset fmnist --setting 3 --processes $PROCESSES --noise_std $NOISE_STD --num_users 50 --local_ep 3
 
     # IMAGENET commands
     echo "Run $i for IMAGENET with noise_std=$NOISE_STD"
-    python robustness.py --dataset imagenet --setting 0 --processes $PROCESSES --noise_std $NOISE_STD
-    python robustness.py --dataset imagenet --setting 1 --processes $PROCESSES --noise_std $NOISE_STD
-    python robustness.py --dataset imagenet --setting 2 --processes $PROCESSES --noise_std $NOISE_STD
-    python robustness.py --dataset imagenet --setting 3 --processes $PROCESSES --noise_std $NOISE_STD
+    python robustness.py --dataset imagenet --setting 0 --processes $PROCESSES --noise_std $NOISE_STD --num_users 50 --local_ep 3
+    python robustness.py --dataset imagenet --setting 1 --processes $PROCESSES --noise_std $NOISE_STD --num_users 50 --local_ep 3
+    python robustness.py --dataset imagenet --setting 2 --processes $PROCESSES --noise_std $NOISE_STD --num_users 50 --local_ep 3
+    python robustness.py --dataset imagenet --setting 3 --processes $PROCESSES --noise_std $NOISE_STD --num_users 50 --local_ep 3
 
 done
 
