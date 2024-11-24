@@ -89,5 +89,5 @@ def process_and_graph_log(file_path, plot=False):
         plt.tight_layout()
         plt.show()
 
-# process_and_graph_log('pcc/cifar.log', plot=True)
+process_and_graph_log('pcc/cifar.log', plot=True)
 process_and_graph_log('pcc/fmnist.log', plot=True)

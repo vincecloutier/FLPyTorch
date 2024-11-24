@@ -1,5 +1,6 @@
 import torch
-from update import hessian
+from utils import get_device
+from update import compute_hessian
 
 def compute_bv_simple(args, gradient, delta_t_i):
     """Computes the simplified banzhaf value for client i at epoch t."""
@@ -12,8 +13,9 @@ def compute_bv_simple(args, gradient, delta_t_i):
         bv += torch.dot(gradient[name].view(-1), delta_term[name].view(-1))
     return bv.item()
 
-def compute_bv_hvp(args, model, train_dataset, gradient, delta_t_i, accumulated_Delta_G_i, device):
+def compute_bv_hvp(args, model, train_dataset, gradient, delta_t_i, accumulated_Delta_G_i):
     """Computes the banzhaf value component for client i at epoch t."""
+    device = get_device()
     # compute delta term
     delta_term = {key: (1.0 / args.num_users) * delta_t_i[key] for key in delta_t_i}
 
@@ -24,7 +26,7 @@ def compute_bv_hvp(args, model, train_dataset, gradient, delta_t_i, accumulated_
             accumulated_Delta_G_i_list.append(accumulated_Delta_G_i[name].to(device))
 
     # compute Hessian-vector product
-    hessian_term = hessian(args, model, train_dataset, accumulated_Delta_G_i_list)
+    hessian_term = compute_hessian(model, train_dataset, accumulated_Delta_G_i_list)
 
     # multiply by alpha
     # hessian_term = {name: args.alpha * hvp_dict[name] for name in hvp_dict}

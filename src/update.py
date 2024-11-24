@@ -1,21 +1,77 @@
 import torch
 from torch import nn
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset
+from utils import get_device
 
 
-def inference(args, model, test_dataset, device):
+class ClientSplit(Dataset):
+    """An abstract Dataset class wrapped around Pytorch Dataset class."""
+    def __init__(self, dataset, idxs):
+        self.dataset = dataset
+        self.idxs = [int(i) for i in idxs]
+
+    def __len__(self):
+        return len(self.idxs)
+
+    def __getitem__(self, item):
+        image, label = self.dataset[self.idxs[item]]
+        return image, torch.tensor(label, dtype=torch.long)
+
+
+class LocalUpdate(object):
+    def __init__(self, args, dataset, idxs):
+        self.args = args
+        self.trainloader = DataLoader(ClientSplit(dataset, idxs), batch_size=self.args.local_bs, shuffle=True)
+        self.device = get_device()
+        self.criterion = nn.CrossEntropyLoss().to(self.device)
+
+    def update_weights(self, model, global_round):
+        # set mode to train model
+        model.train()
+        epoch_loss = []
+
+        # set optimizer for the local updates
+        if self.args.optimizer == 'sgd':
+            optimizer = torch.optim.SGD(model.parameters(), lr=self.args.lr, momentum=self.args.momentum)
+        elif self.args.optimizer == 'adam':
+            optimizer = torch.optim.Adam(model.parameters(), lr=self.args.lr, weight_decay=1e-4)
+
+        for iter in range(self.args.local_ep):
+            batch_loss = []
+            for batch_idx, (images, labels) in enumerate(self.trainloader):
+                images, labels = images.to(self.device), labels.to(self.device)
+
+                model.zero_grad()
+                log_probs = model(images)
+                loss = self.criterion(log_probs, labels)
+                loss.backward()
+
+                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+
+                optimizer.step()
+                batch_loss.append(loss.item())
+            epoch_loss.append(sum(batch_loss)/len(batch_loss))
+            if self.args.verbose:
+                print(f'| Global Round : {global_round+1} | Local Epoch : {iter+1} | Loss: {sum(batch_loss) / len(batch_loss):.6f}')
+
+        return model.state_dict(), sum(epoch_loss) / len(epoch_loss)
+
+
+def test_inference(model, test_dataset):
     """Returns the test accuracy and loss on the global model trained on the entire dataset."""
 
     model.eval()
     loss, total, correct = 0.0, 0.0, 0.0
 
+    device = get_device()
+
     criterion = nn.CrossEntropyLoss().to(device)
     testloader = DataLoader(test_dataset, batch_size=128, shuffle=False)
 
-    for images, labels in testloader:
+    for batch_idx, (images, labels) in enumerate(testloader):
         images, labels = images.to(device), labels.to(device)
 
-        # forward pass
+        # inference
         outputs = model(images)
         batch_loss = criterion(outputs, labels)
         loss += batch_loss.item() * len(labels)
@@ -31,14 +87,16 @@ def inference(args, model, test_dataset, device):
     return accuracy, loss
 
 
-def gradient(args, model, test_dataset, device):
+def test_gradient(args, model, dataset):
     """Computes the gradient of the validation loss with respect to the model parameters."""
 
     model.eval()
     model.zero_grad()  # clear existing gradients
 
+    device = get_device()
+
     criterion = nn.CrossEntropyLoss().to(device)
-    data_loader = DataLoader(test_dataset, batch_size=len(test_dataset), shuffle=False, num_workers=args.num_workers) # top insight to use full dataset
+    data_loader = DataLoader(dataset, batch_size=len(dataset), shuffle=False) # top insight to use full dataset
     
     inputs, targets = next(iter(data_loader))
     inputs, targets = inputs.to(device), targets.to(device)
@@ -57,30 +115,25 @@ def gradient(args, model, test_dataset, device):
     gradient = {}
     for (name, param), grad in zip(model.named_parameters(), grad_params):
         if param.requires_grad:
-            gradient[name] = grad.clone().detach().to(device)
+            gradient[name] = grad.clone().detach()
 
     return gradient
 
 
-def hessian(args, model, test_dataset, v_list, device):
+def compute_hessian(model, dataset, v_list):
     """Computes the Hessian-vector product Hv, where H is the Hessian of loss w.r.t. model parameters."""
-    
+    device = get_device()
     model.eval()
-    model.zero_grad()
-
     criterion = nn.CrossEntropyLoss().to(device)
-    data_loader = DataLoader(test_dataset, batch_size=len(test_dataset), shuffle=False)
-    
+    data_loader = DataLoader(dataset, batch_size=len(dataset), shuffle=False)
     inputs, targets = next(iter(data_loader))
     inputs, targets = inputs.to(device), targets.to(device)
-    
-    # forward pass
     outputs = model(inputs)
-    loss = criterion(outputs, targets)
+    validation_loss = criterion(outputs, targets)
 
     # first gradient
     params = [p for p in model.parameters() if p.requires_grad]
-    grad_params = torch.autograd.grad(loss, params, create_graph=True, retain_graph=True)
+    grad_params = torch.autograd.grad(validation_loss, params, create_graph=True, retain_graph=True)
     
     # flatten grad_params and v_list
     grad_params_flat = torch.cat([g.contiguous().view(-1) for g in grad_params])
@@ -96,5 +149,5 @@ def hessian(args, model, test_dataset, v_list, device):
     hv_dict = {}
     for (name, param), hv in zip(model.named_parameters(), hvp):
         if param.requires_grad:
-            hv_dict[name] = hv.clone().detach().to(device)
+            hv_dict[name] = hv.clone().detach()
     return hv_dict

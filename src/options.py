@@ -14,7 +14,7 @@ def args_parser():
     parser.add_argument('--setting', type=int, default=0, help= "Set to 0 for IID, 1 for non-iid, 2 for mislabeled, 3 for noisy.")
     parser.add_argument('--retrain', type=int, default=0, help= "Retrain the global model w/ reweighting (default: 0)")
     parser.add_argument('--badclient_prop', type=float, default=0.6, help= "Proportion of either non-iid or mislabeled or noisy clients.")
-    parser.add_argument('--num_categories_per_client', type=int, default=3, help= "Number of categories per client in non-iid setting.")
+    parser.add_argument('--num_categories_per_client', type=int, default=4, help= "Number of categories per client in non-iid setting.")
     parser.add_argument('--badsample_prop', type=float, default=0.6, help= "Proportion of mislabeled/noisy samples per client in mislabeled/noisy setting.")
 
     # training arguments
@@ -26,8 +26,6 @@ def args_parser():
 
     # simulation arguments
     parser.add_argument('--processes', type=int, default=8, help="number of processes")
-    parser.add_argument('--processes_per_gpu', type=int, default=2, help="number of processes per gpu")
-    parser.add_argument('--num_workers', type=int, default=0, help="number of workers")
     parser.add_argument('--verbose', type=int, default=1, help='verbose')
 
     args = parser.parse_args()

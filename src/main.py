@@ -5,7 +5,7 @@ import numpy as np
 from tqdm import tqdm
 from collections import defaultdict
 from options import args_parser
-from update import LocalUpdate, inference, gradient
+from update import LocalUpdate, test_inference, test_gradient
 from utils import get_dataset, average_weights, setup_logger, get_device, identify_bad_idxs, measure_accuracy, initialize_model
 from estimation import compute_bv_hvp, compute_bv_simple, compute_G_t, compute_G_minus_i_t
 import warnings
@@ -48,7 +48,7 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
         local_weights = []
 
         model.train()
-        gradient = gradient(args, model, test_dataset)
+        gradient = test_gradient(args, model, test_dataset)
         
         if bad_clients is not None:
             good_clients = [i for i in range(args.num_users) if i not in bad_clients]
@@ -93,7 +93,7 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
                 selection_probabilities = np.array([approx_banzhaf_values[i] / total_banzhaf for i in range(args.num_users)])
                 selection_probabilities /= selection_probabilities.sum()  # normalize
 
-        test_acc, test_loss = inference(model, test_dataset)
+        test_acc, test_loss = test_inference(model, test_dataset)
         if test_acc > best_test_acc * 1.01 or test_loss < best_test_loss * 0.99:
             best_test_acc = test_acc
             best_test_loss = test_loss
@@ -132,7 +132,7 @@ if __name__ == '__main__':
     global_model.to(device)
     global_model.train()
     global_model, approx_banzhaf_values = train_global_model(args, global_model, train_dataset, test_dataset, user_groups, device)
-    test_acc, test_loss = inference(global_model, test_dataset)
+    test_acc, test_loss = test_inference(global_model, test_dataset)
 
     # predict bad clients and measure accuracy
     predicted_bad_clients = identify_bad_idxs(approx_banzhaf_values)
@@ -144,7 +144,7 @@ if __name__ == '__main__':
         global_model.to(device)
         global_model.train()
         retrained_model, _, = train_global_model(args, global_model, train_dataset, test_dataset, user_groups, device, predicted_bad_clients)
-        retrain_test_acc, retrain_test_loss = inference(retrained_model, test_dataset)
+        retrain_test_acc, retrain_test_loss = test_inference(retrained_model, test_dataset)
 
     # log results
     if args.setting == 0:
