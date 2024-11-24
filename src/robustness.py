@@ -114,6 +114,7 @@ def compute_influence_functions(args, model, train_dataset, user_groups, device)
     return influence_values
 
 def train_global_model(args, model, train_dataset, test_dataset, user_groups, device):
+    global_weights = model.state_dict()
     best_test_acc, best_test_loss = 0, float('inf')
     approx_banzhaf_values_simple = defaultdict(float)
     approx_banzhaf_values_hvp = defaultdict(float)
