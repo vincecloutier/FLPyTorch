@@ -201,7 +201,7 @@ def setup_logger(strategy_name: str) -> logging.Logger:
 
 def get_device():
     if torch.cuda.is_available():
-        return torch.device('cuda')
+        return torch.device('cuda:0')
     else:
         return torch.device('cpu')
 
