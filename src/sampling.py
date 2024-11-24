@@ -93,23 +93,25 @@ def mislabeled(dataset, dataset_name, dict_users, badclient_prop, mislabel_prop)
 
 def noisy(dataset, dataset_name, dict_users, badclient_prop, noisy_proportion):
     """Randomly select a proportion of clients and add noise to a proportion of their samples."""
-    labels = dataset.targets.copy()
+    labels = dataset.targets 
+    data = dataset.data 
     clients_to_noisy = np.random.choice(range(len(dict_users)), int(badclient_prop * len(dict_users)), replace=False)
     for client_id in clients_to_noisy:
-        client_indices = np.array(list(dict_users[client_id]), dtype=int)
-        indices_of_base_images = np.where(labels[client_indices] != 2)[0]
-        indices_of_base_images = np.random.choice(indices_of_base_images, int(noisy_proportion * len(indices_of_base_images)), replace=False)
-        indices_of_target_class = np.where(labels[client_indices] == 2)[0]
-        for idx in indices_of_base_images:
+        client_indices = list(dict_users[client_id])
+        indices_of_base_images = [i for i in range(len(client_indices)) if labels[i] != 2]
+        selected_indices = np.random.choice(indices_of_base_images, min(int(noisy_proportion * len(client_indices)), len(indices_of_base_images)), replace=False)
+        indices_of_target_class = [i for i, label in enumerate(labels) if label == 2]
+        for idx in selected_indices:
             target_idx = np.random.choice(indices_of_target_class)
-            base_image = dataset.data[idx]
-            target_image = dataset.data[target_idx]
+            base_image = data[idx].astype(np.float32)
+            target_image = data[target_idx].astype(np.float32)
             noisy_image = 0.9 * base_image + 0.1 * target_image
             if dataset_name == 'fmnist':
-                noisy_image = noisy_image.to(dataset.data.dtype)
+                noisy_image = noisy_image.astype(data.dtype)
             else:
                 noisy_image = noisy_image.astype(np.uint8)
-            dataset.data[idx] = noisy_image
+            data[idx] = noisy_image
             labels[idx] = labels[target_idx]
     dataset.targets = labels
+    dataset.data = data
     return dict_users, clients_to_noisy

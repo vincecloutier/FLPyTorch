@@ -10,19 +10,23 @@ import os
 import json
 import subprocess
 
+from torch.utils.data import Dataset
+import numpy as np
+import torch
+
 class SubsetSplit(Dataset):
-    """An abstract Dataset class wrapped around Pytorch Dataset class."""
+    """A Dataset class wrapped around a subset of a PyTorch Dataset."""
     def __init__(self, dataset, idxs):
         self.dataset = dataset
-        self.data = dataset.data
         self.idxs = [int(i) for i in idxs]
-        self.targets = np.array(self.dataset.targets)[self.idxs]
+        self.targets = np.array(self.dataset.targets)[self.idxs].copy()
+        self.data = self.dataset.data[self.idxs].copy()
 
     def __len__(self):
         return len(self.idxs)
 
     def __getitem__(self, item):
-        image = self.data[self.idxs[item]][0]
+        image = self.data[item]
         label = self.targets[item]
         return image, torch.tensor(label, dtype=torch.long)
 
