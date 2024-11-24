@@ -86,7 +86,7 @@ def train_subset(subset, args, train_dataset, valid_dataset, test_dataset, user_
         isBanzhaf = False
     model, abv_simple, abv_hessian = train_global_model(args, global_model, train_dataset, valid_dataset, test_dataset, user_groups, device, subset, isBanzhaf)
     accuracy, loss = test_inference(model, test_dataset)
-    del model, w, loss
+    del model
     torch.cuda.empty_cache()
     return (subset_key, loss, accuracy, abv_simple, abv_hessian)
 
