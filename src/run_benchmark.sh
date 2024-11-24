@@ -14,18 +14,18 @@ for i in {1..3}
 do
 
     # CIFAR commands
-    echo "Run $i for CIFAR"
-    python benchmark.py --dataset cifar --setting 0 --processes $PROCESSES
-    python benchmark.py --dataset cifar --setting 1 --processes $PROCESSES
-    python benchmark.py --dataset cifar --setting 2 --processes $PROCESSES
-    python benchmark.py --dataset cifar --setting 3 --processes $PROCESSES
+    # echo "Run $i for CIFAR"
+    # python benchmark.py --dataset cifar --setting 0 --processes $PROCESSES
+    # python benchmark.py --dataset cifar --setting 1 --processes $PROCESSES
+    # python benchmark.py --dataset cifar --setting 2 --processes $PROCESSES
+    # python benchmark.py --dataset cifar --setting 3 --processes $PROCESSES
 
     # FMNIST commands
-    # echo "Run $i for FMNIST"
-    # python benchmark.py --dataset fmnist --setting 0 --processes $PROCESSES
-    # python benchmark.py --dataset fmnist --setting 1 --processes $PROCESSES
-    # python benchmark.py --dataset fmnist --setting 2 --processes $PROCESSES
-    # python benchmark.py --dataset fmnist --setting 3 --processes $PROCESSES
+    echo "Run $i for FMNIST"
+    python benchmark.py --dataset fmnist --setting 0 --processes $PROCESSES
+    python benchmark.py --dataset fmnist --setting 1 --processes $PROCESSES
+    python benchmark.py --dataset fmnist --setting 2 --processes $PROCESSES
+    python benchmark.py --dataset fmnist --setting 3 --processes $PROCESSES
 
     # IMAGENET commands
     # echo "Run $i for IMAGENET"
