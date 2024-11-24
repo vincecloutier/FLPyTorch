@@ -9,7 +9,7 @@ from models import CNNFashion, CNNCifar, ResNet9, MobileNetV2
 import os
 import json
 import subprocess
-
+import zipfile
 from torch.utils.data import Dataset
 import numpy as np
 import torch
@@ -158,6 +158,10 @@ def download_imagenet(data_dir: str):
     # download the dataset using kaggle cli
     subprocess.run(["kaggle", "competitions", "download", "-c", "imagenet-object-localization-challenge", "-p", data_dir], check=True)
 
+    # unzip the dataset
+    zip_path = os.path.join(data_dir, 'imagenet-object-localization-challenge.zip')
+    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+        zip_ref.extractall(data_dir)
 
 def train_val_split(full_train_dataset, val_prop):
     num_train = len(full_train_dataset)
