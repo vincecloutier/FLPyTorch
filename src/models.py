@@ -1,6 +1,6 @@
 from torch import nn
 import torch.nn.functional as F
-
+from torchvision.models import resnet50
 
 class CNNFashion(nn.Module):
     def __init__(self, args):
@@ -46,6 +46,24 @@ class CNNCifar(nn.Module):
         x = self.fc3(x)
         # return F.log_softmax(x, dim=1)
         return x # for cross entropy loss
+
+
+class ImageNetModel(nn.Module):
+    def __init__(self, args):
+        super(ImageNetModel, self).__init__()
+        # load pretrained ResNet50
+        self.model = resnet50(pretrained=True)
+        
+        # freeze all layers except the last two
+        for param in list(self.model.parameters())[:-2]:
+            param.requires_grad = False
+            
+        # replace the final fully connected layer
+        num_ftrs = self.model.fc.in_features
+        self.model.fc = nn.Linear(num_ftrs, 1000)
+
+    def forward(self, x):
+        return self.model(x)
 
 
 #ResNet9 For CIFAR10

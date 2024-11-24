@@ -10,7 +10,7 @@ def args_parser():
     parser.add_argument('--frac', type=float, default=0.6, help='the fraction of clients: C')
     parser.add_argument('--hessian', type=int, default=0, help='Use Hessian-vector product to compute Banzhaf values (default: 0)')
 
-    parser.add_argument('--dataset', type=str, default='cifar', help="name of dataset")
+    parser.add_argument('--dataset', type=str, default='imagenet', help="name of dataset")
     parser.add_argument('--setting', type=int, default=0, help= "Set to 0 for IID, 1 for non-iid, 2 for mislabeled, 3 for noisy.")
     parser.add_argument('--retrain', type=int, default=0, help= "Retrain the global model w/ reweighting (default: 0)")
     parser.add_argument('--badclient_prop', type=float, default=0.6, help= "Proportion of either non-iid or mislabeled or noisy clients.")

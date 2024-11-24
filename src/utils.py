@@ -5,14 +5,11 @@ from torch.utils.data import Dataset
 from sampling import iid, noniid, mislabeled, noisy
 import logging
 import numpy as np
-from models import CNNFashion, CNNCifar, ResNet9, MobileNetV2
+from models import CNNFashion, CNNCifar, ResNet9, MobileNetV2, ImageNetModel
 import os
 import json
 import subprocess
 import zipfile
-from torch.utils.data import Dataset
-import numpy as np
-import torch
 
 class SubsetSplit(Dataset):
     """A Dataset class wrapped around a subset of a PyTorch Dataset."""
@@ -29,6 +26,7 @@ class SubsetSplit(Dataset):
         image = self.data[item]
         label = self.targets[item]
         return torch.tensor(image, dtype=torch.float32), torch.tensor(label, dtype=torch.long)
+
 
 def get_dataset(args):
     """Returns train, validation, and test datasets along with a user group,
@@ -65,17 +63,17 @@ def get_dataset(args):
         data_dir = './data/imagenet/'
         dataset_class = datasets.ImageNet
 
-    # ensure data directory exists
-    os.makedirs(data_dir, exist_ok=True)
-
-    # load training dataset
-    full_train_dataset = dataset_class(data_dir, True, download=True if dataset_name != 'imagenet' else False, transform=t_dict[dataset_name]['train'])
-
-    # allocate 10% of the training set as validation set
-    train_dataset, valid_dataset = train_val_split(full_train_dataset, 0.1)
-
-    # load test dataset
-    test_dataset = dataset_class(data_dir, False, download=True if dataset_name != 'imagenet' else False, transform=t_dict[dataset_name]['test'])
+    if dataset_name == 'imagenet':
+        if not os.path.exists(data_dir):
+            download_imagenet(data_dir)
+        train_dataset = dataset_class(data_dir, "train", transform=t_dict[dataset_name]['train'])
+        valid_dataset = dataset_class(data_dir, "val", transform=t_dict[dataset_name]['train'])
+        test_dataset = dataset_class(data_dir, "test", transform=t_dict[dataset_name]['test'])
+    else:
+        os.makedirs(data_dir, exist_ok=True)
+        full_train_dataset = dataset_class(data_dir, True, download=True, transform=t_dict[dataset_name]['train'])
+        train_dataset, valid_dataset = train_val_split(full_train_dataset, 0.1)
+        test_dataset = dataset_class(data_dir, False, download=True, transform=t_dict[dataset_name]['test'])
 
     # handle different settings
     if args.setting == 0:
@@ -104,36 +102,19 @@ def train_val_split(full_train_dataset, val_prop):
 
 
 def download_imagenet(data_dir: str):
-    # create the data directory if it doesn't exist
     os.makedirs(data_dir, exist_ok=True)
-
-    # fetch the kaggle key from the environment variable
     kaggle_api_key = os.getenv('KAGGLE_API_KEY')
     if not kaggle_api_key:
         raise ValueError("KAGGLE_API_KEY is not set as an environment variable")
-
-    # parse the key
     kaggle_json = json.loads(kaggle_api_key)
-
-    # create the ~/.kaggle directory if it doesn't exist
     kaggle_dir = os.path.expanduser("~/.kaggle")
     os.makedirs(kaggle_dir, exist_ok=True)
-
-    # write the kaggle.json file
     kaggle_json_path = os.path.join(kaggle_dir, "kaggle.json")
     with open(kaggle_json_path, 'w') as f:
         json.dump(kaggle_json, f)
-
-    # set correct permissions
     os.chmod(kaggle_json_path, 0o600)
-
-    # ensure kaggle cli is installed
     subprocess.run(["pip", "install", "--quiet", "kaggle"], check=True)
-
-    # download the dataset using kaggle cli
     subprocess.run(["kaggle", "competitions", "download", "-c", "imagenet-object-localization-challenge", "-p", data_dir], check=True)
-
-    # unzip the dataset
     zip_path = os.path.join(data_dir, 'imagenet-object-localization-challenge.zip')
     with zipfile.ZipFile(zip_path, 'r') as zip_ref:
         zip_ref.extractall(data_dir)
@@ -154,7 +135,8 @@ def initialize_model(args):
         'fmnist': CNNFashion,
         'cifar': CNNCifar,
         'resnet': ResNet9,
-        'mobilenet': MobileNetV2
+        'mobilenet': MobileNetV2,
+        'imagenet': ImageNetModel
     }
     if args.dataset in model_dict:
         return model_dict[args.dataset](args=args)

@@ -37,6 +37,9 @@ class LocalUpdate(object):
         elif self.args.optimizer == 'adam':
             optimizer = torch.optim.Adam(model.parameters(), lr=self.args.lr, weight_decay=1e-4)
 
+        if self.args.dataset == 'imagenet':
+            optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=self.args.lr, weight_decay=1e-4)
+
         for iter in range(self.args.local_ep):
             batch_loss = []
             for batch_idx, (images, labels) in enumerate(self.trainloader):
