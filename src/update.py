@@ -45,7 +45,7 @@ class LocalUpdate(object):
 
                 optimizer.zero_grad()
 
-                with autocast("cuda"):
+                with autocast(device_type='cuda', enabled=True):
                     log_probs = model(images)
                     loss = self.criterion(log_probs, labels)
 
