@@ -28,6 +28,21 @@ class SubsetSplit(Dataset):
         return torch.tensor(image, dtype=torch.float32), torch.tensor(label, dtype=torch.long)
 
 
+class AddGaussianNoise(object):
+    """Custom transform to add Gaussian noise to a tensor."""
+    def __init__(self, mean=0.0, std=1.0):
+        self.mean = mean
+        self.std = std
+
+    def __call__(self, tensor):
+        noise = torch.randn(tensor.size()) * self.std + self.mean
+        noisy_tensor = tensor + noise
+        return noisy_tensor
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(mean={self.mean}, std={self.std})"
+
+
 def get_dataset(args):
     """Returns train, validation, and test datasets along with a user group,
     which is a dict where the keys are the user index and the values are the
@@ -62,6 +77,9 @@ def get_dataset(args):
         dataset_name = 'imagenet'
         data_dir = './data/imagenet/'
         dataset_class = datasets.ImageNet
+
+    if args.noise_std > 0:
+        t_dict[dataset_name]['train'] = transforms.Compose([t_dict[dataset_name]['train'], AddGaussianNoise(mean=0.0, std=args.noise_std)])
 
     if dataset_name == 'imagenet':
         if not os.path.exists(data_dir):
