@@ -22,7 +22,8 @@ class SubsetSplit(Dataset):
         return len(self.idxs)
 
     def __getitem__(self, item):
-        image, label = self.dataset[self.idxs[item]]
+        image = self.data[self.idxs[item]][0]
+        label = self.targets[item]
         return image, torch.tensor(label, dtype=torch.long)
 
 def get_dataset(args):
@@ -106,7 +107,15 @@ def get_dataset(args):
         user_groups, bad_clients = noniid(train_dataset, args.dataset, args.num_users, args.badclient_prop, args.num_categories_per_client)
     elif args.setting == 2:
         iid_user_groups = iid(train_dataset, args.num_users)
+        original_targets = np.array(train_dataset.targets)
         user_groups, bad_clients = mislabeled(train_dataset, args.dataset, iid_user_groups, args.badclient_prop, args.badsample_prop)
+        for client in bad_clients:
+            indices = list(user_groups[client])
+            for idx in indices:
+                orig_label = original_targets[idx]  # Original label
+                mod_label = train_dataset[idx][1]  # Modified label
+                if orig_label != mod_label:
+                    print(f"Label changed: Index {idx} from {orig_label} to {mod_label}")
     elif args.setting == 3:
         iid_user_groups = iid(train_dataset, args.num_users)
         user_groups, bad_clients = noisy(train_dataset, args.dataset, iid_user_groups, args.badclient_prop, args.badsample_prop)
