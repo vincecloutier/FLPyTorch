@@ -237,12 +237,14 @@ if __name__ == '__main__':
     global_model = initialize_model(args)
     global_model.to(device)
     global_model.train()
-    global_model, approx_banzhaf_values, shapley_values, influence_values = train_global_model(args, global_model, train_dataset, test_dataset, user_groups, device)
+    global_model, approx_banzhaf_values_simple, approx_banzhaf_values_hvp, shapley_values, influence_values = train_global_model(args, global_model, train_dataset, test_dataset, user_groups, device)
     test_acc, test_loss = test_inference(global_model, test_dataset)
 
-    # predict bad clients and measure accuracy
-    predicted_bad_clients = identify_bad_idxs(approx_banzhaf_values)
-    bad_client_accuracy = measure_accuracy(actual_bad_clients, predicted_bad_clients)
+    shared_clients = set(shapley_values.keys()) & set(influence_values.keys()) & set(approx_banzhaf_values_simple.keys()) & set(approx_banzhaf_values_hvp.keys())
+    sv = [shapley_values[client] for client in shared_clients]
+    iv = [influence_values[client] for client in shared_clients]
+    abv_simple = [approx_banzhaf_values_simple[client] for client in shared_clients]
+    abv_hessian = [approx_banzhaf_values_hvp[client] for client in shared_clients]
 
     # log results   
     if args.setting == 0:
@@ -258,10 +260,8 @@ if __name__ == '__main__':
     logger.info(f'Batch Size: {args.local_bs}, Learning Rate: {args.lr}, Momentum: {args.momentum}')
     logger.info(f'Dataset: {args.dataset}, Setting: {setting_str}, Number Of Rounds: {args.epochs}, Noise STD: {args.noise_std}')
     logger.info(f'Test Accuracy: {100*test_acc}%')
-    logger.info(f'Banzhaf Values: {approx_banzhaf_values}')
-    logger.info(f'Shapley Values: {shapley_values}')
-    logger.info(f'Influence Function Values: {influence_values}')
-    logger.info(f'Actual Bad Clients: {actual_bad_clients}')
-    logger.info(f'Predicted Bad Clients: {predicted_bad_clients}')
-    logger.info(f'Bad Client Accuracy: {bad_client_accuracy}')
+    logger.info(f'Shapley Values: {sv}')
+    logger.info(f'Influence Function Values: {iv}')
+    logger.info(f'Banzhaf Values Simple: {abv_simple}')
+    logger.info(f'Banzhaf Values Hessian: {abv_hessian}')
     logger.info(f'Total Run Time: {time.time()-start_time}')
