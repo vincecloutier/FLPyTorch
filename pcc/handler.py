@@ -14,13 +14,13 @@ def process_and_graph_log(file_path, plot=False):
     shapley_pattern = r"Shapley Values: \[([-\d.,\s]+)\]"
     approx_simple_pattern = r"Approximate Banzhaf Values Simple: \[([-\d.,\s]+)\]"
     approx_hessian_pattern = r"Approximate Banzhaf Values Hessian: \[([-\d.,\s]+)\]"
-    bad_clients_pattern = r"Actual Bad Clients: \[([-\d\s,]*)\]"
+    bad_clients_pattern = r"Actual Bad Clients: \[([-\d\s,]+)\]"
 
     # extract values
     shapley_values = [list(map(float, match.split(','))) for match in re.findall(shapley_pattern, logs)]
     approx_simple_values = [list(map(float, match.split(','))) for match in re.findall(approx_simple_pattern, logs)]
     approx_hessian_values = [list(map(float, match.split(','))) for match in re.findall(approx_hessian_pattern, logs)]
-    bad_idxs = [list(map(int, match.split(' '))) for match in re.findall(bad_clients_pattern, logs) if match]
+    bad_idxs = [[int(num) for num in re.findall(r'-?\d+', match)] for match in re.findall(bad_clients_pattern, logs) if match]
 
     # concatenate across runs
     shapley_all = np.array([val for run in shapley_values for val in run])
@@ -33,7 +33,7 @@ def process_and_graph_log(file_path, plot=False):
     shapley_all = scaler.fit_transform(np.array(shapley_all).reshape(-1, 1)).flatten()
     approx_simple_all = scaler.fit_transform(np.array(approx_simple_all).reshape(-1, 1)).flatten()
     approx_hessian_all = scaler.fit_transform(np.array(approx_hessian_all).reshape(-1, 1)).flatten()
-
+    
     # create a dataframe for easier processing
     data = pd.DataFrame({
         'Shapley': shapley_all,
@@ -89,5 +89,5 @@ def process_and_graph_log(file_path, plot=False):
         plt.tight_layout()
         plt.show()
 
-process_and_graph_log('pcc/cifar.log', plot=True)
+# process_and_graph_log('pcc/cifar.log', plot=True)
 process_and_graph_log('pcc/fmnist.log', plot=True)
