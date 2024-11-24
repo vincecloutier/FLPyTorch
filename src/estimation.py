@@ -2,6 +2,7 @@ import torch
 from utils import get_device
 from update import compute_hessian
 
+
 def compute_bv_simple(args, gradient, delta_t_i):
     """Computes the simplified banzhaf value for client i at epoch t."""
     # compute delta term
@@ -12,6 +13,7 @@ def compute_bv_simple(args, gradient, delta_t_i):
     for name in delta_term:
         bv += torch.dot(gradient[name].view(-1), delta_term[name].view(-1))
     return bv.item()
+
 
 def compute_bv_hvp(args, model, train_dataset, gradient, delta_t_i, accumulated_Delta_G_i):
     """Computes the banzhaf value component for client i at epoch t."""
@@ -42,6 +44,7 @@ def compute_bv_hvp(args, model, train_dataset, gradient, delta_t_i, accumulated_
         final_term += torch.dot(gradient[name].view(-1), total_term[name].view(-1))
     return final_term.item()
 
+
 def compute_G_t(delta_t_i_dict, keys):
     """Computes G_t = (1/n) sum_{k=1}^{n} delta_{t,k}"""
     num_clients = len(delta_t_i_dict)
@@ -50,6 +53,7 @@ def compute_G_t(delta_t_i_dict, keys):
         delta_sum = sum(delta_t_i_dict[idx][key] for idx in delta_t_i_dict)
         G_t[key] = delta_sum / num_clients
     return G_t
+
 
 def compute_G_minus_i_t(delta_t_i_dict, keys, idx_to_exclude):
     """Computes G_{-i}^t = (1/(n-1)) sum_{k != i} delta_{t,k}"""
