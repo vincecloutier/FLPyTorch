@@ -1,5 +1,5 @@
 import torch
-from torch import nn, autocast, GradScaler
+from torch import nn, autocast
 from torch.utils.data import DataLoader, Dataset
 from utils import get_device
 
@@ -24,7 +24,7 @@ class LocalUpdate(object):
         self.trainloader = DataLoader(ClientSplit(dataset, idxs), batch_size=self.args.local_bs, shuffle=True)
         self.device = get_device()
         self.criterion = nn.CrossEntropyLoss().to(self.device)
-        self.scaler = GradScaler("cuda")  
+        self.scaler = torch.GradScaler("cuda")  
 
     def update_weights(self, model, global_round):
         # set mode to train model
