@@ -67,20 +67,21 @@ def test_inference(model, test_dataset):
 
     criterion = nn.CrossEntropyLoss().to(device)
     testloader = DataLoader(test_dataset, batch_size=128, shuffle=False)
+    
+    with torch.no_grad():
+        for batch_idx, (images, labels) in enumerate(testloader):
+            images, labels = images.to(device), labels.to(device)
 
-    for batch_idx, (images, labels) in enumerate(testloader):
-        images, labels = images.to(device), labels.to(device)
+            # inference
+            outputs = model(images)
+            batch_loss = criterion(outputs, labels)
+            loss += batch_loss.item() * len(labels)
 
-        # inference
-        outputs = model(images)
-        batch_loss = criterion(outputs, labels)
-        loss += batch_loss.item() * len(labels)
-
-        # prediction
-        _, pred_labels = torch.max(outputs, 1)
-        pred_labels = pred_labels.view(-1)
-        correct += torch.sum(torch.eq(pred_labels, labels)).item()
-        total += len(labels)
+            # prediction
+            _, pred_labels = torch.max(outputs, 1)
+            pred_labels = pred_labels.view(-1)
+            correct += torch.sum(torch.eq(pred_labels, labels)).item()
+            total += len(labels)
 
     accuracy = correct / total
     loss = loss / total
@@ -145,6 +146,9 @@ def compute_hessian(model, dataset, v_list):
     # second gradient
     hvp = torch.autograd.grad(grad_dot_v, params, retain_graph=True)
     
+    del outputs, validation_loss, grad_params, grad_params_flat, v_flat, grad_dot_v, hvp
+    torch.cuda.empty_cache()
+
     # return as a dict
     hv_dict = {}
     for (name, param), hv in zip(model.named_parameters(), hvp):
