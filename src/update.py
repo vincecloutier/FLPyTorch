@@ -146,7 +146,7 @@ def compute_hessian(model, dataset, v_list):
     # second gradient
     hvp = torch.autograd.grad(grad_dot_v, params, retain_graph=True)
     
-    del outputs, validation_loss, grad_params, grad_params_flat, v_flat, grad_dot_v, hvp
+    del outputs, validation_loss, grad_params, grad_params_flat, v_flat, grad_dot_v
     torch.cuda.empty_cache()
 
     # return as a dict
