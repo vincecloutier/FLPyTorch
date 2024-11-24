@@ -1,5 +1,5 @@
 import torch
-from torch import nn, autocast
+from torch import nn
 from torch.utils.data import DataLoader, Dataset
 from utils import get_device
 
@@ -24,7 +24,6 @@ class LocalUpdate(object):
         self.trainloader = DataLoader(ClientSplit(dataset, idxs), batch_size=self.args.local_bs, shuffle=True)
         self.device = get_device()
         self.criterion = nn.CrossEntropyLoss().to(self.device)
-        self.scaler = torch.GradScaler("cuda")  
 
     def update_weights(self, model, global_round):
         # set mode to train model
@@ -37,25 +36,19 @@ class LocalUpdate(object):
         elif self.args.optimizer == 'adam':
             optimizer = torch.optim.Adam(model.parameters(), lr=self.args.lr, weight_decay=1e-4)
 
-        if self.args.dataset == 'imagenet':
-            optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=self.args.lr, weight_decay=1e-4)
-
         for iter in range(self.args.local_ep):
             batch_loss = []
             for batch_idx, (images, labels) in enumerate(self.trainloader):
                 images, labels = images.to(self.device), labels.to(self.device)
 
-                optimizer.zero_grad()
+                model.zero_grad()
+                log_probs = model(images)
+                loss = self.criterion(log_probs, labels)
+                loss.backward()
 
-                with autocast(device_type='cuda', enabled=True):
-                    log_probs = model(images)
-                    loss = self.criterion(log_probs, labels)
-
-                self.scaler.scale(loss).backward()
                 torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-                self.scaler.step(optimizer)
-                self.scaler.update()
 
+                optimizer.step()
                 batch_loss.append(loss.item())
             epoch_loss.append(sum(batch_loss)/len(batch_loss))
             if self.args.verbose:
@@ -75,20 +68,19 @@ def test_inference(model, test_dataset):
     criterion = nn.CrossEntropyLoss().to(device)
     testloader = DataLoader(test_dataset, batch_size=128, shuffle=False)
 
-    with torch.no_grad():
-        for batch_idx, (images, labels) in enumerate(testloader):
-            images, labels = images.to(device), labels.to(device)
+    for batch_idx, (images, labels) in enumerate(testloader):
+        images, labels = images.to(device), labels.to(device)
 
-            # inference
-            outputs = model(images)
-            batch_loss = criterion(outputs, labels)
-            loss += batch_loss.item() * len(labels)
+        # inference
+        outputs = model(images)
+        batch_loss = criterion(outputs, labels)
+        loss += batch_loss.item() * len(labels)
 
-            # prediction
-            _, pred_labels = torch.max(outputs, 1)
-            pred_labels = pred_labels.view(-1)
-            correct += torch.sum(torch.eq(pred_labels, labels)).item()
-            total += len(labels)
+        # prediction
+        _, pred_labels = torch.max(outputs, 1)
+        pred_labels = pred_labels.view(-1)
+        correct += torch.sum(torch.eq(pred_labels, labels)).item()
+        total += len(labels)
 
     accuracy = correct / total
     loss = loss / total
@@ -158,9 +150,4 @@ def compute_hessian(model, dataset, v_list):
     for (name, param), hv in zip(model.named_parameters(), hvp):
         if param.requires_grad:
             hv_dict[name] = hv.clone().detach()
-
-    # free memory
-    del outputs, validation_loss, grad_params, grad_params_flat, v_flat, grad_dot_v, hvp
-    torch.cuda.empty_cache()
-
     return hv_dict
