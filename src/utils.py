@@ -101,21 +101,18 @@ def get_dataset(args):
 
     # handle different settings
     if args.setting == 0:
-        user_groups = iid(train_dataset, args.num_users)
-        return train_dataset, valid_dataset, test_dataset, user_groups, None
+        user_groups = iid(train_dataset, args.num_users), None
     elif args.setting == 1:
         user_groups, bad_clients = noniid(train_dataset, args.dataset, args.num_users, args.badclient_prop, args.num_categories_per_client)
-        return train_dataset, valid_dataset, test_dataset, user_groups, bad_clients
     elif args.setting == 2:
         iid_user_groups = iid(train_dataset, args.num_users)
         user_groups, bad_clients = mislabeled(train_dataset, args.dataset, iid_user_groups, args.badclient_prop, args.badsample_prop)
-        return train_dataset, valid_dataset, test_dataset, user_groups, bad_clients
     elif args.setting == 3:
         iid_user_groups = iid(train_dataset, args.num_users)
         user_groups, bad_clients = noisy(train_dataset, args.dataset, iid_user_groups, args.badclient_prop, args.badsample_prop)
-        return train_dataset, valid_dataset, test_dataset, user_groups, bad_clients 
     else:
         raise ValueError("Invalid value for --setting. Please use 0, 1, 2, or 3.")
+    return train_dataset, valid_dataset, test_dataset, user_groups, bad_clients
 
 
 def download_imagenet(data_dir: str):
