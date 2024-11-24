@@ -15,24 +15,24 @@ do
 
     # CIFAR commands
     # echo "Run $i for CIFAR"
-    # python benchmark.py --dataset cifar --setting 0 --processes $PROCESSES --local_ep 10
-    # python benchmark.py --dataset cifar --setting 1 --processes $PROCESSES --local_ep 3
-    # python benchmark.py --dataset cifar --setting 2 --processes $PROCESSES --local_ep 3
-    # python benchmark.py --dataset cifar --setting 3 --processes $PROCESSES --local_ep 3
+    # python benchmark.py --dataset cifar --setting 0 --processes $PROCESSES
+    # python benchmark.py --dataset cifar --setting 1 --processes $PROCESSES
+    # python benchmark.py --dataset cifar --setting 2 --processes $PROCESSES
+    # python benchmark.py --dataset cifar --setting 3 --processes $PROCESSES
 
     # FMNIST commands
     echo "Run $i for FMNIST"
-    python benchmark.py --dataset fmnist --setting 0 --processes $PROCESSES --local_ep 10
-    python benchmark.py --dataset fmnist --setting 1 --processes $PROCESSES --local_ep 3
-    python benchmark.py --dataset fmnist --setting 2 --processes $PROCESSES --local_ep 3
-    python benchmark.py --dataset fmnist --setting 3 --processes $PROCESSES --local_ep 3
+    python benchmark.py --dataset fmnist --setting 0 --processes $PROCESSES
+    python benchmark.py --dataset fmnist --setting 1 --processes $PROCESSES
+    python benchmark.py --dataset fmnist --setting 2 --processes $PROCESSES
+    python benchmark.py --dataset fmnist --setting 3 --processes $PROCESSES
 
     # IMAGENET commands
     # echo "Run $i for IMAGENET"
-    # python benchmark.py --dataset imagenet --setting 0 --processes $PROCESSES --local_ep 10
-    # python benchmark.py --dataset imagenet --setting 1 --processes $PROCESSES --local_ep 3
-    # python benchmark.py --dataset imagenet --setting 2 --processes $PROCESSES --local_ep 3
-    # python benchmark.py --dataset imagenet --setting 3 --processes $PROCESSES --local_ep 3
+    # python benchmark.py --dataset imagenet --setting 0 --processes $PROCESSES
+    # python benchmark.py --dataset imagenet --setting 1 --processes $PROCESSES
+    # python benchmark.py --dataset imagenet --setting 2 --processes $PROCESSES
+    # python benchmark.py --dataset imagenet --setting 3 --processes $PROCESSES
 
 done
 
