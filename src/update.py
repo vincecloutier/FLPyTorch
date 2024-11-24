@@ -108,9 +108,8 @@ def test_gradient(args, model, dataset):
     inputs, targets = inputs.to(device), targets.to(device)
 
     # forward pass
-    with torch.no_grad():   
-        outputs = model(inputs)
-        loss = criterion(outputs, targets)
+    outputs = model(inputs)
+    loss = criterion(outputs, targets)
 
     # backward pass
     if args.hessian == 1:
