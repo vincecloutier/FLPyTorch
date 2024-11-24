@@ -20,7 +20,7 @@ class SubsetSplit(Dataset):
         self.dataset = dataset
         self.idxs = [int(i) for i in idxs]
         self.targets = np.array(self.dataset.targets)[self.idxs].copy()
-        self.data = [self.dataset[idx][0] for idx in self.idxs] 
+        self.data = [self.dataset[idx][0].numpy() for idx in self.idxs] 
 
     def __len__(self):
         return len(self.idxs)
@@ -28,7 +28,7 @@ class SubsetSplit(Dataset):
     def __getitem__(self, item):
         image = self.data[item]
         label = self.targets[item]
-        return image, torch.tensor(label, dtype=torch.long)
+        return torch.tensor(image, dtype=torch.float32), torch.tensor(label, dtype=torch.long)
 
 def get_dataset(args):
     """Returns train, validation, and test datasets along with a user group,
@@ -94,6 +94,15 @@ def get_dataset(args):
     return train_dataset, valid_dataset, test_dataset, user_groups, bad_clients
 
 
+def train_val_split(full_train_dataset, val_prop):
+    num_train = len(full_train_dataset)
+    split = int(np.floor(val_prop * num_train))
+    indices = list(range(num_train))
+    np.random.shuffle(indices)
+    train_idx, valid_idx = indices[split:], indices[:split]
+    return SubsetSplit(full_train_dataset, train_idx), SubsetSplit(full_train_dataset, valid_idx)
+
+
 def download_imagenet(data_dir: str):
     # create the data directory if it doesn't exist
     os.makedirs(data_dir, exist_ok=True)
@@ -128,14 +137,6 @@ def download_imagenet(data_dir: str):
     zip_path = os.path.join(data_dir, 'imagenet-object-localization-challenge.zip')
     with zipfile.ZipFile(zip_path, 'r') as zip_ref:
         zip_ref.extractall(data_dir)
-
-def train_val_split(full_train_dataset, val_prop):
-    num_train = len(full_train_dataset)
-    split = int(np.floor(val_prop * num_train))
-    indices = list(range(num_train))
-    np.random.shuffle(indices)
-    train_idx, valid_idx = indices[split:], indices[:split]
-    return SubsetSplit(full_train_dataset, train_idx), SubsetSplit(full_train_dataset, valid_idx)
 
 
 def average_weights(w):
