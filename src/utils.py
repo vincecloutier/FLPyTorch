@@ -20,7 +20,7 @@ class SubsetSplit(Dataset):
         self.dataset = dataset
         self.idxs = [int(i) for i in idxs]
         self.targets = np.array(self.dataset.targets)[self.idxs].copy()
-        self.data = self.dataset.data[self.idxs].copy()
+        self.data = self.dataset.data[self.idxs]
 
     def __len__(self):
         return len(self.idxs)
