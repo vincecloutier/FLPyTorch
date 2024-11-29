@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.stats import pearsonr
 import numpy as np
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, Normalizer
 
 def process_and_graph_log(file_path, plot=False):
     # read the log file
@@ -90,5 +90,6 @@ def process_and_graph_log(file_path, plot=False):
         plt.show()
 
 process_and_graph_log('pcc/cifar.log', plot=True)
+process_and_graph_log('pcc/cifar2.log', plot=True)
 process_and_graph_log('pcc/fmnist.log', plot=True)
 process_and_graph_log('pcc/fmnist2.log', plot=True)
