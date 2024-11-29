@@ -59,9 +59,10 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
         global_weights = average_weights(local_weights)
         model.load_state_dict(global_weights)
 
-        print(f"Subset {clients} Has Test Accuracy {best_test_acc}")
-
         test_acc, test_loss = test_inference(model, test_dataset)
+        
+        print(f"Subset {clients} Has Test Accuracy {test_acc}")
+
         if test_acc > best_test_acc * 1.01 or test_loss < best_test_loss * 0.99:
             best_test_acc = test_acc
             best_test_loss = test_loss
