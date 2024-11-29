@@ -68,30 +68,29 @@ def test_inference(model, test_dataset):
     criterion = nn.CrossEntropyLoss().to(device)
     testloader = DataLoader(test_dataset, batch_size=128, shuffle=False)
     
-    with torch.no_grad():
-        for batch_idx, (images, labels) in enumerate(testloader):
-            images, labels = images.to(device), labels.to(device)
 
-            # inference
-            outputs = model(images)
-            batch_loss = criterion(outputs, labels)
-            loss += batch_loss.item() * len(labels)
+    for batch_idx, (images, labels) in enumerate(testloader):
+        images, labels = images.to(device), labels.to(device)
 
-            # prediction
-            _, pred_labels = torch.max(outputs, 1)
-            pred_labels = pred_labels.view(-1)
-            correct += torch.sum(torch.eq(pred_labels, labels)).item()
-            total += len(labels)
+        # inference
+        outputs = model(images)
+        batch_loss = criterion(outputs, labels)
+        loss += batch_loss.item()
+
+        # prediction
+        _, pred_labels = torch.max(outputs, 1)
+        pred_labels = pred_labels.view(-1)
+        correct += torch.sum(torch.eq(pred_labels, labels)).item()
+        total += len(labels)
 
     accuracy = correct / total
-    loss = loss / total
     return accuracy, loss
 
 
 def test_gradient(args, model, dataset):
     """Computes the gradient of the validation loss with respect to the model parameters."""
 
-    model.train()
+    model.eval()
     model.zero_grad()  # clear existing gradients
 
     device = get_device()
