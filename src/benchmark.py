@@ -66,9 +66,9 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
             no_improvement_count = 0
         else:
             no_improvement_count += 1
-            if no_improvement_count > 3:
+            if no_improvement_count > 5:
                 break
-
+    print(f"Global Training For Subset {clients} Completed With Test Accuracy {best_test_acc}")
     return model, approx_banzhaf_values_simple, approx_banzhaf_values_hessian
 
 
