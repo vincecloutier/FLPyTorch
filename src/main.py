@@ -14,11 +14,11 @@ from functools import partial
 warnings.filterwarnings("ignore", category=UserWarning)
 import os
 
-os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:128"
+# os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:128"
 
 
 def train_client(idx, args, global_weights, train_dataset, user_groups, epoch, device):
-    torch.cuda.set_device(device)
+    # torch.cuda.set_device(device)
 
     model = initialize_model(args)
     model.load_state_dict(global_weights)
@@ -106,7 +106,7 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
                 break
 
         print(f'Test Accuracy: {test_acc}, Test Loss: {test_loss}')
-        print(torch.cuda.memory_summary(device=device))
+        # print(torch.cuda.memory_summary(device=device))
             
     return model, approx_banzhaf_values
 
@@ -114,9 +114,9 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
 if __name__ == '__main__':
     multiprocessing.set_start_method('spawn')
 
-    if torch.cuda.is_available():
-        torch.backends.cudnn.benchmark = True
-        torch.backends.cudnn.enabled = True
+    # if torch.cuda.is_available():
+    #     torch.backends.cudnn.benchmark = True
+    #     torch.backends.cudnn.enabled = True
 
     start_time = time.time()
     logger = setup_logger('experiment')
@@ -126,7 +126,7 @@ if __name__ == '__main__':
     device = get_device()
     train_dataset, valid_dataset, test_dataset, user_groups, actual_bad_clients = get_dataset(args)
     
-    torch.cuda.set_per_process_memory_fraction(0.25, device)
+    # torch.cuda.set_per_process_memory_fraction(0.25, device)
 
     # train the global model
     global_model = initialize_model(args)
