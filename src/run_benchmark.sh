@@ -1,42 +1,58 @@
 #!/bin/bash
 
-# get processes argument
-if [ -z "$1" ]; then
-    PROCESSES=8  # default is eight
-else
-    PROCESSES=$1
-fi
+# Default values
+PROCESSES=8
+RUNS=3
+DATASETS="cifar"
+
+# Parse arguments
+while [[ $# -gt 0 ]]
+do
+key="$1"
+
+case $key in
+    --processes)
+    PROCESSES="$2"
+    shift # past argument
+    shift # past value
+    ;;
+    --runs)
+    RUNS="$2"
+    shift
+    shift
+    ;;
+    --datasets)
+    DATASETS="$2"
+    shift
+    shift
+    ;;
+    *)
+    echo "Unknown option $1"
+    exit 1
+    ;;
+esac
+done
 
 echo "Using $PROCESSES processes."
+echo "Number of runs: $RUNS"
+echo "Datasets: $DATASETS"
 
-# loop to run each command three times
-for i in {1..3}
+# Loop for the number of runs
+for i in $(seq 1 $RUNS)
 do
-
-    # CIFAR commands
-    echo "Run $i for CIFAR"
-    python benchmark.py --dataset cifar --setting 0 --processes $PROCESSES
-    python benchmark.py --dataset cifar --setting 1 --processes $PROCESSES
-    python benchmark.py --dataset cifar --setting 2 --processes $PROCESSES
-    python benchmark.py --dataset cifar --setting 3 --processes $PROCESSES
-
-    # FMNIST commands
-    # echo "Run $i for FMNIST"
-    # python benchmark.py --dataset fmnist --setting 0 --processes $PROCESSES
-    # python benchmark.py --dataset fmnist --setting 1 --processes $PROCESSES
-    # python benchmark.py --dataset fmnist --setting 2 --processes $PROCESSES
-    # python benchmark.py --dataset fmnist --setting 3 --processes $PROCESSES
-
-    # IMAGENET commands
-    # echo "Run $i for IMAGENET"
-    # python benchmark.py --dataset imagenet --setting 0 --processes $PROCESSES
-    # python benchmark.py --dataset imagenet --setting 1 --processes $PROCESSES
-    # python benchmark.py --dataset imagenet --setting 2 --processes $PROCESSES
-    # python benchmark.py --dataset imagenet --setting 3 --processes $PROCESSES
-
+    # Split datasets by comma and loop through each
+    for dataset in $(echo $DATASETS | tr ',' ' ')
+    do
+        echo "Run $i for $dataset"
+        # Run commands for settings 0 to 3
+        for setting in {0..3}
+        do
+            python benchmark.py --dataset $dataset --setting $setting --processes $PROCESSES
+        done
+    done
 done
 
 echo "All runs completed."
 
 # chmod +x run_benchmark.sh
-# ./run_benchmark.sh [processes]
+# ./run_benchmark.sh --processes 8 --runs 3 --datasets cifar
