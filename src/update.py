@@ -29,14 +29,14 @@ class LocalUpdate(object):
         # set mode to train model
         model.train()
         epoch_loss = []
+        sched = None
 
         # set optimizer for the local updates
         if self.args.optimizer == 'sgd':
             optimizer = torch.optim.SGD(model.parameters(), lr=self.args.lr, momentum=self.args.momentum)
         elif self.args.optimizer == 'adam':
             optimizer = torch.optim.Adam(model.parameters(), lr=self.args.lr, weight_decay=1e-4)
-        
-        sched = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=self.args.lr, epochs=self.args.local_ep, steps_per_epoch=len(self.trainloader))
+            sched = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=self.args.lr, epochs=self.args.local_ep, steps_per_epoch=len(self.trainloader))
 
         for iter in range(self.args.local_ep):
             batch_loss = []
@@ -49,10 +49,13 @@ class LocalUpdate(object):
                 loss.backward()
 
                 torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+                if sched is not None:
+                    torch.nn.utils.clip_grad_value_(model.parameters(), 0.1)
 
                 optimizer.step()
-                sched.step()
-                
+                if sched is not None:
+                    sched.step()
+
                 batch_loss.append(loss.item())
             epoch_loss.append(sum(batch_loss)/len(batch_loss))
             if self.args.verbose:
