@@ -78,13 +78,10 @@ def get_dataset(args):
         data_dir = './data/imagenet/'
         dataset_class = datasets.ImageNet
 
-    print(f"Dataset: {dataset_name}")
-
     if args.noise_std > 0:
         t_dict[dataset_name]['train'] = transforms.Compose([t_dict[dataset_name]['train'], AddGaussianNoise(mean=0.0, std=args.noise_std)])
 
     if dataset_name == 'imagenet':
-        print(f"Downloading ImageNet to {data_dir}")
         if not os.path.exists(data_dir):
             download_imagenet(data_dir)
         train_dataset = dataset_class(data_dir, "train", transform=t_dict[dataset_name]['train'])

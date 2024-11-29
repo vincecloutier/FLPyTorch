@@ -99,7 +99,7 @@ class ResNet9(nn.Module):
     
 # ResNet18 For CIFAR10   
 class ResNet18(nn.Module):
-    def __init__(self):
+    def __init__(self, args):
         super(ResNet18, self).__init__()
         self.model = resnet18(weights=None)
         self.model.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
