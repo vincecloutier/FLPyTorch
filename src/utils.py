@@ -5,7 +5,7 @@ from torch.utils.data import Dataset
 from sampling import iid, noniid, mislabeled, noisy
 import logging
 import numpy as np
-from models import CNNFashion, CNNCifar, ResNet9, MobileNetV2, ImageNetModel
+from models import CNNFashion, CNNCifar, ResNet9, ResNet18, ImageNetModel
 import os
 import json
 import subprocess
@@ -65,7 +65,7 @@ def get_dataset(args):
     }
     
     # select dataset-specific configurations
-    if args.dataset in ['cifar', 'resnet', 'mobilenet']:
+    if args.dataset in ['cifar', 'resnet', 'resnet18']:
         dataset_name = 'cifar'
         data_dir = './data/cifar/'
         dataset_class = datasets.CIFAR10
@@ -153,7 +153,7 @@ def initialize_model(args):
         'fmnist': CNNFashion,
         'cifar': CNNCifar,
         'resnet': ResNet9,
-        'mobilenet': MobileNetV2,
+        'resnet18': ResNet18,
         'imagenet': ImageNetModel
     }
     if args.dataset in model_dict:
