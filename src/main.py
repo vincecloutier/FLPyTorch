@@ -101,7 +101,7 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
             no_improvement_count = 0
         else:
             no_improvement_count += 1
-            if no_improvement_count > 3:
+            if no_improvement_count > 3 and epoch > 20:
                 print(f'Convergence Reached At Round {epoch + 1}')
                 break
 
