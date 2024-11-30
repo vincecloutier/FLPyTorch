@@ -49,7 +49,7 @@ class CNNFashion(nn.Module):
 
 
 class CNNCifar(nn.Module):
-    def __init__(self):
+    def __init__(self, args):
         super(CNNCifar, self).__init__()
         self.conv1 = nn.Conv2d(3, 32, 3, padding=1)
         self.bn1 = nn.BatchNorm2d(32)
