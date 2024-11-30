@@ -27,53 +27,25 @@ class CNNFashion(nn.Module):
         return x
 
 
-# class CNNCifar(nn.Module):
-#     def __init__(self, args):
-#         super(CNNCifar, self).__init__()
-#         self.conv1 = nn.Conv2d(3, 6, 5)
-#         self.pool = nn.MaxPool2d(2, 2)
-#         self.conv2 = nn.Conv2d(6, 16, 5)
-#         self.fc1 = nn.Linear(16 * 5 * 5, 120)
-#         self.fc2 = nn.Linear(120, 84)
-#         self.fc3 = nn.Linear(84, 10)
-
-#     def forward(self, x):
-#         x = self.pool(F.relu(self.conv1(x)))
-#         x = self.pool(F.relu(self.conv2(x)))
-#         x = x.view(-1, 16 * 5 * 5)
-#         x = F.relu(self.fc1(x))
-#         x = F.relu(self.fc2(x))
-#         x = self.fc3(x)
-#         # return F.log_softmax(x, dim=1)
-#         return x # for cross entropy loss
-
-
 class CNNCifar(nn.Module):
     def __init__(self, args):
         super(CNNCifar, self).__init__()
-        self.conv1 = nn.Conv2d(3, 32, 3, padding=1)
-        self.bn1 = nn.BatchNorm2d(32)
-        self.conv2 = nn.Conv2d(32, 64, 3, padding=1)
-        self.bn2 = nn.BatchNorm2d(64)
-        self.conv3 = nn.Conv2d(64, 128, 3, padding=1)
-        self.bn3 = nn.BatchNorm2d(128)
-        self.pool = nn.AdaptiveAvgPool2d((2, 2))
-        self.fc1 = nn.Linear(128 * 2 * 2, 256)
-        self.bn_fc1 = nn.BatchNorm1d(256)
-        self.fc2 = nn.Linear(256, 128)
-        self.bn_fc2 = nn.BatchNorm1d(128)
-        self.fc3 = nn.Linear(128, 10)
-        self.dropout = nn.Dropout(0.5)
+        self.conv1 = nn.Conv2d(3, 6, 5)
+        self.pool = nn.MaxPool2d(2, 2)
+        self.conv2 = nn.Conv2d(6, 16, 5)
+        self.fc1 = nn.Linear(16 * 5 * 5, 120)
+        self.fc2 = nn.Linear(120, 84)
+        self.fc3 = nn.Linear(84, 10)
 
     def forward(self, x):
-        x = self.pool(F.relu(self.bn1(self.conv1(x))))
-        x = self.pool(F.relu(self.bn2(self.conv2(x))))
-        x = self.pool(F.relu(self.bn3(self.conv3(x))))
-        x = x.view(-1, 128 * 2 * 2)
-        x = self.dropout(F.relu(self.bn_fc1(self.fc1(x))))
-        x = self.dropout(F.relu(self.bn_fc2(self.fc2(x))))
+        x = self.pool(F.relu(self.conv1(x)))
+        x = self.pool(F.relu(self.conv2(x)))
+        x = x.view(-1, 16 * 5 * 5)
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
         x = self.fc3(x)
-        return x
+        # return F.log_softmax(x, dim=1)
+        return x # for cross entropy loss
 
 
 class ImageNetModel(nn.Module):
