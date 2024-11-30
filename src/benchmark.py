@@ -69,7 +69,7 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
             no_improvement_count = 0
         else:
             no_improvement_count += 1
-            if no_improvement_count > 5:
+            if no_improvement_count > 5 and epoch > 20:
                 break
     return model, approx_banzhaf_values_simple, approx_banzhaf_values_hessian
 
