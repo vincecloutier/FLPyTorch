@@ -77,7 +77,7 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
 def train_subset(subset, args, train_dataset, valid_dataset, test_dataset, user_groups):
     device = get_device()
     global_model = initialize_model(args)
-    global_model.to(device, non_blocking=True)
+    global_model.to(device)
     global_model.train()
 
     subset_key = tuple(sorted(subset))
