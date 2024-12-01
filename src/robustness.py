@@ -74,12 +74,16 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
         model.load_state_dict(global_weights)
 
         # compute banzhaf values
+        start_time = time.time()
         G_t = compute_G_t(delta_t[epoch], global_weights.keys())
         for idx in idxs_users:
             G_t_minus_i = compute_G_minus_i_t(delta_t[epoch], global_weights.keys(), idx)
             if epoch > 0:
                 for key in global_weights.keys():
                     delta_g[idx][key] += G_t_minus_i[key] - G_t[key]
+            t_time = time.time() - start_time
+            runtimes['abvh'] += t_time
+            runtimes['abvs'] += t_time
             start_time = time.time()
             abv_hessian[idx] += compute_abv(args, model, train_dataset, user_groups[idx], grad, delta_t[epoch][idx], delta_g[idx], is_hessian=True)
             runtimes['abvh'] += time.time() - start_time
