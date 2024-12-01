@@ -9,7 +9,7 @@ from update import LocalUpdate, test_inference, test_gradient
 from utils import get_dataset, average_weights, setup_logger, get_device, identify_bad_idxs, measure_accuracy, initialize_model
 from valuation.banzhaf import compute_abv, compute_G_t, compute_G_minus_i_t
 from valuation.influence import compute_influence_functions
-from valuation.shapley import compute_monte_carlo_shapley
+from valuation.shapley import compute_shapley
 import warnings
 import multiprocessing
 from functools import partial
@@ -42,13 +42,9 @@ def train_client(idx, args, global_weights, train_dataset, user_groups, epoch, d
 def train_global_model(args, model, train_dataset, test_dataset, user_groups, device):
     global_weights = model.state_dict()
     best_test_acc, best_test_loss = 0, float('inf')
-    approx_banzhaf_values_simple = defaultdict(float)
-    approx_banzhaf_values_hvp = defaultdict(float)
-    shapley_values = defaultdict(float)
-    influence_values = defaultdict(float)
-    
-    delta_t = defaultdict(dict)
-    delta_g = defaultdict(lambda: {key: torch.zeros_like(global_weights[key]) for key in global_weights.keys()})
+    abv_simple, abv_hessian, shapley_values, influence_values = defaultdict(float), defaultdict(float), defaultdict(float), defaultdict(float)
+    runtimes = {'abvs': 0, 'abvh': 0, 'sv': 0, 'if': 0}
+    delta_t, delta_g = defaultdict(dict), defaultdict(lambda: {key: torch.zeros_like(global_weights[key]) for key in global_weights.keys()})
 
     no_improvement_count = 0
     for epoch in tqdm(range(args.epochs), desc="Training Epochs"):
@@ -82,17 +78,26 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
             if epoch > 0:
                 for key in global_weights.keys():
                     delta_g[idx][key] += G_t_minus_i[key] - G_t[key]
-            approx_banzhaf_values_hvp[idx] += compute_abv(args, model, train_dataset, gradient, delta_t[epoch][idx], delta_g[idx], is_hessian=True)
-            approx_banzhaf_values_simple[idx] += compute_abv(args, model, train_dataset, gradient, delta_t[epoch][idx], is_hessian=False)
+            start_time = time.time()
+            abv_hessian[idx] += compute_abv(args, model, train_dataset, gradient, delta_t[epoch][idx], delta_g[idx], is_hessian=True)
+            runtimes['abvh'] += time.time() - start_time
+            start_time = time.time()
+            abv_simple[idx] += compute_abv(args, model, train_dataset, gradient, delta_t[epoch][idx], is_hessian=False)
+            runtimes['abvs'] += time.time() - start_time
 
-        # compute shapley values and influence functions periodically (e.g., every 5 epochs)
-        if (epoch + 1) % 5 == 0:
-            shapley = compute_monte_carlo_shapley(args, global_weights, train_dataset, user_groups, device, test_dataset)
-            influence = compute_influence_functions(args, model, train_dataset, user_groups, device, test_dataset)
-            for k, v in shapley.items():
-                shapley_values[k] += v  
-            for k, v in influence.items():
-                influence_values[k] += v 
+        # compute shapley values
+        start_time = time.time()
+        shapley = compute_shapley(args, global_weights, local_weights, test_dataset)
+        runtimes['sv'] += time.time() - start_time
+        for k, v in shapley.items():
+            shapley_values[k] += v  
+
+        # compute influence values
+        start_time = time.time()
+        influence = compute_influence_functions(args, model, train_dataset, user_groups, device, test_dataset)
+        runtimes['if'] += time.time() - start_time
+        for k, v in influence.items():
+            influence_values[k] += v 
 
         test_acc, test_loss = test_inference(model, test_dataset)
         if test_acc > best_test_acc * 1.01 or test_loss < best_test_loss * 0.99:
@@ -108,15 +113,7 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
         print(f'Epoch {epoch+1}/{args.epochs} - Test Accuracy: {test_acc}, Test Loss: {test_loss}')
         print(torch.cuda.memory_summary(device=device))
 
-    # average shapley and influence values over the number of sampling points
-    if shapley_values:
-        for k in shapley_values:
-            shapley_values[k] /= (args.epochs // 5)
-    if influence_values:
-        for k in influence_values:
-            influence_values[k] /= (args.epochs // 5)
-
-    return model, approx_banzhaf_values_simple, approx_banzhaf_values_hvp, shapley_values, influence_values
+    return model, abv_simple, abv_hessian, shapley_values, influence_values, runtimes
 
 if __name__ == '__main__':
     multiprocessing.set_start_method('spawn')
@@ -139,14 +136,14 @@ if __name__ == '__main__':
     global_model = initialize_model(args)
     global_model.to(device)
     global_model.train()
-    global_model, approx_banzhaf_values_simple, approx_banzhaf_values_hvp, shapley_values, influence_values = train_global_model(args, global_model, train_dataset, test_dataset, user_groups, device)
+    global_model, abv_simple, abv_hessian, shapley_values, influence_values, runtimes = train_global_model(args, global_model, train_dataset, test_dataset, user_groups, device)
     test_acc, test_loss = test_inference(global_model, test_dataset)
 
-    shared_clients = set(shapley_values.keys()) & set(influence_values.keys()) & set(approx_banzhaf_values_simple.keys()) & set(approx_banzhaf_values_hvp.keys())
+    shared_clients = set(shapley_values.keys()) & set(influence_values.keys()) & set(abv_simple.keys()) & set(abv_hessian.keys())
     sv = [shapley_values[client] for client in shared_clients]
     iv = [influence_values[client] for client in shared_clients]
-    abv_simple = [approx_banzhaf_values_simple[client] for client in shared_clients]
-    abv_hessian = [approx_banzhaf_values_hvp[client] for client in shared_clients]
+    abv_simple = [abv_simple[client] for client in shared_clients]
+    abv_hessian = [abv_hessian[client] for client in shared_clients]
 
     # log results   
     if args.setting == 0:
@@ -166,4 +163,5 @@ if __name__ == '__main__':
     logger.info(f'Influence Function Values: {iv}')
     logger.info(f'Banzhaf Values Simple: {abv_simple}')
     logger.info(f'Banzhaf Values Hessian: {abv_hessian}')
+    logger.info(f'Runtimes: {runtimes}')
     logger.info(f'Total Run Time: {time.time()-start_time}')
