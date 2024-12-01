@@ -129,32 +129,44 @@ def gradient(args, model, dataset):
 
 def compute_hessian(model, dataset, v_list):
     """Computes the Hessian-vector product Hv, where H is the Hessian of loss w.r.t. model parameters."""
-    device = get_device()
     model.eval()
+    model.zero_grad()
+
+    device = get_device()
+
     criterion = nn.CrossEntropyLoss().to(device)
     data_loader = DataLoader(dataset, batch_size=len(dataset), shuffle=False)
+
     inputs, targets = next(iter(data_loader))
     inputs, targets = inputs.to(device), targets.to(device)
+
+    # forward pass
     outputs = model(inputs)
-    validation_loss = criterion(outputs, targets)
+    loss = criterion(outputs, targets)
 
     print("here")
 
     # first gradient
     params = [p for p in model.parameters() if p.requires_grad]
-    grad_params = torch.autograd.grad(validation_loss, params, create_graph=True, retain_graph=True)
+    grad_params = torch.autograd.grad(loss, params, create_graph=True)
+
+    print("here2")
     
     # flatten grad_params and v_list
     grad_params_flat = torch.cat([g.contiguous().view(-1) for g in grad_params])
     v_flat = torch.cat([v.contiguous().view(-1) for v in v_list])
     
+    print("here3")
     # compute the dot product grad_params_flat * v_flat
     grad_dot_v = torch.dot(grad_params_flat, v_flat)
     
+    print("here4")
+
     # second gradient
-    hvp = torch.autograd.grad(grad_dot_v, params, retain_graph=True)
+    hvp = torch.autograd.grad(grad_dot_v, params)
     
-    del outputs, validation_loss, grad_params, grad_params_flat, v_flat, grad_dot_v
+    print("here5")
+    del outputs, loss, grad_params, grad_params_flat, v_flat, grad_dot_v
     torch.cuda.empty_cache()
 
     # return as a dict
