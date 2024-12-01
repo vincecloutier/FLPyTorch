@@ -111,7 +111,7 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
             if no_improvement_count > 3:
                 print(f'Convergence Reached At Round {epoch + 1}')
                 break
-
+        print(shapley_values)
         print(f'Epoch {epoch+1}/{args.epochs} - Test Accuracy: {test_acc}, Test Loss: {test_loss}')
         print(torch.cuda.memory_summary(device=device))
 
@@ -120,9 +120,9 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
 if __name__ == '__main__':
     multiprocessing.set_start_method('spawn')
 
-    if torch.cuda.is_available():
-        torch.backends.cudnn.benchmark = True
-        torch.backends.cudnn.enabled = True
+    # if torch.cuda.is_available():
+    #     torch.backends.cudnn.benchmark = True
+    #     torch.backends.cudnn.enabled = True
 
     start_time = time.time()
     args = args_parser()
@@ -132,7 +132,7 @@ if __name__ == '__main__':
     device = get_device()
     train_dataset, valid_dataset, test_dataset, user_groups, actual_bad_clients = get_dataset(args)
     
-    torch.cuda.set_per_process_memory_fraction(0.25, device)
+    # torch.cuda.set_per_process_memory_fraction(0.25, device)
 
     # train the global model
     global_model = initialize_model(args)
