@@ -1,7 +1,7 @@
 import numpy as np
 from update import test_inference
 from utils import average_weights, initialize_model, get_device
-
+from collections import defaultdict
 
 def compute_shapley(args, global_weights, client_weights, test_dataset):
     """Estimate Shapley values for participants in a round using permutation sampling."""
@@ -17,7 +17,7 @@ def compute_shapley(args, global_weights, client_weights, test_dataset):
     t = int((2 * r**2 / epsilon**2) * np.log(2 * m / delta))
     
     base_acc = test_inference(model, test_dataset)[0] 
-    shapley_updates = np.zeros(m)
+    shapley_updates = defaultdict(float)
 
     for _ in range(t):
         permutation = np.random.permutation(client_keys)
@@ -32,5 +32,5 @@ def compute_shapley(args, global_weights, client_weights, test_dataset):
             shapley_updates[i] += curr_acc - prev_acc
             prev_acc = curr_acc
     
-    shapley_updates /= t
+    shapley_updates = {k: v / t for k, v in shapley_updates.items()}
     return shapley_updates

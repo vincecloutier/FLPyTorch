@@ -90,10 +90,10 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
         print('computing shapley values')
         # compute shapley values
         start_time = time.time()
-        shapley = compute_shapley(args, global_weights, local_weights_dict, test_dataset)
-        runtimes['sv'] += time.time() - start_time
-        for k, v in shapley.items():
+        shapley_updates = compute_shapley(args, global_weights, local_weights_dict, test_dataset)
+        for k, v in shapley_updates.items():
             shapley_values[k] += v  
+        runtimes['sv'] += time.time() - start_time
 
         # compute influence values
         # start_time = time.time()
@@ -112,8 +112,8 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
             if no_improvement_count > 3:
                 print(f'Convergence Reached At Round {epoch + 1}')
                 break
-        print(shapley_values)
-        print(f'Epoch {epoch+1}/{args.epochs} - Test Accuracy: {test_acc}, Test Loss: {test_loss}')
+    
+        print(f'Epoch {epoch+1}/{args.epochs} - Test Accuracy: {test_acc}, Test Loss: {test_loss}, Runtimes: {runtimes}')
         print(torch.cuda.memory_summary(device=device))
 
     return model, abv_simple, abv_hessian, shapley_values, influence_values, runtimes
