@@ -94,7 +94,7 @@ def test_inference(model, test_dataset):
     return accuracy, loss
 
 
-def test_gradient(args, model, dataset):
+def gradient(args, model, dataset):
     """Computes the gradient of the validation loss with respect to the model parameters."""
 
     model.eval()
