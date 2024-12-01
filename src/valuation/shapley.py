@@ -4,33 +4,36 @@ os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
 os.environ['VECLIB_MAXIMUM_THREADS'] = '1'
 os.environ['NUMEXPR_NUM_THREADS'] = '1'
+
 import numpy as np
 from update import test_inference
 from utils import average_weights, initialize_model, get_device
 from collections import defaultdict
 from tqdm import tqdm
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor
 
-def compute_shapley_for_permutation(args):
-    (client_keys, client_weights, global_weights, base_acc, test_dataset, device, args_model) = args
-    permutation = np.random.permutation(client_keys)
-    prev_acc = base_acc
+def compute_shapley_for_permutations(args):
+    (client_keys, client_weights, global_weights, base_acc, test_dataset, device, args_model, num_permutations) = args
+    shapley_updates_local = defaultdict(float)
 
-    # initize model inside the function
     model = initialize_model(args_model)
     model.load_state_dict(global_weights)
-    model.to(device)
+    model.to(device) 
     model.train()
 
-    current_weights = []
-    shapley_updates_local = defaultdict(float)
-    for i in permutation:
-        current_weights.append(client_weights[i])
-        avg_weights = average_weights(current_weights)
-        model.load_state_dict(avg_weights)
-        curr_acc = test_inference(model, test_dataset)[0]
-        shapley_updates_local[i] += curr_acc - prev_acc
-        prev_acc = curr_acc
+    for _ in tqdm(range(num_permutations), desc="Calculating Shapley Values"):
+        permutation = np.random.permutation(client_keys)
+        prev_acc = base_acc
+
+        current_weights = []
+        for i in permutation:
+            current_weights.append(client_weights[i])
+            avg_weights = average_weights(current_weights)
+            model.load_state_dict(avg_weights)
+            curr_acc = test_inference(model, test_dataset)[0]
+            shapley_updates_local[i] += curr_acc - prev_acc
+            prev_acc = curr_acc
+
     return shapley_updates_local
 
 def compute_shapley(args, global_weights, client_weights, test_dataset):
@@ -50,20 +53,18 @@ def compute_shapley(args, global_weights, client_weights, test_dataset):
     t = int((2 * r**2 / epsilon**2) * np.log(2 * m / delta))
 
     shapley_updates = defaultdict(float)
+  
+    num_processes = args.shapley_processes
+    args_list = []
+    for i in range(num_processes):
+        num_permutations = t // num_processes + (1 if i < (t % num_processes) else 0)
+        process_args = (client_keys, client_weights, global_weights, base_acc, test_dataset, device, args, num_permutations)
+        args_list.append(process_args)
 
-    # Prepare arguments for parallel execution
-    args_list = [
-        (client_keys, client_weights, global_weights, base_acc, test_dataset, device, args)
-        for _ in range(t)
-    ]
-
-    with ProcessPoolExecutor(max_workers=args.shapley_processes) as executor:
-        futures = [executor.submit(compute_shapley_for_permutation, arg) for arg in args_list]
-
-        # Use tqdm to display progress
-        for future in tqdm(as_completed(futures), total=t, desc="Calculating Shapley Values"):
-            shapley_update_local = future.result()
-            for k, v in shapley_update_local.items():
+    with ProcessPoolExecutor(max_workers=num_processes) as executor:
+        shapley_update_local = executor.map(compute_shapley_for_permutations, args_list)
+        for updates in shapley_update_local:
+            for k, v in updates.items():
                 shapley_updates[k] += v
 
     # Average the Shapley values over all permutations
