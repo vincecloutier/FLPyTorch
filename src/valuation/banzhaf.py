@@ -67,13 +67,21 @@ def compute_abv(args, model, dataset, gradient, delta_t_i, accumulated_Delta_G_i
         total_term = {}
         for name in delta_term:
             total_term[name] = delta_term[name] - hessian_term.get(name, torch.zeros_like(delta_term[name], device=device))
-    else:
-        total_term = delta_term
 
+        del delta_term, hessian_term, accumulated_Delta_G_i_list
+    else:
+        total_term = delta_term 
+        
+        del delta_term
+    
     # compute gradient dot product total_term
     bv = 0.0
     for name in total_term:
         bv += torch.dot(gradient[name].view(-1), total_term[name].view(-1))
+   
+    del total_term
+    torch.cuda.empty_cache()
+   
     return bv.item()
 
 

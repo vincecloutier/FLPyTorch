@@ -138,6 +138,8 @@ def compute_hessian(model, dataset, v_list):
     outputs = model(inputs)
     validation_loss = criterion(outputs, targets)
 
+    print("here")
+
     # first gradient
     params = [p for p in model.parameters() if p.requires_grad]
     grad_params = torch.autograd.grad(validation_loss, params, create_graph=True, retain_graph=True)
