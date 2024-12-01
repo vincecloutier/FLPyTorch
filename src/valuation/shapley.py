@@ -4,11 +4,6 @@ os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
 os.environ['VECLIB_MAXIMUM_THREADS'] = '1'
 os.environ['NUMEXPR_NUM_THREADS'] = '1'
-
-# If using PyTorch with GPUs
-import torch.multiprocessing
-torch.multiprocessing.set_start_method('spawn', force=True)
-
 import numpy as np
 from update import test_inference
 from utils import average_weights, initialize_model, get_device
