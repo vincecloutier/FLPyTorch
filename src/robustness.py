@@ -74,6 +74,7 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
         model.load_state_dict(global_weights)
 
         print('computing banzhaf values')
+        print(torch.cuda.memory_summary(device=device))
         # compute banzhaf values
         G_t = compute_G_t(delta_t[epoch], global_weights.keys())
         for idx in idxs_users:
@@ -81,6 +82,7 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
             if epoch > 0:
                 for key in global_weights.keys():
                     delta_g[idx][key] += G_t_minus_i[key] - G_t[key]
+            print(idx)
             start_time = time.time()
             abv_hessian[idx] += compute_abv(args, model, valid_dataset, grad, delta_t[epoch][idx], delta_g[idx], is_hessian=True)
             runtimes['abvh'] += time.time() - start_time
