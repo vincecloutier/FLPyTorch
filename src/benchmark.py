@@ -8,7 +8,7 @@ import numpy as np
 from tqdm import tqdm
 from options import args_parser
 from update import LocalUpdate, test_inference, test_gradient
-from valuation.banzhaf import compute_bv_simple, compute_bv_hvp, compute_G_t, compute_G_minus_i_t
+from valuation.banzhaf import compute_abv, compute_G_t, compute_G_minus_i_t
 from utils import get_dataset, average_weights, setup_logger, get_device, identify_bad_idxs, measure_accuracy, initialize_model
 import multiprocessing
 from scipy.stats import pearsonr
@@ -52,8 +52,8 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
                 if epoch > 0:
                     for key in global_weights.keys():
                         delta_g[idx][key] += G_t_minus_i[key] - G_t[key]
-                approx_banzhaf_values_hessian[idx] += compute_bv_hvp(args, model, test_dataset, gradient, delta_t[epoch][idx], delta_g[idx])
-                approx_banzhaf_values_simple[idx] += compute_bv_simple(args, gradient, delta_t[epoch][idx])
+                approx_banzhaf_values_hessian[idx] += compute_abv(args, model, train_dataset, gradient, delta_t[epoch][idx], delta_g[idx], is_hessian=True)
+                approx_banzhaf_values_simple[idx] += compute_abv(args, model, train_dataset, gradient, delta_t[epoch][idx], delta_g[idx], is_hessian=False)
 
         # update global weights and model
         global_weights = average_weights(local_weights)

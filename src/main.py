@@ -7,7 +7,7 @@ from collections import defaultdict
 from options import args_parser
 from update import LocalUpdate, test_inference, test_gradient
 from utils import get_dataset, average_weights, setup_logger, get_device, identify_bad_idxs, measure_accuracy, initialize_model
-from valuation.banzhaf import compute_bv_hvp, compute_bv_simple, compute_G_t, compute_G_minus_i_t
+from valuation.banzhaf import compute_abv, compute_G_t, compute_G_minus_i_t
 import warnings
 import multiprocessing
 from functools import partial
@@ -82,10 +82,10 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
                 if epoch > 0:
                     for key in global_weights.keys():
                         delta_g[idx][key] += G_t_minus_i[key] - G_t[key]
-                approx_banzhaf_values[idx] += compute_bv_hvp(args, model, test_dataset, gradient, delta_t[epoch][idx], delta_g[idx])
+                approx_banzhaf_values[idx] += compute_abv(args, model, train_dataset, gradient, delta_t[epoch][idx], delta_g[idx], is_hessian=True)
         else:
             for idx in idxs_users:
-                approx_banzhaf_values[idx] += compute_bv_simple(args, gradient, delta_t[epoch][idx])
+                approx_banzhaf_values[idx] += compute_abv(args, model, train_dataset, gradient, delta_t[epoch][idx], is_hessian=False)
     
         # update selection probabilities based on the banzhaf values
         if bad_clients is not None:
