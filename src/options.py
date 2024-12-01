@@ -27,6 +27,7 @@ def args_parser():
 
     # simulation arguments
     parser.add_argument('--processes', type=int, default=8, help="number of processes")
+    parser.add_argument('--shapley_processes', type=int, default=8, help="number of processes for shapley values")
     parser.add_argument('--verbose', type=int, default=1, help='verbose')
 
     args = parser.parse_args()

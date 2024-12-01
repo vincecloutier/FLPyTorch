@@ -57,7 +57,7 @@ def compute_shapley(args, global_weights, client_weights, test_dataset):
         for _ in range(t)
     ]
 
-    with ProcessPoolExecutor(max_workers=args.processes) as executor:
+    with ProcessPoolExecutor(max_workers=args.shapley_processes) as executor:
         futures = [executor.submit(compute_shapley_for_permutation, arg) for arg in args_list]
 
         # Use tqdm to display progress
