@@ -75,11 +75,10 @@ def test_inference(model, test_dataset):
     criterion = nn.CrossEntropyLoss().to(device)
     testloader = DataLoader(test_dataset, batch_size=128, shuffle=False)
     
-
     for batch_idx, (images, labels) in enumerate(testloader):
         images, labels = images.to(device), labels.to(device)
 
-        # inference
+        # forward pass
         outputs = model(images)
         batch_loss = criterion(outputs, labels)
         loss += batch_loss.item()
