@@ -59,33 +59,12 @@ def compute_shapley(args, global_weights, client_weights, test_dataset):
         for k, v in updates.items():
             shapley_updates[k] += v
 
+    del shapley_update_local
+    torch.cuda.empty_cache()
+
     # average the values over all permutations
     shapley_updates = {k: v / t for k, v in shapley_updates.items()}
     return shapley_updates
-
-
-def handle_permutation(args):
-    client_keys, base_acc, device, args_model, num_permutations = args
-    shapley_updates_local = defaultdict(float)
-
-    model = initialize_model(args_model)
-    model.load_state_dict(_global_weights)
-    model.to(device)
-
-    for _ in tqdm(range(num_permutations), desc="Calculating Shapley Values"):
-        permutation = np.random.permutation(client_keys)
-        prev_acc = base_acc
-        current_weights = []
-        for i in permutation:
-            current_weights.append(_client_weights[i])
-            avg_weights = average_weights(current_weights)
-            model.load_state_dict(avg_weights)
-            with torch.no_grad():
-                curr_acc = test_inference(model, _test_dataset)[0]
-            shapley_updates_local[i] += curr_acc - prev_acc
-            prev_acc = curr_acc
-
-    return shapley_updates_local
 
 
 def compute_shapley_for_permutation(args):
@@ -108,5 +87,8 @@ def compute_shapley_for_permutation(args):
             curr_acc = test_inference(model, _test_dataset)[0]
         shapley_updates_local[i] += curr_acc - prev_acc
         prev_acc = curr_acc
-    return shapley_updates_local
 
+    del model
+    torch.cuda.empty_cache()
+
+    return shapley_updates_local
