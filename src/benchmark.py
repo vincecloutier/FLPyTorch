@@ -52,8 +52,8 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
                 if epoch > 0:
                     for key in global_weights.keys():
                         delta_g[idx][key] += G_t_minus_i[key] - G_t[key]
-                approx_banzhaf_values_hessian[idx] += compute_abv(args, model, train_dataset, gradient, delta_t[epoch][idx], delta_g[idx], is_hessian=True)
-                approx_banzhaf_values_simple[idx] += compute_abv(args, model, train_dataset, gradient, delta_t[epoch][idx], delta_g[idx], is_hessian=False)
+                approx_banzhaf_values_hessian[idx] += compute_abv(args, model, valid_dataset, gradient, delta_t[epoch][idx], delta_g[idx], is_hessian=True)
+                approx_banzhaf_values_simple[idx] += compute_abv(args, model, valid_dataset, gradient, delta_t[epoch][idx], delta_g[idx], is_hessian=False)
 
         # update global weights and model
         global_weights = average_weights(local_weights)
