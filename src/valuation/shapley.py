@@ -14,13 +14,13 @@ def compute_shapley(args, global_weights, client_weights, test_dataset):
 
     client_keys = list(client_weights.keys())
     m = len(client_keys)
-    epsilon, delta, r = 0.1, 0.05, 1  # allow 10% error at 95% confidence, r = 1 since accuracy in [0, 1]  
+    epsilon, delta, r = 0.25, 0.25, 1  # allow 25% error at 75% confidence, r = 1 since accuracy in [0, 1]  
     t = int((2 * r**2 / epsilon**2) * np.log(2 * m / delta))
     
     base_acc = test_inference(model, test_dataset)[0] 
     shapley_updates = defaultdict(float)
 
-    with tqdm(total=t) as pbar:
+    with tqdm(total=t, desc="Calculating Shapley Values") as pbar:
         for i in range(t):
             permutation = np.random.permutation(client_keys)
             prev_acc = base_acc
