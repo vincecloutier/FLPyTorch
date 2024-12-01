@@ -1,3 +1,14 @@
+import os
+os.environ['OMP_NUM_THREADS'] = '1'
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+os.environ['MKL_NUM_THREADS'] = '1'
+os.environ['VECLIB_MAXIMUM_THREADS'] = '1'
+os.environ['NUMEXPR_NUM_THREADS'] = '1'
+
+# If using PyTorch with GPUs
+import torch.multiprocessing
+torch.multiprocessing.set_start_method('spawn', force=True)
+
 import numpy as np
 from update import test_inference
 from utils import average_weights, initialize_model, get_device
@@ -10,7 +21,7 @@ def compute_shapley_for_permutation(args):
     permutation = np.random.permutation(client_keys)
     prev_acc = base_acc
 
-    # Initialize model inside the function to avoid issues with shared resources
+    # initize model inside the function
     model = initialize_model(args_model)
     model.load_state_dict(global_weights)
     model.to(device)
@@ -51,8 +62,7 @@ def compute_shapley(args, global_weights, client_weights, test_dataset):
         for _ in range(t)
     ]
 
-    with ProcessPoolExecutor() as executor:
-        # Submit all tasks to the executor
+    with ProcessPoolExecutor(max_workers=args.processes) as executor:
         futures = [executor.submit(compute_shapley_for_permutation, arg) for arg in args_list]
 
         # Use tqdm to display progress
