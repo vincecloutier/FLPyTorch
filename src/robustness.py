@@ -84,10 +84,10 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
                     delta_g[idx][key] += G_t_minus_i[key] - G_t[key]
             print(idx)
             start_time = time.time()
-            abv_hessian[idx] += compute_abv(args, model, valid_dataset, grad, delta_t[epoch][idx], delta_g[idx], is_hessian=True)
+            abv_hessian[idx] += compute_abv(args, model, train_dataset, user_groups[idx], grad, delta_t[epoch][idx], delta_g[idx], is_hessian=True)
             runtimes['abvh'] += time.time() - start_time
             start_time = time.time()
-            abv_simple[idx] += compute_abv(args, model, valid_dataset, grad, delta_t[epoch][idx], delta_g[idx], is_hessian=False)
+            abv_simple[idx] += compute_abv(args, model, train_dataset, user_groups[idx], grad, delta_t[epoch][idx], delta_g[idx], is_hessian=False)
             runtimes['abvs'] += time.time() - start_time
 
         print('computing shapley values')
