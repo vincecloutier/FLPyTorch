@@ -4,6 +4,7 @@ from collections import defaultdict
 from update import LocalUpdate, gradient, conjugate_gradient
 import multiprocessing
 from functools import partial
+from utils import get_device, initialize_model, average_weights
 
 
 def compute_influence_functions(args, model, train_dataset, user_groups, device, test_dataset):
@@ -47,3 +48,25 @@ def compute_client_influence(client_idx, args, model, train_dataset, user_groups
     influence = -torch.dot(client_grad_flat, x).item()
     return client_idx, influence
     
+
+def compute_influence(args, global_weights, client_weights, test_dataset, influence_updates):
+    """Estimate Influence values for participants in a round using permutation sampling."""
+    device = get_device()
+    model = initialize_model(args) 
+    model.load_state_dict(global_weights)
+    model.to(device)
+    model.train()
+
+    client_keys = list(client_weights.keys())
+
+    influence_updates = defaultdict(float)
+
+    for i in client_keys:
+        current_weights = client_weights - client_weights[i]
+        term = average_weights(current_weights) - global_weights
+
+    
+    
+    influence_updates = {k: v / t for k, v in influence_updates.items()}
+    return influence_updates
+
