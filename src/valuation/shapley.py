@@ -2,6 +2,7 @@ import numpy as np
 from update import test_inference
 from utils import average_weights, initialize_model, get_device
 
+
 def compute_shapley(args, global_weights, client_weights, test_dataset):
     """Estimate Shapley values for participants in a round using permutation sampling."""
     device = get_device()
