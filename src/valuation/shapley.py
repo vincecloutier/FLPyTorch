@@ -31,13 +31,16 @@ def compute_shapley(args, global_weights, client_weights, test_dataset):
         print("here6")
         for i in permutation:
             current_weights.append(client_weights[i])
+            print(current_weights)
             print("here7")
-            model.load_state_dict(average_weights(current_weights))
-            print("here8")
-            curr_acc = test_inference(model, test_dataset)[0]
+            avg_weights = average_weights(current_weights)
+            print(avg_weights)
+            model.load_state_dict(avg_weights)
             print("here9")
-            shapley_updates[i] += curr_acc - prev_acc
+            curr_acc = test_inference(model, test_dataset)[0]
             print("here10")
+            shapley_updates[i] += curr_acc - prev_acc
+            print("here11")
             prev_acc = curr_acc
     
     shapley_updates /= t
