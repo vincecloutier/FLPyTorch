@@ -73,6 +73,7 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
         global_weights = average_weights(local_weights)
         model.load_state_dict(global_weights)
 
+        print('computing banzhaf values')
         # compute banzhaf values
         G_t = compute_G_t(delta_t[epoch], global_weights.keys())
         for idx in idxs_users:
@@ -87,6 +88,7 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
             abv_simple[idx] += compute_abv(args, model, train_dataset, gradient, delta_t[epoch][idx], is_hessian=False)
             runtimes['abvs'] += time.time() - start_time
 
+        print('computing shapley values')
         # compute shapley values
         start_time = time.time()
         shapley = compute_shapley(args, global_weights, local_weights_dict, test_dataset)
