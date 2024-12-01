@@ -7,7 +7,7 @@ from collections import defaultdict
 from options import args_parser
 from update import LocalUpdate, test_inference, test_gradient
 from utils import get_dataset, average_weights, setup_logger, get_device, identify_bad_idxs, measure_accuracy, initialize_model
-from banzhaf import compute_bv_hvp, compute_bv_simple, compute_G_t, compute_G_minus_i_t
+from valuation.banzhaf import compute_bv_hvp, compute_bv_simple, compute_G_t, compute_G_minus_i_t
 import warnings
 import multiprocessing
 from functools import partial

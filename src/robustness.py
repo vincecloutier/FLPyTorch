@@ -5,64 +5,20 @@ import numpy as np
 from tqdm import tqdm
 from collections import defaultdict
 from options import args_parser
-from update import LocalUpdate, test_inference, test_gradient, conjugate_gradient
+from update import LocalUpdate, test_inference, test_gradient
 from utils import get_dataset, average_weights, setup_logger, get_device, identify_bad_idxs, measure_accuracy, initialize_model
-from banzhaf import compute_bv_hvp, compute_bv_simple, compute_G_t, compute_G_minus_i_t
+from valuation.banzhaf import compute_bv_hvp, compute_bv_simple, compute_G_t, compute_G_minus_i_t
+from valuation.influence import compute_influence_functions
+from valuation.shapley import compute_monte_carlo_shapley
 import warnings
 import multiprocessing
 from functools import partial
 warnings.filterwarnings("ignore", category=UserWarning)
 import os
-import random
 
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:128"
 
-
-def process_permutation(sample_idx, args, global_weights, train_dataset, user_groups, device, test_dataset, clients):
-    random_permutation = copy.deepcopy(clients)
-    random.shuffle(random_permutation)
-    
-    current_weights = copy.deepcopy(global_weights)
-    current_model = initialize_model(args)
-    current_model.load_state_dict(current_weights)
-    current_model.to(device)
-    current_model.train()
-    
-    # initial performance
-    initial_perf = test_inference(current_model, test_dataset)[0]  # assuming higher is better
-    
-    permutation_shapley = defaultdict(float)
-    
-    for client_idx in random_permutation:
-        # train the model with the current client
-        local_update = LocalUpdate(args=args, dataset=train_dataset, idxs=user_groups[client_idx])
-        w, _ = local_update.update_weights(model=current_model, global_round=sample_idx)
-        current_weights = average_weights([current_weights, w])
-        current_model.load_state_dict(current_weights)
-        
-        # performance after adding the client
-        new_perf = test_inference(current_model, test_dataset)[0]
-        
-        # marginal contribution
-        marginal_contribution = new_perf - initial_perf
-        permutation_shapley[client_idx] += marginal_contribution
-        
-        # update initial performance for next client in permutation
-        initial_perf = new_perf
-    
-    del current_model
-    torch.cuda.empty_cache()
-    
-    return permutation_shapley
-
-def compute_client_influence(client_idx, args, model, train_dataset, user_groups, x):
-    """Compute the influence of a single client."""
-    client_data = LocalUpdate(args=args, dataset=train_dataset, idxs=user_groups[client_idx]).get_data()
-    client_grad = test_gradient(args, model, client_data)
-    client_grad_flat = torch.cat([g.contiguous().view(-1) for g in client_grad])
-    influence = -torch.dot(client_grad_flat, x).item()
-    return client_idx, influence
 
 def train_client(idx, args, global_weights, train_dataset, user_groups, epoch, device):
     torch.cuda.set_device(device)
@@ -81,67 +37,6 @@ def train_client(idx, args, global_weights, train_dataset, user_groups, epoch, d
     torch.cuda.empty_cache()
 
     return idx, w, delta
-
-
-def compute_monte_carlo_shapley(args, global_weights, train_dataset, user_groups, device, test_dataset):
-    """Compute Monte Carlo Shapley values for clients."""
-    num_clients = args.num_users
-    shapley_values = defaultdict(float)
-    num_samples = 2*args.num_users
-
-    clients = list(range(num_clients))
-
-    # parallelize the processing of random permutations
-    with multiprocessing.Pool(processes=args.processes) as pool:
-        results = list(tqdm(pool.imap(
-            partial(process_permutation, args=args, global_weights=global_weights, train_dataset=train_dataset, 
-                    user_groups=user_groups, device=device, test_dataset=test_dataset, clients=clients),
-            range(num_samples)
-        ), total=num_samples, desc="Shapley Permutations"))
-    # aggregate the shapley values
-    for permutation_shapley in results:
-        for client_idx, contribution in permutation_shapley.items():
-            shapley_values[client_idx] += contribution
-    
-    # average the contributions
-    for client_idx in shapley_values:
-        shapley_values[client_idx] /= num_samples
-    
-    return shapley_values
-
-
-def compute_influence_functions(args, model, train_dataset, user_groups, device, test_dataset):
-    """Compute Influence Functions for clients."""
-    influence_values = defaultdict(float)
-    model.eval()
-    
-    # compute the gradient of the test loss w.r.t. model parameters
-    test_loss_grad = test_gradient(args, model, test_dataset)
-    
-    # solve Hx = grad_test_loss to get x = H^{-1} grad_test_loss
-    x = conjugate_gradient(model, train_dataset, test_loss_grad, num_iterations=20, tol=1e-4)
-    
-    # split x back into parameter tensors
-    x_dict = {}
-    idx = 0
-    for name, param in model.named_parameters():
-        if param.requires_grad:
-            numel = param.numel()
-            x_dict[name] = x[idx:idx+numel].view_as(param).clone().detach()
-            idx += numel
-
-    # parallelize the computation of influence for each client
-    with multiprocessing.Pool(processes=args.processes) as pool:
-        results = list(tqdm(pool.imap(
-            partial(compute_client_influence, args=args, model=model, train_dataset=train_dataset, 
-                    user_groups=user_groups, x=x, device=device),
-            range(args.num_users)
-        ), total=args.num_users, desc="Influence Functions"))
-    
-    for client_idx, influence in results:
-        influence_values[client_idx] = influence
-    
-    return influence_values
 
 
 def train_global_model(args, model, train_dataset, test_dataset, user_groups, device):
