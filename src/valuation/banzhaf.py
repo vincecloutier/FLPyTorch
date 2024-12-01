@@ -44,7 +44,7 @@ from update import compute_hessian
 #         final_term += torch.dot(gradient[name].view(-1), total_term[name].view(-1))
 #     return final_term.item()
 
-def compute_abv(args, model, train_dataset, gradient, delta_t_i, accumulated_Delta_G_i, is_hessian):
+def compute_abv(args, model, dataset, gradient, delta_t_i, accumulated_Delta_G_i, is_hessian):
     """Computes the banzhaf value component for client i at epoch t."""
     device = get_device()
     # compute delta term
@@ -58,7 +58,7 @@ def compute_abv(args, model, train_dataset, gradient, delta_t_i, accumulated_Del
                 accumulated_Delta_G_i_list.append(accumulated_Delta_G_i[name].to(device))
 
         # compute Hessian-vector product
-        hessian_term = compute_hessian(model, train_dataset, accumulated_Delta_G_i_list)
+        hessian_term = compute_hessian(model, dataset, accumulated_Delta_G_i_list)
 
         # multiply by alpha
         # hessian_term = {name: args.alpha * hvp_dict[name] for name in hvp_dict}
