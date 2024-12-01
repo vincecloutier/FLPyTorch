@@ -75,7 +75,7 @@ def compute_abv(args, model, dataset, indexes, gradient, delta_t_i, accumulated_
     
     # compute gradient dot product total_term
     bv = 0.0
-    for name in total_term:
+    for name in gradient:
         bv += torch.dot(gradient[name].view(-1), total_term[name].view(-1))
    
     del total_term
