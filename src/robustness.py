@@ -49,6 +49,7 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
     no_improvement_count = 0
     for epoch in tqdm(range(args.epochs), desc="Training Epochs"):
         local_weights = []
+        local_weights_dict = defaultdict(dict)
 
         model.train()
         gradient = test_gradient(args, model, test_dataset)
@@ -66,6 +67,7 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
         pool.join()
         for idx, w, delta in results:
             local_weights.append(copy.deepcopy(w))
+            local_weights_dict[idx] = copy.deepcopy(w)
             delta_t[epoch][idx] = delta
 
         global_weights = average_weights(local_weights)
@@ -87,17 +89,17 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
 
         # compute shapley values
         start_time = time.time()
-        shapley = compute_shapley(args, global_weights, local_weights, test_dataset)
+        shapley = compute_shapley(args, global_weights, local_weights_dict, test_dataset)
         runtimes['sv'] += time.time() - start_time
         for k, v in shapley.items():
             shapley_values[k] += v  
 
         # compute influence values
-        start_time = time.time()
-        influence = compute_influence_functions(args, model, train_dataset, user_groups, device, test_dataset)
-        runtimes['if'] += time.time() - start_time
-        for k, v in influence.items():
-            influence_values[k] += v 
+        # start_time = time.time()
+        # influence = compute_influence_functions(args, model, train_dataset, user_groups, device, test_dataset)
+        # runtimes['if'] += time.time() - start_time
+        # for k, v in influence.items():
+        #     influence_values[k] += v 
 
         test_acc, test_loss = test_inference(model, test_dataset)
         if test_acc > best_test_acc * 1.01 or test_loss < best_test_loss * 0.99:
