@@ -144,28 +144,20 @@ def compute_hessian(model, dataset, v_list):
     outputs = model(inputs)
     loss = criterion(outputs, targets)
 
-    print("here")
-
     # first gradient
     params = [p for p in model.parameters() if p.requires_grad]
     grad_params = torch.autograd.grad(loss, params, create_graph=True)
 
-    print("here2")
-    
     # flatten grad_params and v_list
     grad_params_flat = torch.cat([g.contiguous().view(-1) for g in grad_params])
     v_flat = torch.cat([v.contiguous().view(-1) for v in v_list])
-    
-    print("here3")
+
     # compute the dot product grad_params_flat * v_flat
     grad_dot_v = torch.dot(grad_params_flat, v_flat)
     
-    print("here4")
-
     # second gradient
     hvp = torch.autograd.grad(grad_dot_v, params)
     
-    print("here5")
     del outputs, loss, grad_params, grad_params_flat, v_flat, grad_dot_v
     torch.cuda.empty_cache()
 
@@ -174,6 +166,7 @@ def compute_hessian(model, dataset, v_list):
     for (name, param), hv in zip(model.named_parameters(), hvp):
         if param.requires_grad:
             hv_dict[name] = hv.clone().detach()
+        
     return hv_dict
 
 
