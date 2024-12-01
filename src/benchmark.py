@@ -7,7 +7,7 @@ import torch
 import numpy as np
 from tqdm import tqdm
 from options import args_parser
-from update import LocalUpdate, test_inference, test_gradient
+from update import LocalUpdate, test_inference, gradient
 from valuation.banzhaf import compute_abv, compute_G_t, compute_G_minus_i_t
 from utils import get_dataset, average_weights, setup_logger, get_device, identify_bad_idxs, measure_accuracy, initialize_model
 import multiprocessing
@@ -30,7 +30,7 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
 
         model.train()
         if isBanzhaf:
-            gradient = test_gradient(args, model, valid_dataset)
+            gradient = gradient(args, model, valid_dataset)
 
         m = max(int(args.frac * len(clients)), 1)
         idxs_users = np.random.choice(clients, m, replace=False)

@@ -5,7 +5,7 @@ import numpy as np
 from tqdm import tqdm
 from collections import defaultdict
 from options import args_parser
-from update import LocalUpdate, test_inference, test_gradient
+from update import LocalUpdate, test_inference, gradient
 from utils import get_dataset, average_weights, setup_logger, get_device, identify_bad_idxs, measure_accuracy, initialize_model
 from valuation.banzhaf import compute_abv, compute_G_t, compute_G_minus_i_t
 from valuation.influence import compute_influence_functions
@@ -39,7 +39,7 @@ def train_client(idx, args, global_weights, train_dataset, user_groups, epoch, d
     return idx, w, delta
 
 
-def train_global_model(args, model, train_dataset, test_dataset, user_groups, device):
+def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, user_groups, device):
     global_weights = model.state_dict()
     best_test_acc, best_test_loss = 0, float('inf')
     abv_simple, abv_hessian, shapley_values, influence_values = defaultdict(float), defaultdict(float), defaultdict(float), defaultdict(float)
@@ -52,7 +52,7 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
         local_weights_dict = defaultdict(dict)
 
         model.train()
-        gradient = test_gradient(args, model, test_dataset)
+        gradient = gradient(args, model, valid_dataset)
         
         m = max(int(args.frac * args.num_users), 1)
         idxs_users = np.random.choice(range(args.num_users), m, replace=False)
@@ -140,7 +140,7 @@ if __name__ == '__main__':
     global_model = initialize_model(args)
     global_model.to(device)
     global_model.train()
-    global_model, abv_simple, abv_hessian, shapley_values, influence_values, runtimes = train_global_model(args, global_model, train_dataset, test_dataset, user_groups, device)
+    global_model, abv_simple, abv_hessian, shapley_values, influence_values, runtimes = train_global_model(args, global_model, train_dataset, valid_dataset, test_dataset, user_groups, device)
     test_acc, test_loss = test_inference(global_model, test_dataset)
 
     shared_clients = set(shapley_values.keys()) & set(influence_values.keys()) & set(abv_simple.keys()) & set(abv_hessian.keys())

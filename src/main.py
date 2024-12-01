@@ -5,7 +5,7 @@ import numpy as np
 from tqdm import tqdm
 from collections import defaultdict
 from options import args_parser
-from update import LocalUpdate, test_inference, test_gradient
+from update import LocalUpdate, test_inference, gradient
 from utils import get_dataset, average_weights, setup_logger, get_device, identify_bad_idxs, measure_accuracy, initialize_model
 from valuation.banzhaf import compute_abv, compute_G_t, compute_G_minus_i_t
 import warnings
@@ -36,7 +36,7 @@ def train_client(idx, args, global_weights, train_dataset, user_groups, epoch, d
     return idx, w, delta
 
 
-def train_global_model(args, model, train_dataset, test_dataset, user_groups, device, bad_clients=None):
+def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, user_groups, device, bad_clients=None):
     global_weights = model.state_dict()
     best_test_acc, best_test_loss = 0, float('inf')
     approx_banzhaf_values = defaultdict(float)
@@ -49,7 +49,7 @@ def train_global_model(args, model, train_dataset, test_dataset, user_groups, de
         local_weights = []
 
         model.train()
-        gradient = test_gradient(args, model, test_dataset)
+        gradient = gradient(args, model, valid_dataset)
         
         if bad_clients is not None:
             good_clients = [i for i in range(args.num_users) if i not in bad_clients]
@@ -132,7 +132,7 @@ if __name__ == '__main__':
     global_model = initialize_model(args)
     global_model.to(device)
     global_model.train()
-    global_model, approx_banzhaf_values = train_global_model(args, global_model, train_dataset, test_dataset, user_groups, device)
+    global_model, approx_banzhaf_values = train_global_model(args, global_model, train_dataset, valid_dataset, test_dataset, user_groups, device)
     test_acc, test_loss = test_inference(global_model, test_dataset)
 
     # predict bad clients and measure accuracy
@@ -144,7 +144,7 @@ if __name__ == '__main__':
         global_model = initialize_model(args)
         global_model.to(device)
         global_model.train()
-        retrained_model, _, = train_global_model(args, global_model, train_dataset, test_dataset, user_groups, device, predicted_bad_clients)
+        retrained_model, _, = train_global_model(args, global_model, train_dataset, valid_dataset, test_dataset, user_groups, device, predicted_bad_clients)
         retrain_test_acc, retrain_test_loss = test_inference(retrained_model, test_dataset)
 
     # log results
