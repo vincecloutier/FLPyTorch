@@ -7,7 +7,6 @@ import multiprocessing
 import torch
 
 
-# global variables to avoid data copying
 _global_weights = None
 _client_weights = None
 _test_dataset = None
@@ -19,45 +18,6 @@ def init_process(global_weights, client_weights, test_dataset):
     _client_weights = client_weights
     _test_dataset = test_dataset
 
-
-def compute_shapley_for_permutations(args):
-    (client_keys, client_weights, global_weights, base_acc, test_dataset, device, args_model, num_permutations) = args
-    shapley_updates_local = defaultdict(float)
-
-    model = initialize_model(args_model)
-    model.load_state_dict(global_weights)
-    model.to(device)
-
-    for _ in tqdm(range(num_permutations), desc="Calculating Shapley Values"):
-        permutation = np.random.permutation(client_keys)
-        prev_acc = base_acc
-
-        cumulative_weights_sum = {k: v.clone() for k, v in global_weights.items()}
-        n = 1  # start from 1 to include the global weights
-
-        for i in permutation:
-            client_weight = client_weights[i]
-
-            # incrementally update cumulative weights sum
-            for key in cumulative_weights_sum.keys():
-                cumulative_weights_sum[key] += client_weight[key]
-            n += 1
-
-            # compute average weights
-            avg_weights = {key: cumulative_weights_sum[key] / n for key in cumulative_weights_sum.keys()}
-
-            # update model parameters directly
-            with torch.no_grad():
-                for name, param in model.named_parameters():
-                    param.copy_(avg_weights[name])
-
-            # perform inference without tracking gradients
-            with torch.no_grad():
-                curr_acc = test_inference(model, test_dataset)[0]
-            shapley_updates_local[i] += curr_acc - prev_acc
-            prev_acc = curr_acc
-
-    return shapley_updates_local
 
 def compute_shapley(args, global_weights, client_weights, test_dataset):
     """Estimate Shapley values for participants in a round using permutation sampling."""
@@ -89,7 +49,7 @@ def compute_shapley(args, global_weights, client_weights, test_dataset):
         process_args = (client_keys, base_acc, device, args, num_permutations)
         args_list.append(process_args)
 
-    shapley_update_local = pool.map(compute_shapley_worker, args_list)
+    shapley_update_local = pool.map(handle_permutation, args_list)
     pool.close()
     pool.join()
 
@@ -102,6 +62,25 @@ def compute_shapley(args, global_weights, client_weights, test_dataset):
     return shapley_updates
 
 
-def compute_shapley_worker(args):
+def handle_permutation(args):
     client_keys, base_acc, device, args_model, num_permutations = args
-    return compute_shapley_for_permutations((client_keys, _client_weights, _global_weights, base_acc, _test_dataset, device, args_model, num_permutations))
+    shapley_updates_local = defaultdict(float)
+
+    model = initialize_model(args_model)
+    model.load_state_dict(_global_weights)
+    model.to(device)
+
+    for _ in tqdm(range(num_permutations), desc="Calculating Shapley Values"):
+        permutation = np.random.permutation(client_keys)
+        prev_acc = base_acc
+        current_weights = []
+        for i in permutation:
+            current_weights.append(_client_weights[i])
+            avg_weights = average_weights(current_weights)
+            model.load_state_dict(avg_weights)
+            with torch.no_grad():
+                curr_acc = test_inference(model, _test_dataset)[0]
+            shapley_updates_local[i] += curr_acc - prev_acc
+            prev_acc = curr_acc
+
+    return shapley_updates_local
