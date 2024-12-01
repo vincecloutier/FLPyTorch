@@ -3,7 +3,7 @@ from update import test_inference
 from utils import average_weights, initialize_model, get_device
 from collections import defaultdict
 from tqdm import tqdm
-from concurrent.futures import ProcessPoolExecutor
+import multiprocessing
 
 def compute_shapley_for_permutations(args):
     (client_keys, client_weights, global_weights, base_acc, test_dataset, device, args_model, num_permutations) = args
@@ -54,11 +54,12 @@ def compute_shapley(args, global_weights, client_weights, test_dataset):
         process_args = (client_keys, client_weights, global_weights, base_acc, test_dataset, device, args, num_permutations)
         args_list.append(process_args)
 
-    with ProcessPoolExecutor(max_workers=num_processes) as executor:
-        shapley_update_local = executor.map(compute_shapley_for_permutations, args_list)
-        for updates in shapley_update_local:
-            for k, v in updates.items():
-                shapley_updates[k] += v
+    with multiprocessing.Pool(processes=num_processes) as pool:
+        shapley_update_local = pool.map(compute_shapley_for_permutations, args_list)
+
+    for updates in shapley_update_local:
+        for k, v in updates.items():
+            shapley_updates[k] += v
 
     # Average the Shapley values over all permutations
     shapley_updates = {k: v / t for k, v in shapley_updates.items()}
