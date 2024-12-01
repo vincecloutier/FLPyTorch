@@ -87,7 +87,6 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
             abv_simple[idx] += compute_abv(args, model, train_dataset, user_groups[idx], grad, delta_t[epoch][idx], delta_g[idx], is_hessian=False)
             runtimes['abvs'] += time.time() - start_time
 
-        print('computing shapley values')
         # compute shapley values
         start_time = time.time()
         shapley_updates = compute_shapley(args, global_weights, local_weights_dict, test_dataset)
