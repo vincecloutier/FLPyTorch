@@ -106,7 +106,7 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
             abv_simple[idx] += compute_abv(args, model, train_dataset, user_groups[idx], grad, delta_t[epoch][idx], delta_g[idx], is_hessian=False)
             runtimes['abvs'] += time.time() - start_time
 
-        del G_t, G_t_minus_i, delta_g
+        del G_t, G_t_minus_i
         torch.cuda.empty_cache()
 
         test_acc, test_loss = test_inference(model, test_dataset)
