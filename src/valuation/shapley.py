@@ -3,6 +3,8 @@ import numpy as np
 from update import test_inference
 from utils import average_weights, initialize_model, get_device
 from collections import defaultdict
+from math import factorial as fact
+import itertools
 import multiprocessing
 import torch
 
@@ -36,14 +38,11 @@ def compute_shapley(args, global_weights, client_weights, test_dataset):
     t = int((2 * r**2 / epsilon**2) * np.log(2 * len(client_keys) / delta))
 
     shapley_updates = defaultdict(float)
-    args_list = [(i, client_keys, base_acc, device, args) for i in range(t)]
-
-    print(f"Computing Shapley Values For {t} Permutations")
-
+    if t < fact(len(client_keys)):
+        args_list = [(None, client_keys, base_acc, device, args) for _ in range(t)]
+    else:
+        args_list = [(perm, client_keys, base_acc, device, args) for perm in itertools.permutations(client_keys)]
     pool = multiprocessing.Pool(processes=args.shapley_processes, initializer=init_process, initargs=(global_weights, client_weights, test_dataset))
-   
-    print(f"Using {args.shapley_processes} Processes")
-   
     results = pool.map(compute_shapley_for_permutation, args_list)
     pool.close()
     pool.join()
@@ -61,7 +60,7 @@ def compute_shapley(args, global_weights, client_weights, test_dataset):
 
 
 def compute_shapley_for_permutation(args):
-    (i, client_keys, base_acc, device, args_model) = args
+    (perm, client_keys, base_acc, device, args_model) = args
 
     model = initialize_model(args_model)
     model.load_state_dict(_global_weights)
@@ -69,12 +68,12 @@ def compute_shapley_for_permutation(args):
 
     shapley_updates_local = defaultdict(float)
 
-    print(f"Computing Shapley Values For Permutation: {i}")
+    if perm is None:
+        perm = np.random.permutation(client_keys)
 
-    permutation = np.random.permutation(client_keys)
     prev_acc = base_acc
     current_weights = []
-    for i in permutation:
+    for i in perm:
         current_weights.append(_client_weights[i])
         avg_weights = average_weights(current_weights)
         model.load_state_dict(avg_weights)
@@ -86,7 +85,7 @@ def compute_shapley_for_permutation(args):
     del model
     torch.cuda.empty_cache()
 
-    print(f"Finished Shapley Values For Permutation: {permutation}")
+    print(f"Finished Shapley Values For Permutation: {perm}")
 
     return shapley_updates_local
 
