@@ -6,8 +6,9 @@ import multiprocessing
 from functools import partial
 from utils import get_device, initialize_model, average_weights
 import numpy as np
-from pydvl.influence.torch import EkfacInfluence
+from pydvl.influence.torch import EkfacInfluence, NystroemSketchInfluence
 from torch.utils.data import DataLoader
+import torch.nn.functional as F
 
 def compute_influence_functions(args, model, train_dataset, user_groups, device, test_dataset):
     """Compute Influence Functions for clients."""
@@ -57,7 +58,7 @@ def compute_influence(args, model, train_dataset, test_dataset, user_groups):
 
     for id, indexes in user_groups.items():
         train_data_loader = DataLoader(ClientSplit(train_dataset, indexes), batch_size=args.local_bs, shuffle=False)
-        influence_model = EkfacInfluence(model, update_diagonal=True, hessian_regularization=0.1)
+        influence_model = NystroemSketchInfluence(model, F.cross_entropy, rank = 30, hessian_regularization=0.1)
         influence_model = influence_model.fit(train_data_loader)
         all_influences = influence_model.influences(*test_dataset, *train_dataset, mode="up")
         influences[id] = sum(np.mean(all_influences.numpy(), axis=0))
