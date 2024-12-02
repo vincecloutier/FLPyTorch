@@ -145,6 +145,10 @@ def average_weights(w):
         for i in range(1, len(w)):
             w_avg[key] += w[i][key]
         w_avg[key] = torch.div(w_avg[key], len(w))
+
+    del w
+    torch.cuda.empty_cache()
+    
     return w_avg
 
 

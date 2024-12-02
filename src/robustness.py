@@ -32,8 +32,7 @@ def train_client(idx, args, global_weights, train_dataset, user_groups, epoch, d
     w, _ = local_model.update_weights(model=model, global_round=epoch)
     delta = {key: (w[key] - global_weights[key]).to(device) for key in global_weights.keys()}
 
-    del model
-    del local_model
+    del model, local_model, global_weights
     torch.cuda.empty_cache()
 
     return idx, w, delta
@@ -73,6 +72,16 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
         global_weights = average_weights(local_weights)
         model.load_state_dict(global_weights)
 
+        # compute shapley values
+        # start_time = time.time()
+        # shapley_updates = compute_shapley(args, global_weights, local_weights_dict, test_dataset)
+        # for k, v in shapley_updates.items():
+        #     shapley_values[k] += v  
+        # runtimes['sv'] += time.time() - start_time
+
+        del local_weights, local_weights_dict
+        torch.cuda.empty_cache()
+
         # compute banzhaf values
         start_time = time.time()
         G_t = compute_G_t(delta_t[epoch], global_weights.keys())
@@ -81,6 +90,10 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
             if epoch > 0:
                 for key in global_weights.keys():
                     delta_g[idx][key] += G_t_minus_i[key] - G_t[key]
+
+            del G_t, G_t_minus_i
+            torch.cuda.empty_cache()
+
             t_time = time.time() - start_time
             runtimes['abvh'] += t_time
             runtimes['abvs'] += t_time
@@ -91,12 +104,6 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
             abv_simple[idx] += compute_abv(args, model, train_dataset, user_groups[idx], grad, delta_t[epoch][idx], delta_g[idx], is_hessian=False)
             runtimes['abvs'] += time.time() - start_time
 
-        # compute shapley values
-        start_time = time.time()
-        shapley_updates = compute_shapley(args, global_weights, local_weights_dict, test_dataset)
-        for k, v in shapley_updates.items():
-            shapley_values[k] += v  
-        runtimes['sv'] += time.time() - start_time
 
         # compute influence values
         # start_time = time.time()
