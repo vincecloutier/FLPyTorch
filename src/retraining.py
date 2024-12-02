@@ -118,8 +118,8 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
 if __name__ == '__main__':
     multiprocessing.set_start_method('spawn')
 
-    logger = setup_logger('experiment')
     args = args_parser()
+    logger = setup_logger(f'retraining_{args.dataset}_{args.setting}')
     print(args)
 
     device = get_device()
