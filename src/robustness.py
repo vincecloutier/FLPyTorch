@@ -79,8 +79,8 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
         #     shapley_values[k] += v  
         # runtimes['sv'] += time.time() - start_time
 
-        del local_weights, local_weights_dict
-        torch.cuda.empty_cache()
+        # del local_weights, local_weights_dict
+        # torch.cuda.empty_cache()
 
         # compute banzhaf values
         start_time = time.time()
@@ -90,10 +90,6 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
             if epoch > 0:
                 for key in global_weights.keys():
                     delta_g[idx][key] += G_t_minus_i[key] - G_t[key]
-
-            del G_t, G_t_minus_i
-            torch.cuda.empty_cache()
-
             t_time = time.time() - start_time
             runtimes['abvh'] += t_time
             runtimes['abvs'] += t_time
