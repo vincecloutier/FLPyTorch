@@ -136,11 +136,14 @@ if __name__ == '__main__':
     global_model, abv_simple, abv_hessian, shapley_values, influence_values, runtimes = train_global_model(args, global_model, train_dataset, valid_dataset, test_dataset, user_groups, device)
     test_acc, test_loss = test_inference(global_model, test_dataset)
 
-    shared_clients = set(shapley_values.keys()) & set(influence_values.keys()) & set(abv_simple.keys()) & set(abv_hessian.keys())
-    sv = [shapley_values[client] for client in shared_clients]
-    iv = [influence_values[client] for client in shared_clients]
-    abv_simple = [abv_simple[client] for client in shared_clients]
-    abv_hessian = [abv_hessian[client] for client in shared_clients]
+    predicted_bad_abvs = identify_bad_idxs(abv_simple)
+    predicted_bad_abvh = identify_bad_idxs(abv_hessian)
+    predicted_bad_sv = identify_bad_idxs(shapley_values)
+    predicted_bad_if = identify_bad_idxs(influence_values)
+    bad_client_accuracy_abvs = measure_accuracy(actual_bad_clients, predicted_bad_abvs)
+    bad_client_accuracy_abvh = measure_accuracy(actual_bad_clients, predicted_bad_abvh)
+    bad_client_accuracy_sv = measure_accuracy(actual_bad_clients, predicted_bad_sv)
+    bad_client_accuracy_if = measure_accuracy(actual_bad_clients, predicted_bad_if)
 
     # log results   
     if args.setting == 0:
@@ -156,9 +159,18 @@ if __name__ == '__main__':
     logger.info(f'Batch Size: {args.local_bs}, Learning Rate: {args.lr}, Momentum: {args.momentum}')
     logger.info(f'Dataset: {args.dataset}, Setting: {setting_str}, Number Of Rounds: {args.epochs}, Noise STD: {args.noise_std}')
     logger.info(f'Test Accuracy: {100*test_acc}%')
-    logger.info(f'Shapley Values: {sv}')
-    logger.info(f'Influence Function Values: {iv}')
     logger.info(f'Banzhaf Values Simple: {abv_simple}')
     logger.info(f'Banzhaf Values Hessian: {abv_hessian}')
+    logger.info(f'Shapley Values: {shapley_values}')
+    logger.info(f'Influence Function Values: {influence_values}')
+    logger.info(f'Actual Bad Clients: {actual_bad_clients}')
+    logger.info(f'Predicted Bad Clients Banzhaf Simple: {predicted_bad_abvs}')
+    logger.info(f'Predicted Bad Clients Banzhaf Hessian: {predicted_bad_abvh}')
+    logger.info(f'Predicted Bad Clients Shapley: {predicted_bad_sv}')
+    logger.info(f'Predicted Bad Clients Influence: {predicted_bad_if}')
+    logger.info(f'Bad Client Accuracy Banzhaf Simple: {bad_client_accuracy_abvs}')
+    logger.info(f'Bad Client Accuracy Banzhaf Hessian: {bad_client_accuracy_abvh}')
+    logger.info(f'Bad Client Accuracy Shapley: {bad_client_accuracy_sv}')
+    logger.info(f'Bad Client Accuracy Influence: {bad_client_accuracy_if}')
     logger.info(f'Runtimes: {runtimes}')
     logger.info(f'Total Run Time: {time.time()-start_time}')
