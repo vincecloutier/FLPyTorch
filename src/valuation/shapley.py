@@ -38,7 +38,12 @@ def compute_shapley(args, global_weights, client_weights, test_dataset):
     shapley_updates = defaultdict(float)
     args_list = [(i, client_keys, base_acc, device, args) for i in range(t)]
 
+    print(f"Computing Shapley Values For {t} Permutations")
+
     pool = multiprocessing.Pool(processes=args.shapley_processes, initializer=init_process, initargs=(global_weights, client_weights, test_dataset))
+   
+    print(f"Using {args.shapley_processes} Processes")
+   
     results = pool.map(compute_shapley_for_permutation, args_list)
     pool.close()
     pool.join()
@@ -63,7 +68,7 @@ def compute_shapley_for_permutation(args):
     model.to(device)
 
     shapley_updates_local = defaultdict(float)
-    
+
     print(f"Computing Shapley Values For Permutation: {i}")
 
     permutation = np.random.permutation(client_keys)
