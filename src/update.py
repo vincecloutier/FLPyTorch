@@ -126,48 +126,76 @@ def gradient(args, model, dataset):
     return gradient
 
 
+# def compute_hessian(model, dataset, v_list):
+#     """Computes the Hessian-vector product Hv, where H is the Hessian of loss w.r.t. model parameters."""
+#     model.eval()
+#     model.zero_grad()
+
+#     device = get_device()
+
+#     criterion = nn.CrossEntropyLoss().to(device)
+#     data_loader = DataLoader(dataset, batch_size=len(dataset), shuffle=False)
+
+#     inputs, targets = next(iter(data_loader))
+#     inputs, targets = inputs.to(device), targets.to(device)
+
+#     # forward pass
+#     outputs = model(inputs)
+#     loss = criterion(outputs, targets)
+
+#     # first gradient
+#     params = [p for p in model.parameters() if p.requires_grad]
+#     grad_params = torch.autograd.grad(loss, params, create_graph=True)
+
+#     # flatten grad_params and v_list
+#     grad_params_flat = torch.cat([g.contiguous().view(-1) for g in grad_params])
+#     v_flat = torch.cat([v.contiguous().view(-1) for v in v_list])
+
+#     # compute the dot product grad_params_flat * v_flat
+#     grad_dot_v = torch.dot(grad_params_flat, v_flat)
+    
+#     # second gradient
+#     hvp = torch.autograd.grad(grad_dot_v, params)
+    
+#     del outputs, loss, grad_params, grad_params_flat, v_flat, grad_dot_v
+#     torch.cuda.empty_cache()
+
+#     # return as a dict
+#     hv_dict = {}
+#     for (name, param), hv in zip(model.named_parameters(), hvp):
+#         if param.requires_grad:
+#             hv_dict[name] = hv.clone().detach()
+        
+#     return hv_dict
+
+
 def compute_hessian(model, dataset, v_list):
-    """Computes the Hessian-vector product Hv, where H is the Hessian of loss w.r.t. model parameters."""
+    """Computes the Hessian-vector product Hv by averaging over batches."""
     model.eval()
-    model.zero_grad()
-
     device = get_device()
-
     criterion = nn.CrossEntropyLoss().to(device)
-    data_loader = DataLoader(dataset, batch_size=len(dataset), shuffle=False)
-
-    inputs, targets = next(iter(data_loader))
-    inputs, targets = inputs.to(device), targets.to(device)
-
-    # forward pass
-    outputs = model(inputs)
-    loss = criterion(outputs, targets)
-
-    # first gradient
+    data_loader = DataLoader(dataset, batch_size=128, shuffle=False)
     params = [p for p in model.parameters() if p.requires_grad]
-    grad_params = torch.autograd.grad(loss, params, create_graph=True)
+    hvp_total = [torch.zeros_like(p) for p in params]
+    for inputs, targets in data_loader:
+        inputs, targets = inputs.to(device), targets.to(device)
+        outputs = model(inputs)
+        loss = criterion(outputs, targets)
+        grad_params = torch.autograd.grad(loss, params, create_graph=True)
+        grad_params_flat = torch.cat([g.contiguous().view(-1) for g in grad_params])
+        v_flat = torch.cat([v.contiguous().view(-1) for v in v_list])
+        grad_dot_v = torch.dot(grad_params_flat, v_flat)
+        hvp = torch.autograd.grad(grad_dot_v, params)
+        for i, hv in enumerate(hvp):
+            hvp_total[i] += hv.detach()
+        model.zero_grad()
+    hvp_avg = [hv / len(data_loader) for hv in hvp_total]
+    hv_dict = {name: hv.clone().detach() for (name, _), hv in zip(model.named_parameters(), hvp_avg) if _.requires_grad}
 
-    # flatten grad_params and v_list
-    grad_params_flat = torch.cat([g.contiguous().view(-1) for g in grad_params])
-    v_flat = torch.cat([v.contiguous().view(-1) for v in v_list])
-
-    # compute the dot product grad_params_flat * v_flat
-    grad_dot_v = torch.dot(grad_params_flat, v_flat)
-    
-    # second gradient
-    hvp = torch.autograd.grad(grad_dot_v, params)
-    
-    del outputs, loss, grad_params, grad_params_flat, v_flat, grad_dot_v
+    del hvp_total, hvp_avg, hvp
     torch.cuda.empty_cache()
 
-    # return as a dict
-    hv_dict = {}
-    for (name, param), hv in zip(model.named_parameters(), hvp):
-        if param.requires_grad:
-            hv_dict[name] = hv.clone().detach()
-        
     return hv_dict
-
 
 
 def conjugate_gradient(model, dataset, b, num_iterations=10, tol=1e-10):
