@@ -8,7 +8,7 @@ from options import args_parser
 from update import LocalUpdate, test_inference, gradient
 from utils import get_dataset, average_weights, setup_logger, get_device, identify_bad_idxs, measure_accuracy, initialize_model, EarlyStopping
 from valuation.banzhaf import compute_abv, compute_G_t, compute_G_minus_i_t
-from valuation.influence import compute_influence_functions
+from valuation.influence import compute_influence
 from valuation.shapley import compute_shapley
 import warnings
 import multiprocessing
@@ -115,6 +115,8 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
     
         print(f'Epoch {epoch+1}/{args.epochs} - Test Accuracy: {acc}, Test Loss: {loss}, Runtimes: {runtimes}')
         print(torch.cuda.memory_summary(device=device))
+    
+    influence_values = compute_influence(args, model, train_dataset, test_dataset, user_groups)
 
     return model, abv_simple, abv_hessian, shapley_values, influence_values, runtimes
 
@@ -158,7 +160,7 @@ if __name__ == '__main__':
     logger.info(f'Number Of Clients: {args.num_users}, Client Selection Fraction: {args.frac}, Local Epochs: {args.local_ep}')
     logger.info(f'Batch Size: {args.local_bs}, Learning Rate: {args.lr}, Momentum: {args.momentum}')
     logger.info(f'Dataset: {args.dataset}, Setting: {setting_str}, Number Of Rounds: {args.epochs}, Noise STD: {args.noise_std}')
-    logger.info(f'Test Accuracy: {100*test_acc}%')
+    logger.info(f'Test Accuracy: {100*test_acc}%, Test Loss: {test_loss}')
     logger.info(f'Banzhaf Values Simple: {abv_simple}')
     logger.info(f'Banzhaf Values Hessian: {abv_hessian}')
     logger.info(f'Shapley Values: {shapley_values}')
