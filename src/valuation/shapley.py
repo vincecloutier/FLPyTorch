@@ -49,15 +49,16 @@ def compute_shapley(args, global_weights, client_weights, test_dataset):
         process_args = (client_keys, base_acc, device, args, num_permutations)
         args_list.append(process_args)
 
-    args_list = [(client_keys, base_acc, device, args) for _ in range(t)]
+    # Progress bar for the overall computation
+    with tqdm(total=t, desc="Computing Shapley Values") as pbar:
+        shapley_update_local = pool.imap_unordered(compute_shapley_for_permutation, args_list)
+        for updates in shapley_update_local:
+            for k, v in updates.items():
+                shapley_updates[k] += v
+            pbar.update()
 
-    shapley_update_local = pool.map(compute_shapley_for_permutation, args_list)
     pool.close()
     pool.join()
-
-    for updates in shapley_update_local:
-        for k, v in updates.items():
-            shapley_updates[k] += v
 
     del shapley_update_local
     torch.cuda.empty_cache()
