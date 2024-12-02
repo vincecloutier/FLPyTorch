@@ -50,7 +50,6 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
     for epoch in tqdm(range(args.epochs)):
         local_weights = []
 
-        model.train()
         grad = gradient(args, model, valid_dataset)
         
         if bad_clients is not None:
@@ -62,11 +61,11 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
             idxs_users = np.random.choice(range(args.num_users), m, replace=False)
 
         train_client_partial = partial(train_client, args=args, global_weights=copy.deepcopy(global_weights), train_dataset=train_dataset, user_groups=user_groups, epoch=epoch, device=device)
-
         with multiprocessing.Pool(processes=args.processes) as pool:
             results = pool.map(train_client_partial, idxs_users)
         pool.close()
         pool.join()
+
         for idx, w, delta in results:
             local_weights.append(copy.deepcopy(w))
             delta_t[epoch][idx] = delta
@@ -129,7 +128,6 @@ if __name__ == '__main__':
     # train the global model
     global_model = initialize_model(args)
     global_model.to(device)
-    global_model.train()
     global_model, abv_simple, abv_hessian, runtimes = train_global_model(args, global_model, train_dataset, valid_dataset, test_dataset, user_groups, device)
     test_acc, test_loss = test_inference(global_model, test_dataset)
 

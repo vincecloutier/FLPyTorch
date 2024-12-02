@@ -27,7 +27,6 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
     for epoch in tqdm(range(args.epochs), desc=f"Global Training For Subset {clients}"):
         local_weights = []
 
-        model.train()
         if isBanzhaf:
             grad = gradient(args, model, valid_dataset)
 
