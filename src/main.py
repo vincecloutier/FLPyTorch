@@ -82,8 +82,8 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
                 approx_banzhaf_values[idx] += compute_abv(args, model, train_dataset, grad, delta_t[epoch][idx], delta_g[idx], is_hessian=True)
         else:
             for idx in idxs_users:
-                approx_banzhaf_values[idx] += compute_abv(args, model, train_dataset, grad, delta_t[epoch][idx], is_hessian=False)
-    
+                approx_banzhaf_values[idx] += compute_abv(args, model, train_dataset, grad, delta_t[epoch][idx], delta_g[idx], is_hessian=False)
+
         # update selection probabilities based on the banzhaf values
         if bad_clients is not None:
             total_banzhaf = sum(approx_banzhaf_values.values())
