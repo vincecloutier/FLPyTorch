@@ -10,10 +10,17 @@ from pydvl.influence.torch import EkfacInfluence, NystroemSketchInfluence
 from torch.utils.data import DataLoader
 import torch.nn.functional as F
 
-def compute_influence(args, model, train_dataset, test_dataset, user_groups):
+import torch
+print(f"PyTorch Version: {torch.__version__}")
+print(f"CUDA Version: {torch.version.cuda}")
+print(f"Is CUDA Available: {torch.cuda.is_available()}")
+
+def compute_influence(args, global_weights, train_dataset, test_dataset, user_groups):
     """Estimate Influence values for participants in a round using permutation sampling."""
     device = get_device()
-    model.to(device)
+    model = initialize_model(args)
+    model.load_state_dict(global_weights)
+    model.to(device).float()
     model.eval()
 
     influences = defaultdict(float)
