@@ -12,9 +12,14 @@ import torch.nn.functional as F
 
 def compute_influence(args, model, train_dataset, test_dataset, user_groups):
     """Estimate Influence values for participants in a round using permutation sampling."""
+    device = get_device()
+    model.to(device)
+    model.eval()
+
     influences = defaultdict(float)
     print(f'Computing Influence Functions for {args.num_users} clients')
     for id, indexes in user_groups.items():
+        
         print(f'here')
         train_data_loader = DataLoader(ClientSplit(train_dataset, indexes), batch_size=args.local_bs, shuffle=False)
         print(f'here2')
