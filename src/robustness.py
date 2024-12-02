@@ -122,7 +122,7 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
 
 
 if __name__ == '__main__':
-    multiprocessing.set_start_method('spawn')
+    # multiprocessing.set_start_method('spawn')
 
     start_time = time.time()
     args = args_parser()
