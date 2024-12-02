@@ -63,6 +63,8 @@ def compute_shapley_for_permutation(args):
     model.to(device)
 
     shapley_updates_local = defaultdict(float)
+    
+    print(f"Computing Shapley Values For Permutation: {i}")
 
     permutation = np.random.permutation(client_keys)
     prev_acc = base_acc
