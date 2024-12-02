@@ -11,6 +11,25 @@ import json
 import subprocess
 import zipfile
 
+class EarlyStopping:
+    def __init__(self, patience=3, epoch_threshold=10, acc_threshold=0.80):
+        self.best_acc = -float('inf')
+        self.best_loss = float('inf')
+        self.no_improvement_count = 0
+        self.patience = patience
+        self.epoch_threshold = epoch_threshold
+        self.acc_threshold = acc_threshold
+
+    def check(self, epoch, acc, loss):
+        if acc > self.best_acc * 1.01 or loss < self.best_loss * 0.99:
+            self.best_acc, self.best_loss = acc, loss
+            self.no_improvement_count = 0
+        else:
+            self.no_improvement_count += 1
+            if self.no_improvement_count > self.patience and (epoch > self.epoch_threshold or acc > self.acc_threshold):
+                return True
+        return False
+
 class SubsetSplit(Dataset):
     """A Dataset class wrapped around a subset of a PyTorch Dataset."""
     def __init__(self, dataset, idxs):

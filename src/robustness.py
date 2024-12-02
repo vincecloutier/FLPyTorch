@@ -6,7 +6,7 @@ from tqdm import tqdm
 from collections import defaultdict
 from options import args_parser
 from update import LocalUpdate, test_inference, gradient
-from utils import get_dataset, average_weights, setup_logger, get_device, identify_bad_idxs, measure_accuracy, initialize_model
+from utils import get_dataset, average_weights, setup_logger, get_device, identify_bad_idxs, measure_accuracy, initialize_model, EarlyStopping
 from valuation.banzhaf import compute_abv, compute_G_t, compute_G_minus_i_t
 from valuation.influence import compute_influence_functions
 from valuation.shapley import compute_shapley
@@ -40,12 +40,12 @@ def train_client(idx, args, global_weights, train_dataset, user_groups, epoch, d
 
 def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, user_groups, device):
     global_weights = model.state_dict()
-    best_test_acc, best_test_loss = 0, float('inf')
     abv_simple, abv_hessian, shapley_values, influence_values = defaultdict(float), defaultdict(float), defaultdict(float), defaultdict(float)
-    runtimes = {'abvs': 0, 'abvh': 0, 'sv': 0, 'if': 0}
     delta_t, delta_g = defaultdict(dict), defaultdict(lambda: {key: torch.zeros_like(global_weights[key]) for key in global_weights.keys()})
 
-    no_improvement_count = 0
+    runtimes = {'abvs': 0, 'abvh': 0, 'sv': 0, 'if': 0}
+    early_stopping = EarlyStopping()
+
     for epoch in tqdm(range(args.epochs), desc="Training Epochs"):
         local_weights = []
         local_weights_dict = defaultdict(dict)
@@ -109,27 +109,19 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
         del G_t, G_t_minus_i
         torch.cuda.empty_cache()
 
-        test_acc, test_loss = test_inference(model, test_dataset)
-        if test_acc > best_test_acc * 1.01 or test_loss < best_test_loss * 0.99:
-            best_test_acc, best_test_loss = test_acc, test_loss
-            no_improvement_count = 0
-        else:
-            no_improvement_count += 1
-            if (no_improvement_count > 3 and epoch > 20) or test_acc > 0.80:
-                print(f'Convergence Reached At Round {epoch + 1}')
-                break
+        acc, loss = test_inference(model, test_dataset)    
+        if early_stopping.check(epoch, acc, loss):
+            print(f'Convergence Reached At Round {epoch + 1}')
+            break
     
-        print(f'Epoch {epoch+1}/{args.epochs} - Test Accuracy: {test_acc}, Test Loss: {test_loss}, Runtimes: {runtimes}')
+        print(f'Epoch {epoch+1}/{args.epochs} - Test Accuracy: {acc}, Test Loss: {loss}, Runtimes: {runtimes}')
         print(torch.cuda.memory_summary(device=device))
 
     return model, abv_simple, abv_hessian, shapley_values, influence_values, runtimes
 
+
 if __name__ == '__main__':
     multiprocessing.set_start_method('spawn')
-
-    # if torch.cuda.is_available():
-    #     torch.backends.cudnn.benchmark = True
-    #     torch.backends.cudnn.enabled = True
 
     start_time = time.time()
     args = args_parser()
@@ -139,8 +131,6 @@ if __name__ == '__main__':
     device = get_device()
     train_dataset, valid_dataset, test_dataset, user_groups, actual_bad_clients = get_dataset(args)
     
-    # torch.cuda.set_per_process_memory_fraction(0.25, device)
-
     # train the global model
     global_model = initialize_model(args)
     global_model.to(device)
