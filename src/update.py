@@ -112,10 +112,7 @@ def gradient(args, model, dataset):
     loss = criterion(outputs, targets)
 
     # backward pass
-    if args.hessian == 1:
-        grad_params = torch.autograd.grad(loss, model.parameters(), create_graph=True, retain_graph=True)
-    else:
-        grad_params = torch.autograd.grad(loss, model.parameters(), create_graph=False, retain_graph=False)
+    grad_params = torch.autograd.grad(loss, model.parameters(), create_graph=False, retain_graph=False)
 
     # collect gradients
     gradient = {}
