@@ -6,7 +6,7 @@ from tqdm import tqdm
 from collections import defaultdict
 from options import args_parser
 from update import LocalUpdate, test_inference, gradient
-from utils import get_dataset, average_weights, setup_logger, get_device, identify_bad_idxs, measure_accuracy, initialize_model
+from utils import get_dataset, average_weights, setup_logger, get_device, identify_bad_idxs, measure_accuracy, initialize_model, EarlyStopping
 from valuation.banzhaf import compute_abv, compute_G_t, compute_G_minus_i_t
 import warnings
 import multiprocessing
@@ -14,11 +14,12 @@ from functools import partial
 warnings.filterwarnings("ignore", category=UserWarning)
 import os
 
-# os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:128"
+
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:128"
 
 
 def train_client(idx, args, global_weights, train_dataset, user_groups, epoch, device):
-    # torch.cuda.set_device(device)
+    torch.cuda.set_device(device)
 
     model = initialize_model(args)
     model.load_state_dict(global_weights)
@@ -36,14 +37,16 @@ def train_client(idx, args, global_weights, train_dataset, user_groups, epoch, d
 
 
 def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, user_groups, device, bad_clients=None):
+    start_time = time.time()
     global_weights = model.state_dict()
-    best_test_acc, best_test_loss = 0, float('inf')
-    approx_banzhaf_values = defaultdict(float)
+    abv_simple, abv_hessian = defaultdict(float), defaultdict(float)
+    delta_t, delta_g = defaultdict(dict), defaultdict(lambda: {key: torch.zeros_like(global_weights[key]) for key in global_weights.keys()})
+    
     selection_probabilities = np.full(args.num_users, 1 / args.num_users)
-    delta_t = defaultdict(dict)
-    delta_g = defaultdict(lambda: {key: torch.zeros_like(global_weights[key]) for key in global_weights.keys()})
 
-    no_improvement_count = 0
+    runtimes = {'abvs': 0, 'abvh': 0, 'total': 0}
+    early_stopping = EarlyStopping()
+
     for epoch in tqdm(range(args.epochs)):
         local_weights = []
 
@@ -71,49 +74,51 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
         global_weights = average_weights(local_weights)
         model.load_state_dict(global_weights)
 
+        del local_weights
+        torch.cuda.empty_cache()
+
         # compute banzhaf values
-        if args.hessian == 1:
-            G_t = compute_G_t(delta_t[epoch], global_weights.keys())
-            for idx in idxs_users:
-                G_t_minus_i = compute_G_minus_i_t(delta_t[epoch], global_weights.keys(), idx)
-                if epoch > 0:
-                    for key in global_weights.keys():
-                        delta_g[idx][key] += G_t_minus_i[key] - G_t[key]
-                approx_banzhaf_values[idx] += compute_abv(args, model, train_dataset, user_groups[idx], grad, delta_t[epoch][idx], delta_g[idx], is_hessian=True)
-        else:
-            for idx in idxs_users:
-                approx_banzhaf_values[idx] += compute_abv(args, model, train_dataset, user_groups[idx], grad, delta_t[epoch][idx], delta_g[idx], is_hessian=False)
+        start_time = time.time()
+        G_t = compute_G_t(delta_t[epoch], global_weights.keys())
+        for idx in idxs_users:
+            G_t_minus_i = compute_G_minus_i_t(delta_t[epoch], global_weights.keys(), idx)
+            if epoch > 0:
+                for key in global_weights.keys():
+                    delta_g[idx][key] += G_t_minus_i[key] - G_t[key]
+            t_time = time.time() - start_time
+            runtimes['abvh'] += t_time
+            runtimes['abvs'] += t_time
+            start_time = time.time()
+            abv_hessian[idx] += compute_abv(args, model, train_dataset, user_groups[idx], grad, delta_t[epoch][idx], delta_g[idx], is_hessian=True)
+            runtimes['abvh'] += time.time() - start_time
+            start_time = time.time()
+            abv_simple[idx] += compute_abv(args, model, train_dataset, user_groups[idx], grad, delta_t[epoch][idx], delta_g[idx], is_hessian=False)
+            runtimes['abvs'] += time.time() - start_time
+
+        del G_t, G_t_minus_i
+        torch.cuda.empty_cache()
 
         if bad_clients is not None:
-            total_banzhaf = sum(approx_banzhaf_values.values())
+            total_banzhaf = sum(abv_simple.values())
             if total_banzhaf > 0:
-                selection_probabilities = np.array([approx_banzhaf_values[i] / total_banzhaf for i in range(args.num_users)])
+                selection_probabilities = np.array([abv_simple[i] / total_banzhaf for i in range(args.num_users)])
                 selection_probabilities /= selection_probabilities.sum()  # normalize
 
-        test_acc, test_loss = test_inference(model, test_dataset)
-        if test_acc > best_test_acc * 1.01 or test_loss < best_test_loss * 0.99:
-            best_test_acc, best_test_loss = test_acc, test_loss
-            no_improvement_count = 0
-        else:
-            no_improvement_count += 1
-            if (no_improvement_count > 3 and epoch > 20) or test_acc > 0.80:
-                print(f'Convergence Reached At Round {epoch + 1}')
-                break
+        acc, loss = test_inference(model, test_dataset)
+        if early_stopping.check(epoch, acc, loss):
+            print(f'Convergence Reached At Round {epoch + 1}')
+            break
 
-        print(f'Epoch {epoch+1}/{args.epochs} - Test Accuracy: {test_acc}, Test Loss: {test_loss}')
-        # print(torch.cuda.memory_summary(device=device))
-            
-    return model, approx_banzhaf_values
+        print(f'Epoch {epoch+1}/{args.epochs} - Test Accuracy: {acc}, Test Loss: {loss}, Runtimes: {runtimes}s')
+        print(torch.cuda.memory_summary(device=device))
+        
+    runtimes['total'] = time.time() - start_time
+    return model, abv_simple, abv_hessian, runtimes
 
 
 if __name__ == '__main__':
     multiprocessing.set_start_method('spawn')
 
-    # if torch.cuda.is_available():
-    #     torch.backends.cudnn.benchmark = True
-    #     torch.backends.cudnn.enabled = True
-
-    start_time = time.time()
     logger = setup_logger('experiment')
     args = args_parser()
     print(args)
@@ -121,25 +126,25 @@ if __name__ == '__main__':
     device = get_device()
     train_dataset, valid_dataset, test_dataset, user_groups, actual_bad_clients = get_dataset(args)
     
-    # torch.cuda.set_per_process_memory_fraction(0.25, device)
-
     # train the global model
     global_model = initialize_model(args)
     global_model.to(device)
     global_model.train()
-    global_model, approx_banzhaf_values = train_global_model(args, global_model, train_dataset, valid_dataset, test_dataset, user_groups, device)
+    global_model, abv_simple, abv_hessian, runtimes = train_global_model(args, global_model, train_dataset, valid_dataset, test_dataset, user_groups, device)
     test_acc, test_loss = test_inference(global_model, test_dataset)
 
     # predict bad clients and measure accuracy
-    predicted_bad_clients = identify_bad_idxs(approx_banzhaf_values)
-    bad_client_accuracy = measure_accuracy(actual_bad_clients, predicted_bad_clients)
+    predicted_bad_abvs = identify_bad_idxs(abv_simple)
+    predicted_bad_abvh = identify_bad_idxs(abv_hessian)
+    bad_client_accuracy_abvs = measure_accuracy(actual_bad_clients, predicted_bad_abvs)
+    bad_client_accuracy_abvh = measure_accuracy(actual_bad_clients, predicted_bad_abvh)
 
     # retrain the model w/o bad clients 
     if args.retrain:
         global_model = initialize_model(args)
         global_model.to(device)
         global_model.train()
-        retrained_model, _, = train_global_model(args, global_model, train_dataset, valid_dataset, test_dataset, user_groups, device, predicted_bad_clients)
+        retrained_model, _, _, retrained_runtimes = train_global_model(args, global_model, train_dataset, valid_dataset, test_dataset, user_groups, device, predicted_bad_abvs)
         retrain_test_acc, retrain_test_loss = test_inference(retrained_model, test_dataset)
 
     # log results
@@ -154,11 +159,13 @@ if __name__ == '__main__':
     logger.info(f'Number Of Clients: {args.num_users}, Client Selection Fraction: {args.frac}, Local Epochs: {args.local_ep}')
     logger.info(f'Batch Size: {args.local_bs}, Learning Rate: {args.lr}, Momentum: {args.momentum}')
     logger.info(f'Dataset: {args.dataset}, Setting: {setting_str}, Number Of Rounds: {args.epochs}, Hessian: {args.hessian}')
-    logger.info(f'Test Accuracy Before Retraining: {100*test_acc}%')
+    logger.info(f'Test Accuracy Before Retraining: {100*test_acc}, Test Loss Before Retraining: {test_loss}, in {runtimes["total"]}s')
     if args.retrain:
-        logger.info(f'Test Accuracy After Retraining: {100*retrain_test_acc}%')
-    logger.info(f'Banzhaf Values: {approx_banzhaf_values}')
+        logger.info(f'Test Accuracy After Retraining: {100*retrain_test_acc}, Test Loss After Retraining: {retrain_test_loss}, in {retrained_runtimes["total"]}s')
+    logger.info(f'Banzhaf Values Simple: {abv_simple}')
+    logger.info(f'Banzhaf Values Hessian: {abv_hessian}')
     logger.info(f'Actual Bad Clients: {actual_bad_clients}')
-    logger.info(f'Predicted Bad Clients: {predicted_bad_clients}')
-    logger.info(f'Bad Client Accuracy: {bad_client_accuracy}')
-    logger.info(f'Total Run Time: {time.time()-start_time}')
+    logger.info(f'Predicted Bad Clients Simple: {predicted_bad_abvs}')
+    logger.info(f'Predicted Bad Clients Hessian: {predicted_bad_abvh}')
+    logger.info(f'Bad Client Accuracy Simple: {bad_client_accuracy_abvs}')
+    logger.info(f'Bad Client Accuracy Hessian: {bad_client_accuracy_abvh}')

@@ -9,7 +9,7 @@ from tqdm import tqdm
 from options import args_parser
 from update import LocalUpdate, test_inference, gradient
 from valuation.banzhaf import compute_abv, compute_G_t, compute_G_minus_i_t
-from utils import get_dataset, average_weights, setup_logger, get_device, identify_bad_idxs, measure_accuracy, initialize_model
+from utils import get_dataset, average_weights, setup_logger, get_device, identify_bad_idxs, measure_accuracy, initialize_model, EarlyStopping
 import multiprocessing
 from scipy.stats import pearsonr
 from functools import partial
@@ -18,15 +18,14 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
     if clients is None or len(clients) == 0:
         return model, defaultdict(float), defaultdict(float)
     global_weights = model.state_dict()
-    best_test_acc, best_test_loss = 0, float('inf')
-    approx_banzhaf_values_hessian = defaultdict(float)
-    approx_banzhaf_values_simple = defaultdict(float)
+    abv_simple, abv_hessian = defaultdict(float), defaultdict(float)
     if isBanzhaf:
-        delta_t = defaultdict(dict)
-        delta_g = defaultdict(lambda: {key: torch.zeros_like(global_weights[key]) for key in global_weights.keys()})
+        delta_t, delta_g = defaultdict(dict), defaultdict(lambda: {key: torch.zeros_like(global_weights[key]) for key in global_weights.keys()})
+
+    early_stopping = EarlyStopping()
 
     for epoch in tqdm(range(args.epochs), desc=f"Global Training For Subset {clients}"):
-        local_weights, local_losses = [], []
+        local_weights = []
 
         model.train()
         if isBanzhaf:
@@ -37,13 +36,13 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
 
         for idx in idxs_users:
             local_model = LocalUpdate(args=args, dataset=train_dataset, idxs=user_groups[idx])
-            w, loss = local_model.update_weights(model=copy.deepcopy(model), global_round=epoch)
+            w, _ = local_model.update_weights(model=copy.deepcopy(model), global_round=epoch)
             local_weights.append(copy.deepcopy(w))
-            local_losses.append(loss)
-
-            # compute banzhaf value estimate
             if isBanzhaf:
                 delta_t[epoch][idx] = {key: (global_weights[key] - w[key]).to(device) for key in w.keys()}
+        
+        global_weights = average_weights(local_weights)
+        model.load_state_dict(global_weights)
 
         if isBanzhaf:
             G_t = compute_G_t(delta_t[epoch], global_weights.keys())
@@ -52,26 +51,17 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
                 if epoch > 0:
                     for key in global_weights.keys():
                         delta_g[idx][key] += G_t_minus_i[key] - G_t[key]
-                approx_banzhaf_values_hessian[idx] += compute_abv(args, model, valid_dataset, grad, delta_t[epoch][idx], delta_g[idx], is_hessian=True)
-                approx_banzhaf_values_simple[idx] += compute_abv(args, model, valid_dataset, grad, delta_t[epoch][idx], delta_g[idx], is_hessian=False)
+                abv_hessian[idx] += compute_abv(args, model, valid_dataset, grad, delta_t[epoch][idx], delta_g[idx], is_hessian=True)
+                abv_simple[idx] += compute_abv(args, model, valid_dataset, grad, delta_t[epoch][idx], delta_g[idx], is_hessian=False)
 
-        # update global weights and model
-        global_weights = average_weights(local_weights)
-        model.load_state_dict(global_weights)
+        acc, loss = test_inference(model, test_dataset)
+        if early_stopping.check(epoch, acc, loss):
+            print(f"Convergence Reached At Round {epoch + 1}")
+            break
 
-        test_acc, test_loss = test_inference(model, test_dataset)
-        
-        print(f"Subset {clients} Has Test Accuracy {test_acc}")
+        print(f'Subset {clients} - Epoch {epoch+1}/{args.epochs} - Test Accuracy: {acc}, Test Loss: {loss}')
 
-        if test_acc > best_test_acc * 1.01 or test_loss < best_test_loss * 0.99:
-            best_test_acc = test_acc
-            best_test_loss = test_loss
-            no_improvement_count = 0
-        else:
-            no_improvement_count += 1
-            if no_improvement_count > 5 and epoch > 20:
-                break
-    return model, approx_banzhaf_values_simple, approx_banzhaf_values_hessian
+    return model, abv_simple, abv_hessian
 
 
 def train_subset(subset, args, train_dataset, valid_dataset, test_dataset, user_groups):
