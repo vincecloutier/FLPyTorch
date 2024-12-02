@@ -27,7 +27,7 @@ def compute_influence(args, model, train_dataset, test_dataset, user_groups):
         print(f'here3')
         influence_model = influence_model.fit(train_data_loader)
         print(f'here4')
-        all_influences = influence_model.influences(*test_dataset, *train_dataset, mode="up")
+        all_influences = influence_model.influences(test_dataset, train_dataset, mode="up")
         print(f'here5')
         influences[id] = sum(np.mean(all_influences.numpy(), axis=0))
         print(f'here6')
