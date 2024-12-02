@@ -64,7 +64,6 @@ def compute_influence(args, global_weights, client_weights, test_dataset, influe
     for i in client_keys:
         current_weights = client_weights - client_weights[i]
         term = average_weights(current_weights) - global_weights
-
     
     
     influence_updates = {k: v / t for k, v in influence_updates.items()}
