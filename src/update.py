@@ -126,6 +126,7 @@ def gradient(args, model, dataset):
     return gradient
 
 
+# this one was used for pcc (as of now)
 # def compute_hessian(model, dataset, v_list):
 #     """Computes the Hessian-vector product Hv, where H is the Hessian of loss w.r.t. model parameters."""
 #     model.eval()
