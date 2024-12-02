@@ -84,8 +84,5 @@ def compute_shapley_for_permutation(args):
 
     del model
     torch.cuda.empty_cache()
-
-    print(f"Finished Shapley Values For Permutation: {perm}")
-
+    
     return shapley_updates_local
-
