@@ -18,13 +18,11 @@ import os
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:128"
 
 
-def train_client(idx, args, global_weights, train_dataset, user_groups, epoch, device):
-    torch.cuda.set_device(device)
-
+def train_client(idx, args, global_weights, train_dataset, user_groups, epoch):
+    device = get_device()
     model = initialize_model(args)
     model.load_state_dict(global_weights)
     model.to(device)
-    model.train()
 
     local_model = LocalUpdate(args=args, dataset=train_dataset, idxs=user_groups[idx])
     w, _ = local_model.update_weights(model=model, global_round=epoch)
@@ -60,7 +58,7 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
             m = max(int(args.frac * args.num_users), 1)
             idxs_users = np.random.choice(range(args.num_users), m, replace=False)
 
-        train_client_partial = partial(train_client, args=args, global_weights=copy.deepcopy(global_weights), train_dataset=train_dataset, user_groups=user_groups, epoch=epoch, device=device)
+        train_client_partial = partial(train_client, args=args, global_weights=copy.deepcopy(global_weights), train_dataset=train_dataset, user_groups=user_groups, epoch=epoch)
         with multiprocessing.Pool(processes=args.processes) as pool:
             results = pool.map(train_client_partial, idxs_users)
         pool.close()
