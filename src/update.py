@@ -63,6 +63,7 @@ class LocalUpdate(object):
 
         return model.state_dict(), sum(epoch_loss) / len(epoch_loss)
 
+    # this was used for pcc
     # def update_weights(self, model, global_round):
     #     # set mode to train model
     #     model.train()
