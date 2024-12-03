@@ -122,7 +122,7 @@ if __name__ == '__main__':
     global_model = initialize_model(args)
     global_model.to(device)
 
-    for i in range(6):
+    for i in range(1):
         print(f'Run {i+1} with noise std {i*0.2}')
         logger.info(f'Run {i}: Adding Gaussian noise with std={i*0.2}')
         noise_transform.set_std(i*0.2)
