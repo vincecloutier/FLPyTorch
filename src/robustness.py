@@ -99,7 +99,6 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
             break
     
         print(f'Epoch {epoch+1}/{args.epochs} - Test Accuracy: {acc}, Test Loss: {loss}, Runtimes: {runtimes}')
-        print(torch.cuda.memory_summary(device=device))
     
     start_time = time.time()
     influence_values = compute_influence(args, global_weights, train_dataset, test_dataset, user_groups)
