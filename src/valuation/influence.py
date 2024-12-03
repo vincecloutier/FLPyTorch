@@ -113,9 +113,7 @@ def compute_influence(args, global_weights, train_dataset, test_dataset, user_gr
     # iterate over each client and sum the influence scores of their training samples
     for client_id, sample_indices in user_groups.items():
         # convert sample_indices to a tensor if they aren't already
-        if not isinstance(sample_indices, torch.Tensor):
-            sample_indices = torch.tensor(sample_indices, dtype=torch.long, device=scores.device)
-        
+        sample_indices = torch.tensor(list(sample_indices), dtype=torch.long, device=scores.device)
         # aggregate the influence scores for the client's training samples
         client_influence_score = influence_scores[sample_indices].sum().item()
         client_influence[client_id] = client_influence_score
