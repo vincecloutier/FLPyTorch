@@ -1,6 +1,7 @@
 import torch
-from torch import nn
+from torch import nn, autocast
 from torch.utils.data import DataLoader, Dataset
+from torch.amp import GradScaler 
 from utils import get_device
 
 
@@ -29,35 +30,34 @@ class LocalUpdate(object):
         # set mode to train model
         model.train()
         epoch_loss = []
-        sched = None
 
-        # set optimizer for the local updates
-        if self.args.optimizer == 'sgd':
-            optimizer = torch.optim.SGD(model.parameters(), lr=self.args.lr, momentum=self.args.momentum)
-        elif self.args.optimizer == 'adam':
-            optimizer = torch.optim.Adam(model.parameters(), lr=self.args.lr, weight_decay=1e-4)
-            sched = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=self.args.lr, epochs=self.args.local_ep, steps_per_epoch=len(self.trainloader))
+        scaler = GradScaler()
+        optimizer = torch.optim.Adam(model.parameters(), lr=self.args.lr, weight_decay=1e-4)        
+        sched = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=self.args.lr, epochs=self.args.local_ep, steps_per_epoch=len(self.trainloader))
 
         for iter in range(self.args.local_ep):
             batch_loss = []
-            for batch_idx, (images, labels) in enumerate(self.trainloader):
+            for images, labels in self.trainloader:
                 images, labels = images.to(self.device), labels.to(self.device)
 
-                model.zero_grad()
-                log_probs = model(images)
-                loss = self.criterion(log_probs, labels)
-                loss.backward()
+                optimizer.zero_grad()
+                with autocast(device_type='cuda', dtype=torch.float16):
+                    output = model(images)
+                    loss = self.criterion(output, labels)
+                scaler.scale(loss).backward()
 
+                scaler.unscale_(optimizer)
                 torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-                if sched is not None:
-                    torch.nn.utils.clip_grad_value_(model.parameters(), 0.1)
 
-                optimizer.step()
-                if sched is not None:
-                    sched.step()
+                scaler.step(optimizer)
+                scaler.update()
+
+                sched.step()
 
                 batch_loss.append(loss.item())
+
             epoch_loss.append(sum(batch_loss)/len(batch_loss))
+            
             if self.args.verbose:
                 print(f'| Global Round : {global_round+1} | Local Epoch : {iter+1} | Loss: {sum(batch_loss) / len(batch_loss):.6f}')
 
