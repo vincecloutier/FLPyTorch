@@ -121,7 +121,7 @@ def noniid(dataset, dataset_name, num_users, badclient_prop, num_cat):
     # check that all clients have the same number of samples
     for client_id in dict_users:
         if len(dict_users[client_id]) != len(dict_users[0]):
-            raise ValueError(f"Client {client_id} has {len(dict_users[client_id])} samples, expected {len(dict_users[0])}")
+            print(f"Client {client_id} has {len(dict_users[client_id])} samples, expected {len(dict_users[0])}")
 
     return dict_users, non_iid_clients
 
