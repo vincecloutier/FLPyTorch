@@ -69,9 +69,6 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
             local_weights.append(copy.deepcopy(w))
             delta_t[epoch][idx] = delta
 
-        global_weights = average_weights(local_weights)
-        model.load_state_dict(global_weights)
-
         # compute banzhaf values
         start_time = time.time()
         G_t = compute_G_t(delta_t[epoch], global_weights.keys())
@@ -89,6 +86,9 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
             start_time = time.time()
             abv_simple[idx] += compute_abv(args, model, train_dataset, user_groups[idx], grad, delta_t[epoch][idx], delta_g[idx], is_hessian=False)
             runtimes['abvs'] += time.time() - start_time
+
+        global_weights = average_weights(local_weights)
+        model.load_state_dict(global_weights)
 
         if bad_clients is not None:
             total_banzhaf = sum(abv_simple.values())
