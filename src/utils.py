@@ -11,6 +11,7 @@ import json
 import subprocess
 import zipfile
 
+
 class EarlyStopping:
     def __init__(self, patience=3, epoch_threshold=15, acc_threshold=0.80):
         self.best_acc = -float('inf')
@@ -29,6 +30,7 @@ class EarlyStopping:
             if self.no_improvement_count > self.patience and (epoch > self.epoch_threshold or acc > self.acc_threshold):
                 return True
         return False
+
 
 class SubsetSplit(Dataset):
     """A Dataset class wrapped around a subset of a PyTorch Dataset."""
@@ -49,20 +51,24 @@ class SubsetSplit(Dataset):
 
 class AddGaussianNoise(object):
     """Custom transform to add Gaussian noise to a tensor."""
-    def __init__(self, mean=0.0, std=1.0):
+    def __init__(self, mean=0.0, std=0.0):
         self.mean = mean
         self.std = std
 
     def __call__(self, tensor):
-        noise = torch.randn(tensor.size()) * self.std + self.mean
-        noisy_tensor = tensor + noise
-        return noisy_tensor
+        if self.std > 0:
+            noise = torch.randn(tensor.size()) * self.std + self.mean
+            return tensor + noise
+        return tensor
 
     def __repr__(self):
         return f"{self.__class__.__name__}(mean={self.mean}, std={self.std})"
 
+    def set_std(self, std):
+        self.std = std
 
-def get_dataset(args):
+
+def get_dataset(args, noise_transform=None):
     """Returns train, validation, and test datasets along with a user group,
     which is a dict where the keys are the user index and the values are the
     corresponding data for each of those users.
@@ -97,8 +103,8 @@ def get_dataset(args):
         data_dir = './data/imagenet/'
         dataset_class = datasets.ImageNet
 
-    if args.noise_std > 0:
-        t_dict[dataset_name]['train'] = transforms.Compose([t_dict[dataset_name]['train'], AddGaussianNoise(mean=0.0, std=args.noise_std)])
+    if noise_transform is not None:
+        t_dict[dataset_name]['train'] = transforms.Compose([t_dict[dataset_name]['train'], noise_transform])
 
     if dataset_name == 'imagenet':
         if not os.path.exists(data_dir):

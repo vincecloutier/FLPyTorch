@@ -6,7 +6,7 @@ from tqdm import tqdm
 from collections import defaultdict
 from options import args_parser
 from update import LocalUpdate, test_inference, gradient
-from utils import get_dataset, average_weights, setup_logger, get_device, identify_bad_idxs, measure_accuracy, initialize_model, EarlyStopping
+from utils import get_dataset, average_weights, setup_logger, get_device, identify_bad_idxs, measure_accuracy, initialize_model, EarlyStopping, AddGaussianNoise
 from valuation.banzhaf import compute_abv, compute_G_t, compute_G_minus_i_t
 from valuation.influence import compute_influence
 from valuation.shapley import compute_shapley
@@ -111,55 +111,62 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
 if __name__ == '__main__':
     multiprocessing.set_start_method('spawn', force=True)
 
-    start_time = time.time()
     args = args_parser()
     logger = setup_logger(f'robustness_{args.dataset}_{args.setting}')
     print(args)
 
     device = get_device()
-    train_dataset, valid_dataset, test_dataset, user_groups, actual_bad_clients = get_dataset(args)
+    noise_transform = AddGaussianNoise()
+    train_dataset, valid_dataset, test_dataset, user_groups, actual_bad_clients = get_dataset(args, noise_transform=noise_transform)
     
     # train the global model
     global_model = initialize_model(args)
     global_model.to(device)
-    global_model, abv_simple, abv_hessian, shapley_values, influence_values, runtimes = train_global_model(args, global_model, train_dataset, valid_dataset, test_dataset, user_groups, device)
-    test_acc, test_loss = test_inference(global_model, test_dataset)
 
-    predicted_bad_abvs = identify_bad_idxs(abv_simple)
-    predicted_bad_abvh = identify_bad_idxs(abv_hessian)
-    predicted_bad_sv = identify_bad_idxs(shapley_values)
-    predicted_bad_if = identify_bad_idxs(influence_values)
-    bad_client_accuracy_abvs = measure_accuracy(actual_bad_clients, predicted_bad_abvs)
-    bad_client_accuracy_abvh = measure_accuracy(actual_bad_clients, predicted_bad_abvh)
-    bad_client_accuracy_sv = measure_accuracy(actual_bad_clients, predicted_bad_sv)
-    bad_client_accuracy_if = measure_accuracy(actual_bad_clients, predicted_bad_if)
+    for i in range(6):
+        print(f'Run {i+1} with noise std {i*0.2}')
+        logger.info(f'Run {i}: Adding Gaussian noise with std={i*0.2}')
+        noise_transform.set_std(i*0.2)
 
-    # log results   
-    if args.setting == 0:
-        setting_str = "IID"
-    elif args.setting == 1:
-        setting_str = f"Non IID with {len(actual_bad_clients)} Bad Clients and {args.num_categories_per_client} Categories Per Bad Client"
-    elif args.setting == 2:
-        setting_str = f"Mislabeled with {len(actual_bad_clients)} Bad Clients and {100 * args.badsample_prop}% Bad Samples Per Bad Client"
-    elif args.setting == 3:
-        setting_str = f"Noisy with {len(actual_bad_clients)} Bad Clients and {100 * args.badsample_prop}% Bad Samples Per Bad Client"
-    
-    logger.info(f'Number Of Clients: {args.num_users}, Client Selection Fraction: {args.frac}, Local Epochs: {args.local_ep}')
-    logger.info(f'Batch Size: {args.local_bs}, Learning Rate: {args.lr}, Momentum: {args.momentum}')
-    logger.info(f'Dataset: {args.dataset}, Setting: {setting_str}, Number Of Rounds: {args.epochs}, Noise STD: {args.noise_std}')
-    logger.info(f'Test Accuracy: {100*test_acc}%, Test Loss: {test_loss}')
-    logger.info(f'Banzhaf Values Simple: {abv_simple}')
-    logger.info(f'Banzhaf Values Hessian: {abv_hessian}')
-    logger.info(f'Shapley Values: {shapley_values}')
-    logger.info(f'Influence Function Values: {influence_values}')
-    logger.info(f'Actual Bad Clients: {actual_bad_clients}')
-    logger.info(f'Predicted Bad Clients Banzhaf Simple: {predicted_bad_abvs}')
-    logger.info(f'Predicted Bad Clients Banzhaf Hessian: {predicted_bad_abvh}')
-    logger.info(f'Predicted Bad Clients Shapley: {predicted_bad_sv}')
-    logger.info(f'Predicted Bad Clients Influence: {predicted_bad_if}')
-    logger.info(f'Bad Client Accuracy Banzhaf Simple: {bad_client_accuracy_abvs}')
-    logger.info(f'Bad Client Accuracy Banzhaf Hessian: {bad_client_accuracy_abvh}')
-    logger.info(f'Bad Client Accuracy Shapley: {bad_client_accuracy_sv}')
-    logger.info(f'Bad Client Accuracy Influence: {bad_client_accuracy_if}')
-    logger.info(f'Runtimes: {runtimes}')
-    logger.info(f'Total Run Time: {time.time()-start_time}')
+        global_model, abv_simple, abv_hessian, shapley_values, influence_values, runtimes = train_global_model(args, global_model, train_dataset, valid_dataset, test_dataset, user_groups, device)
+        test_acc, test_loss = test_inference(global_model, test_dataset)
+
+        predicted_bad_abvs = identify_bad_idxs(abv_simple)
+        predicted_bad_abvh = identify_bad_idxs(abv_hessian)
+        predicted_bad_sv = identify_bad_idxs(shapley_values)
+        predicted_bad_if = identify_bad_idxs(influence_values)
+        bad_client_accuracy_abvs = measure_accuracy(actual_bad_clients, predicted_bad_abvs)
+        bad_client_accuracy_abvh = measure_accuracy(actual_bad_clients, predicted_bad_abvh)
+        bad_client_accuracy_sv = measure_accuracy(actual_bad_clients, predicted_bad_sv)
+        bad_client_accuracy_if = measure_accuracy(actual_bad_clients, predicted_bad_if)
+
+        # log results   
+        if args.setting == 0:
+            setting_str = "IID"
+        elif args.setting == 1:
+            setting_str = f"Non IID with {len(actual_bad_clients)} Bad Clients and {args.num_categories_per_client} Categories Per Bad Client"
+        elif args.setting == 2:
+            setting_str = f"Mislabeled with {len(actual_bad_clients)} Bad Clients and {100 * args.badsample_prop}% Bad Samples Per Bad Client"
+        elif args.setting == 3:
+            setting_str = f"Noisy with {len(actual_bad_clients)} Bad Clients and {100 * args.badsample_prop}% Bad Samples Per Bad Client"
+        
+        logger.info(f'Number Of Clients: {args.num_users}, Client Selection Fraction: {args.frac}, Local Epochs: {args.local_ep}')
+        logger.info(f'Batch Size: {args.local_bs}, Learning Rate: {args.lr}, Momentum: {args.momentum}')
+        logger.info(f'Dataset: {args.dataset}, Setting: {setting_str}, Number Of Rounds: {args.epochs}')
+        logger.info(f'Test Accuracy: {100*test_acc}%, Test Loss: {test_loss}')
+        logger.info(f'Banzhaf Values Simple: {abv_simple}')
+        logger.info(f'Banzhaf Values Hessian: {abv_hessian}')
+        logger.info(f'Shapley Values: {shapley_values}')
+        logger.info(f'Influence Function Values: {influence_values}')
+        logger.info(f'Actual Bad Clients: {actual_bad_clients}')
+        logger.info(f'Predicted Bad Clients Banzhaf Simple: {predicted_bad_abvs}')
+        logger.info(f'Predicted Bad Clients Banzhaf Hessian: {predicted_bad_abvh}')
+        logger.info(f'Predicted Bad Clients Shapley: {predicted_bad_sv}')
+        logger.info(f'Predicted Bad Clients Influence: {predicted_bad_if}')
+        logger.info(f'Bad Client Accuracy Banzhaf Simple: {bad_client_accuracy_abvs}')
+        logger.info(f'Bad Client Accuracy Banzhaf Hessian: {bad_client_accuracy_abvh}')
+        logger.info(f'Bad Client Accuracy Shapley: {bad_client_accuracy_sv}')
+        logger.info(f'Bad Client Accuracy Influence: {bad_client_accuracy_if}')
+        logger.info(f'Runtimes: {runtimes}')
+
+# TODO: if this doesn't work try to use the noise transform on only the training data (not the validation data)
