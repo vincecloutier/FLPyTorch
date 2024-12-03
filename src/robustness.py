@@ -134,7 +134,9 @@ if __name__ == '__main__':
         predicted_bad_abvs = identify_bad_idxs(abv_simple)
         predicted_bad_abvh = identify_bad_idxs(abv_hessian)
         predicted_bad_sv = identify_bad_idxs(shapley_values)
-        predicted_bad_if = identify_bad_idxs(influence_values)
+        # predicted_bad_if = identify_bad_idxs(influence_values)
+        median_influence = np.median(list(influence_values.values()))
+        predicted_bad_if = [cid for cid in influence_values if influence_values[cid] / median_influence > 1.5]
         bad_client_accuracy_abvs = measure_accuracy(actual_bad_clients, predicted_bad_abvs)
         bad_client_accuracy_abvh = measure_accuracy(actual_bad_clients, predicted_bad_abvh)
         bad_client_accuracy_sv = measure_accuracy(actual_bad_clients, predicted_bad_sv)
