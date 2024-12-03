@@ -97,7 +97,7 @@ def compute_influence(args, global_weights, train_dataset, test_dataset, user_gr
         score_args=score_args,
         factors_name=factors_name,
         query_dataset=test_dataset,
-        query_indices=list(range(len(test_dataset))),
+        query_indices=list(range(2000)),
         train_dataset=train_dataset,
         per_device_query_batch_size=1000,
         overwrite_output_dir=False,
@@ -105,10 +105,14 @@ def compute_influence(args, global_weights, train_dataset, test_dataset, user_gr
     scores = analyzer.load_pairwise_scores(scores_name)["all_modules"]
     print(f"Scores shape: {scores.shape}")
 
+    del analyzer, model, task, analyzer
+    torch.cuda.empty_cache()
+
     client_influence = defaultdict(float)
     
     # sum influence scores over all test samples for each training sample -> shape: [num_train_samples]
     influence_scores = scores.sum(dim=0)
+    influence_scores = influence_scores / influence_scores.max()  # Normalize between 0 and 1
     
     # iterate over each client and sum the influence scores of their training samples
     for client_id, sample_indices in user_groups.items():
@@ -119,6 +123,9 @@ def compute_influence(args, global_weights, train_dataset, test_dataset, user_gr
         client_influence[client_id] = client_influence_score
     
     print(client_influence)
+
+    del scores, influence_scores
+    torch.cuda.empty_cache()
 
     return client_influence
 
