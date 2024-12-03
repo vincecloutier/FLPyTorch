@@ -1,21 +1,10 @@
-from tqdm import tqdm
 from collections import defaultdict
-from update import LocalUpdate, gradient, conjugate_gradient, ClientSplit
-import multiprocessing
-from functools import partial
-from utils import get_device, initialize_model, average_weights
-import numpy as np
-from pydvl.influence.torch import EkfacInfluence, NystroemSketchInfluence
-from torch.utils.data import DataLoader
+from utils import get_device, initialize_model
 import torch.nn.functional as F
-import pytorch_influence_functions as ptif
-import os
 from typing import Tuple
-
 import torch
 import torch.nn.functional as F
 from torch import nn
-
 from kronfluence.analyzer import Analyzer, prepare_model
 from kronfluence.arguments import FactorArguments, ScoreArguments
 from kronfluence.task import Task
