@@ -118,6 +118,8 @@ def compute_influence(args, global_weights, train_dataset, test_dataset, user_gr
         client_influence_score = influence_scores[sample_indices].sum().item()
         client_influence[client_id] = client_influence_score
     
+    print(client_influence)
+
     return client_influence
 
 
