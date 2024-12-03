@@ -1,7 +1,7 @@
 import torch
 from torch import nn, autocast
 from torch.utils.data import DataLoader, Dataset
-from torch.amp import GradScaler 
+from torch.cuda.amp import GradScaler 
 from utils import get_device
 
 
@@ -57,7 +57,7 @@ class LocalUpdate(object):
                 batch_loss.append(loss.item())
 
             epoch_loss.append(sum(batch_loss)/len(batch_loss))
-            
+
             if self.args.verbose:
                 print(f'| Global Round : {global_round+1} | Local Epoch : {iter+1} | Loss: {sum(batch_loss) / len(batch_loss):.6f}')
 
