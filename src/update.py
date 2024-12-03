@@ -102,7 +102,7 @@ def gradient(args, model, dataset):
     device = get_device()
 
     criterion = nn.CrossEntropyLoss().to(device)
-    data_loader = DataLoader(dataset, batch_size=len(dataset), shuffle=False) # top insight to use full dataset
+    data_loader = DataLoader(dataset, batch_size=len(dataset), shuffle=False)
     
     inputs, targets = next(iter(data_loader))
     inputs, targets = inputs.to(device), targets.to(device)
@@ -119,6 +119,9 @@ def gradient(args, model, dataset):
     for (name, param), grad in zip(model.named_parameters(), grad_params):
         if param.requires_grad:
             gradient[name] = grad.clone().detach()
+
+    del inputs, targets, outputs, loss, grad_params
+    torch.cuda.empty_cache()
 
     return gradient
 
