@@ -76,6 +76,8 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
             G_t_minus_i = compute_G_minus_i_t(delta_t[epoch], global_weights.keys(), idx)
             if epoch > 0:
                 for key in global_weights.keys():
+                    if delta_g[idx][key].dtype != G_t_minus_i[key].dtype or delta_g[idx][key].dtype != G_t[key].dtype:
+                        raise ValueError(f"delta_g[{idx}][{key}].dtype: {delta_g[idx][key].dtype}, G_t_minus_i[{key}].dtype: {G_t_minus_i[key].dtype}, G_t[{key}].dtype: {G_t[key].dtype}")
                     delta_g[idx][key] += G_t_minus_i[key] - G_t[key]
             t_time = time.time() - start_time
             runtimes['abvh'] += t_time
