@@ -26,10 +26,26 @@ def compute_influence(args, global_weights, train_dataset, test_dataset, user_gr
 
     config = ptif.get_default_config()
     config.device = device
-    influences, harmful, helpful = ptif.calc_img_wise(config, model, train_loader, test_loader)
+    influences, _, _ = ptif.calc_img_wise(config, model, train_loader, test_loader)
 
+    print("Sample influence entry:", next(iter(influences.values())))
+    print(f"Shape of influences: {np.array(next(iter(influences.values()))).shape}")
+
+    # convert user_groups to numpy arrays for faster indexing
+    user_groups_np = {cid: np.array(idxs, dtype=np.int32) for cid, idxs in user_groups.items()}
     client_influences = defaultdict(float)
-    for id, indexes in user_groups.items():
-        client_influences[id] = sum(influences[indexes])
+    client_ids = list(user_groups_np.keys())
+    client_indices = list(user_groups_np.values())
+
+    for test_id, test_info in tqdm(influences.items(), total=len(influences), desc="Aggregating Influences"):
+        influence_scores = test_info.get('influence', [])
+        if not influence_scores:
+            continue  # skip if no influence scores
+
+        influence_array = np.array(influence_scores, dtype=np.float32)
+        
+        for cid, indices in zip(client_ids, client_indices):
+            valid_indices = indices[indices < len(influence_array)]
+            client_influences[cid] += influence_array[valid_indices].sum()
 
     return client_influences
