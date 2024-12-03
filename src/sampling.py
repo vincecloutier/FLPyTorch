@@ -75,7 +75,7 @@ def iid(dataset, num_users):
 
 def noniid(dataset, dataset_name, num_users, badclient_prop, num_cat):
     """Assigns data to clients ensuring each client receives the same number of samples."""
-    dict_users = {i: [] for i in range(num_users)}
+    dict_users = {i: np.array([], dtype=int) for i in range(num_users)}
     non_iid_clients = []
 
     # Determine the number of non-iid and iid clients
