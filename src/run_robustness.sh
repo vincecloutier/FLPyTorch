@@ -9,34 +9,10 @@ fi
 
 echo "Using $PROCESSES processes."
 
-# loop to run each command nine times
-for i in {1..9}
-do
-    # calculate noise_std for this iteration
-    NOISE_STD=$(echo "scale=1; 0.1 * $i" | bc)
-
-    # CIFAR commands
-    echo "Run $i for CIFAR with noise_std=$NOISE_STD"
-    python robustness.py --dataset cifar --setting 0 --processes $PROCESSES --noise_std $NOISE_STD --num_users 50 --local_ep 3
-    python robustness.py --dataset cifar --setting 1 --processes $PROCESSES --noise_std $NOISE_STD --num_users 50 --local_ep 3
-    python robustness.py --dataset cifar --setting 2 --processes $PROCESSES --noise_std $NOISE_STD --num_users 50 --local_ep 3
-    python robustness.py --dataset cifar --setting 3 --processes $PROCESSES --noise_std $NOISE_STD --num_users 50 --local_ep 3
-
-    # FMNIST commands
-    echo "Run $i for FMNIST with noise_std=$NOISE_STD"
-    python robustness.py --dataset fmnist --setting 0 --processes $PROCESSES --noise_std $NOISE_STD --num_users 50 --local_ep 3
-    python robustness.py --dataset fmnist --setting 1 --processes $PROCESSES --noise_std $NOISE_STD --num_users 50 --local_ep 3
-    python robustness.py --dataset fmnist --setting 2 --processes $PROCESSES --noise_std $NOISE_STD --num_users 50 --local_ep 3
-    python robustness.py --dataset fmnist --setting 3 --processes $PROCESSES --noise_std $NOISE_STD --num_users 50 --local_ep 3
-
-    # IMAGENET commands
-    echo "Run $i for IMAGENET with noise_std=$NOISE_STD"
-    python robustness.py --dataset imagenet --setting 0 --processes $PROCESSES --noise_std $NOISE_STD --num_users 50 --local_ep 3
-    python robustness.py --dataset imagenet --setting 1 --processes $PROCESSES --noise_std $NOISE_STD --num_users 50 --local_ep 3
-    python robustness.py --dataset imagenet --setting 2 --processes $PROCESSES --noise_std $NOISE_STD --num_users 50 --local_ep 3
-    python robustness.py --dataset imagenet --setting 3 --processes $PROCESSES --noise_std $NOISE_STD --num_users 50 --local_ep 3
-
-done
+python robustness.py --dataset resnet --setting 0 --processes $PROCESSES --num_users 5 --local_ep 10
+python robustness.py --dataset resnet --setting 1 --processes $PROCESSES --num_users 5 --local_ep 10
+python robustness.py --dataset resnet --setting 2 --processes $PROCESSES --num_users 5 --local_ep 10
+python robustness.py --dataset resnet --setting 3 --processes $PROCESSES --num_users 5 --local_ep 10
 
 echo "All runs completed."
 
