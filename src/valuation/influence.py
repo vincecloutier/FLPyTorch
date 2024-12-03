@@ -27,50 +27,6 @@ from kronfluence.utils.dataset import DataLoaderKwargs
 BATCH_TYPE = Tuple[torch.Tensor, torch.Tensor]
 
 
-# def compute_influence(args, global_weights, train_dataset, test_dataset, user_groups):
-#     """Calculate client-wise influence values."""
-#     device = get_device()
-#     model = initialize_model(args)
-#     model.load_state_dict(global_weights)
-#     model.to(device).float()
-#     model.eval()
-
-#     train_loader = DataLoader(train_dataset, batch_size=args.local_bs, shuffle=False)
-#     test_loader = DataLoader(test_dataset, batch_size=args.local_bs, shuffle=False)
-
-#     print(f'Computing Influence Functions')
-
-#     os.makedirs('outdir', exist_ok=True)
-
-#     config = ptif.get_default_config()
-#     # config['gpu'] = 0
-#     config['recursion_depth'] = 1000
-#     config['r'] = 5
-#     influences, _, _ = ptif.calc_img_wise(config, model, train_loader, test_loader)
-
-#     print("Sample influence entry:", next(iter(influences.values())))
-#     print(f"Shape of influences: {np.array(next(iter(influences.values()))).shape}")
-
-#     # convert user_groups to numpy arrays for faster indexing
-#     user_groups_np = {cid: np.array(idxs, dtype=np.int32) for cid, idxs in user_groups.items()}
-#     client_influences = defaultdict(float)
-#     client_ids = list(user_groups_np.keys())
-#     client_indices = list(user_groups_np.values())
-
-#     for test_id, test_info in tqdm(influences.items(), total=len(influences), desc="Aggregating Influences"):
-#         influence_scores = test_info.get('influence', [])
-#         if not influence_scores:
-#             continue  # skip if no influence scores
-
-#         influence_array = np.array(influence_scores, dtype=np.float32)
-        
-#         for cid, indices in zip(client_ids, client_indices):
-#             valid_indices = indices[indices < len(influence_array)]
-#             client_influences[cid] += influence_array[valid_indices].sum()
-
-#     return client_influences
-
-
 class ClassificationTask(Task):
     def compute_train_loss(self, batch: BATCH_TYPE, model: nn.Module, sample: bool = False) -> torch.Tensor:
         inputs, labels = batch
@@ -141,7 +97,7 @@ def compute_influence(args, global_weights, train_dataset, test_dataset, user_gr
         score_args=score_args,
         factors_name=factors_name,
         query_dataset=test_dataset,
-        query_indices=list(range(2000)),
+        query_indices=list(range(len(test_dataset))),
         train_dataset=train_dataset,
         per_device_query_batch_size=1000,
         overwrite_output_dir=False,
@@ -149,3 +105,63 @@ def compute_influence(args, global_weights, train_dataset, test_dataset, user_gr
     scores = analyzer.load_pairwise_scores(scores_name)["all_modules"]
     print(f"Scores shape: {scores.shape}")
 
+    client_influence = defaultdict(float)
+    
+    # sum influence scores over all test samples for each training sample -> shape: [num_train_samples]
+    influence_scores = scores.sum(dim=0)
+    
+    # iterate over each client and sum the influence scores of their training samples
+    for client_id, sample_indices in user_groups.items():
+        # convert sample_indices to a tensor if they aren't already
+        if not isinstance(sample_indices, torch.Tensor):
+            sample_indices = torch.tensor(sample_indices, dtype=torch.long, device=scores.device)
+        
+        # aggregate the influence scores for the client's training samples
+        client_influence_score = influence_scores[sample_indices].sum().item()
+        client_influence[client_id] = client_influence_score
+    
+    return client_influence
+
+
+# def compute_influence(args, global_weights, train_dataset, test_dataset, user_groups):
+#     """Calculate client-wise influence values."""
+#     device = get_device()
+#     model = initialize_model(args)
+#     model.load_state_dict(global_weights)
+#     model.to(device).float()
+#     model.eval()
+
+#     train_loader = DataLoader(train_dataset, batch_size=args.local_bs, shuffle=False)
+#     test_loader = DataLoader(test_dataset, batch_size=args.local_bs, shuffle=False)
+
+#     print(f'Computing Influence Functions')
+
+#     os.makedirs('outdir', exist_ok=True)
+
+#     config = ptif.get_default_config()
+#     # config['gpu'] = 0
+#     config['recursion_depth'] = 1000
+#     config['r'] = 5
+#     influences, _, _ = ptif.calc_img_wise(config, model, train_loader, test_loader)
+
+#     print("Sample influence entry:", next(iter(influences.values())))
+#     print(f"Shape of influences: {np.array(next(iter(influences.values()))).shape}")
+
+#     # convert user_groups to numpy arrays for faster indexing
+#     user_groups_np = {cid: np.array(idxs, dtype=np.int32) for cid, idxs in user_groups.items()}
+#     client_influences = defaultdict(float)
+#     client_ids = list(user_groups_np.keys())
+#     client_indices = list(user_groups_np.values())
+
+#     for test_id, test_info in tqdm(influences.items(), total=len(influences), desc="Aggregating Influences"):
+#         influence_scores = test_info.get('influence', [])
+#         if not influence_scores:
+#             continue  # skip if no influence scores
+
+#         influence_array = np.array(influence_scores, dtype=np.float32)
+        
+#         for cid, indices in zip(client_ids, client_indices):
+#             valid_indices = indices[indices < len(influence_array)]
+#             client_influences[cid] += influence_array[valid_indices].sum()
+
+#     return client_influences
