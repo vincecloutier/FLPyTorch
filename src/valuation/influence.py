@@ -97,7 +97,7 @@ class ClassificationTask(Task):
         return -margins.sum()
 
 
-def compute_influence(args, global_weights, train_dataset, test_dataset):
+def compute_influence(args, global_weights, train_dataset, test_dataset, user_groups):
     # prepare the model
     device = get_device()
     model = initialize_model(args)
@@ -149,4 +149,3 @@ def compute_influence(args, global_weights, train_dataset, test_dataset):
     scores = analyzer.load_pairwise_scores(scores_name)["all_modules"]
     print(f"Scores shape: {scores.shape}")
 
-    
