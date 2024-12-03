@@ -72,9 +72,6 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
         global_weights = average_weights(local_weights)
         model.load_state_dict(global_weights)
 
-        del local_weights
-        torch.cuda.empty_cache()
-
         # compute banzhaf values
         start_time = time.time()
         G_t = compute_G_t(delta_t[epoch], global_weights.keys())
@@ -92,9 +89,6 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
             start_time = time.time()
             abv_simple[idx] += compute_abv(args, model, train_dataset, user_groups[idx], grad, delta_t[epoch][idx], delta_g[idx], is_hessian=False)
             runtimes['abvs'] += time.time() - start_time
-
-        del G_t, G_t_minus_i
-        torch.cuda.empty_cache()
 
         if bad_clients is not None:
             total_banzhaf = sum(abv_simple.values())
@@ -152,9 +146,8 @@ if __name__ == '__main__':
         setting_str = f"Mislabeled with {len(actual_bad_clients)} Bad Clients and {100 * args.badsample_prop}% Bad Samples Per Bad Client"
     elif args.setting == 3:
         setting_str = f"Noisy with {len(actual_bad_clients)} Bad Clients and {100 * args.badsample_prop}% Bad Samples Per Bad Client"
-    logger.info(f'Number Of Clients: {args.num_users}, Client Selection Fraction: {args.frac}, Local Epochs: {args.local_ep}')
-    logger.info(f'Batch Size: {args.local_bs}, Learning Rate: {args.lr}, Momentum: {args.momentum}')
-    logger.info(f'Dataset: {args.dataset}, Setting: {setting_str}, Number Of Rounds: {args.epochs}, Hessian: {args.hessian}')
+    logger.info(f'Number Of Clients: {args.num_users}, Client Selection Fraction: {args.frac}, Local Epochs: {args.local_ep}, Batch Size: {args.local_bs}, Learning Rate: {args.lr}')
+    logger.info(f'Dataset: {args.dataset}, Setting: {setting_str}, Number Of Rounds: {args.epochs}')
     logger.info(f'Test Accuracy Before Retraining: {100*test_acc}, Test Loss Before Retraining: {test_loss}, in {runtimes["total"]}s')
     if args.retrain:
         logger.info(f'Test Accuracy After Retraining: {100*retrain_test_acc}, Test Loss After Retraining: {retrain_test_loss}, in {retrained_runtimes["total"]}s')
