@@ -12,7 +12,7 @@ import subprocess
 import zipfile
 
 class EarlyStopping:
-    def __init__(self, patience=3, epoch_threshold=10, acc_threshold=0.80):
+    def __init__(self, patience=3, epoch_threshold=15, acc_threshold=0.80):
         self.best_acc = -float('inf')
         self.best_loss = float('inf')
         self.no_improvement_count = 0
@@ -209,7 +209,7 @@ def identify_bad_idxs(approx_banzhaf_values: dict, threshold: float = 3) -> list
         return []
     banzhaf_tensor = torch.tensor(list(approx_banzhaf_values.values()))
     median_banzhaf = torch.median(banzhaf_tensor)    
-    bad_idxs = [key for key, banzhaf in approx_banzhaf_values.items() if banzhaf < median_banzhaf / threshold]
+    bad_idxs = [key for key, banzhaf in approx_banzhaf_values.items() if (banzhaf < median_banzhaf / threshold) and (banzhaf < 0)]
     return bad_idxs
 
 
