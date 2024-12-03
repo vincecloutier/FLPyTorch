@@ -117,11 +117,11 @@ def compute_influence_edb(args, delta_t_i, epoch):
     # sum over all keys in delta_t_i
     client_influences = defaultdict(float)
 
-    print(f"Shape of delta_t_i: {delta_t_i[0]['conv1.weight'].shape}")
-
-    for key in delta_t_i:
-        for i in range(epoch // 2, epoch):
-            client_influences[key] += torch.norm(delta_t_i[i][key], 2).item()
+    for epoch in range(epoch // 2, epoch):
+        for cid in delta_t_i[epoch]:
+            tensor = delta_t_i[epoch][cid]
+            norm = torch.norm(tensor, p=2).item()
+            client_influences[cid] += norm
 
     print(client_influences)
-    return client_influences
+    return client_influences    
