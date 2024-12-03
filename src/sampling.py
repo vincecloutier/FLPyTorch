@@ -9,6 +9,70 @@ def iid(dataset, num_users):
         all_idxs = list(set(all_idxs) - dict_users[i])
     return dict_users
 
+
+# def noniid(dataset, dataset_name, num_users, badclient_prop, num_cat):
+#     """Sample non-IID client data with specified number of categories per client and percentage of non-IID clients."""
+#     if dataset_name == 'fmnist':
+#         shard_size = 100
+#     else:
+#         shard_size = 250
+
+#     idxs = np.arange(len(dataset.targets))
+#     num_classes = len(np.unique(dataset.targets))
+
+#     # create shards per category
+#     shards_per_category = {}
+#     shard_id_to_indices = {}
+#     shard_id = 0
+#     for c in range(num_classes):
+#         idxs_c = idxs[dataset.targets == c]
+#         np.random.shuffle(idxs_c)
+#         num_shards_c = len(idxs_c) // shard_size
+#         shards_c = []
+#         for i in range(num_shards_c):
+#             shard_indices = idxs_c[i * shard_size: (i + 1) * shard_size]
+#             shard_id_to_indices[shard_id] = shard_indices
+#             shards_c.append(shard_id)
+#             shard_id += 1
+#         shards_per_category[c] = shards_c
+
+#     # collect all shard ids
+#     all_shard_ids = list(range(shard_id))
+#     np.random.shuffle(all_shard_ids)
+
+#     # initialize user data dictionary
+#     dict_users = {i: np.array([], dtype=int) for i in range(num_users)}
+
+#     num_non_iid_clients = int(badclient_prop * num_users)
+#     num_iid_clients = num_users - num_non_iid_clients
+#     shards_per_client = shard_id // num_users
+#     iid_clients = np.random.choice(range(num_users), num_iid_clients, replace=False)
+#     non_iid_clients = [i for i in range(num_users) if i not in iid_clients]
+
+#     # assign shards to iid clients
+#     assigned_shard_ids = set()
+#     for i in iid_clients:
+#         client_shard_ids = all_shard_ids[:shards_per_client]
+#         all_shard_ids = all_shard_ids[shards_per_client:]
+#         dict_users[i] = np.concatenate([shard_id_to_indices[sid] for sid in client_shard_ids])
+#         assigned_shard_ids.update(client_shard_ids)
+
+#     # assign shards to non-IID clients
+#     for i in non_iid_clients:
+#         # select k random categories
+#         categories = np.random.choice(num_classes, num_cat, replace=False)
+#         available_shards = []
+#         for c in categories:
+#             available_shards.extend([sid for sid in shards_per_category[c] if sid not in assigned_shard_ids])
+
+#         np.random.shuffle(available_shards)
+#         client_shard_ids = available_shards[:shards_per_client]
+#         dict_users[i] = np.concatenate([shard_id_to_indices[sid] for sid in client_shard_ids])
+#         assigned_shard_ids.update(client_shard_ids)
+
+#     return dict_users, non_iid_clients
+
+
 def noniid(dataset, dataset_name, num_users, badclient_prop, num_cat):
     """Assigns data to clients ensuring each client receives the same number of samples."""
     dict_users = {i: np.array([], dtype=int) for i in range(num_users)}
@@ -43,17 +107,16 @@ def noniid(dataset, dataset_name, num_users, badclient_prop, num_cat):
     # remove classes from non-iid clients
     selected_classes = np.random.choice(classes, num_cat, replace=False)
     for client_id in non_iid_clients:
-        mask = np.isin(dict_users[client_id], selected_classes)
-        dict_users[client_id] = dict_users[client_id][mask]
+        samples_to_keep = [idx for idx in dict_users[client_id] if dataset.targets[idx] in selected_classes]
+        dict_users[client_id] = samples_to_keep
 
     # for iid clients, remove the same amount of samples except we remove an equal amount all classes
     num_to_remove_per_class = (samples_per_class_per_client * (len(classes) - num_cat)) // len(classes)
     for client_id in iid_clients:
         for cls in classes:
-            cls_indices = dict_users[client_id][dataset.targets[dict_users[client_id]] == cls]
+            cls_indices = [idx for idx in dict_users[client_id] if dataset.targets[idx] == cls]
             indices_to_remove = np.random.choice(cls_indices, size=num_to_remove_per_class, replace=False)
-            mask = ~np.isin(dict_users[client_id], indices_to_remove)
-            dict_users[client_id] = dict_users[client_id][mask]
+            dict_users[client_id] = np.array([idx for idx in dict_users[client_id] if idx not in indices_to_remove])
 
     # check that all clients have the same number of samples
     for client_id in dict_users:
