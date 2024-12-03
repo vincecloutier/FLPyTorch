@@ -32,7 +32,7 @@ def train_client(idx, args, global_weights, train_dataset, user_groups, epoch, d
     w, _ = local_model.update_weights(model=model, global_round=epoch)
     delta = {key: (global_weights[key] - w[key]).to(device) for key in global_weights.keys()}
 
-    del model, local_model, global_weights
+    del local_model, model
     torch.cuda.empty_cache()
 
     return idx, w, delta
@@ -66,18 +66,6 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
             local_weights_dict[idx] = copy.deepcopy(w)
             delta_t[epoch][idx] = delta
 
-        # for idx in idxs_users:
-        #     local_model = LocalUpdate(args=args, dataset=train_dataset, idxs=user_groups[idx])
-        #     w, _ = local_model.update_weights(model=copy.deepcopy(model), global_round=epoch)
-        #     local_weights.append(copy.deepcopy(w))
-        #     local_weights_dict[idx] = copy.deepcopy(w)
-        #     delta_t[epoch][idx] = {key: (global_weights[key] - w[key]).to(device) for key in w.keys()}
-        #     del local_model, w
-        #     torch.cuda.empty_cache()
-
-        global_weights = average_weights(local_weights)
-        model.load_state_dict(global_weights)
-       
         # compute shapley values
         start_time = time.time()
         shapley_updates = compute_shapley(args, global_weights, local_weights_dict, test_dataset)
@@ -85,17 +73,8 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
             shapley_values[k] += v  
         runtimes['sv'] += time.time() - start_time
 
-        del shapley_updates, local_weights_dict, local_weights
-        torch.cuda.empty_cache()
-
-        # compute influence values
-        # start_time = time.time()
-        # influence = compute_influence_functions(args, model, train_dataset, user_groups, device, test_dataset)
-        # runtimes['if'] += time.time() - start_time
-        # for k, v in influence.items():
-        #     influence_values[k] += v 
-        # TODO Memory clean up for this guy
-
+        global_weights = average_weights(local_weights)
+       
         # compute banzhaf values
         start_time = time.time()
         G_t = compute_G_t(delta_t[epoch], global_weights.keys())
@@ -114,8 +93,7 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
             abv_simple[idx] += compute_abv(args, model, train_dataset, user_groups[idx], grad, delta_t[epoch][idx], delta_g[idx], is_hessian=False)
             runtimes['abvs'] += time.time() - start_time
 
-        del G_t, G_t_minus_i
-        torch.cuda.empty_cache()
+        model.load_state_dict(global_weights)
 
         acc, loss = test_inference(model, test_dataset)    
         if early_stopping.check(epoch, acc, loss):
@@ -125,7 +103,9 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
         print(f'Epoch {epoch+1}/{args.epochs} - Test Accuracy: {acc}, Test Loss: {loss}, Runtimes: {runtimes}')
         print(torch.cuda.memory_summary(device=device))
     
-    influence_values = compute_influence(args, global_weights, train_dataset, test_dataset, user_groups)
+    # start_time = time.time()
+    # influence_values = compute_influence(args, global_weights, train_dataset, test_dataset, user_groups)
+    # runtimes['if'] += time.time() - start_time
 
     return model, abv_simple, abv_hessian, shapley_values, influence_values, runtimes
 
