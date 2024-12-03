@@ -8,7 +8,7 @@ from options import args_parser
 from update import LocalUpdate, test_inference, gradient
 from utils import get_dataset, average_weights, setup_logger, get_device, identify_bad_idxs, measure_accuracy, initialize_model, EarlyStopping, AddGaussianNoise
 from valuation.banzhaf import compute_abv, compute_G_t, compute_G_minus_i_t
-from valuation.influence import compute_influence
+from valuation.influence import compute_influence, compute_influence_edb
 from valuation.shapley import compute_shapley
 import warnings
 import multiprocessing
@@ -101,7 +101,8 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
         print(f'Epoch {epoch+1}/{args.epochs} - Test Accuracy: {acc}, Test Loss: {loss}, Runtimes: {runtimes}')
     
     start_time = time.time()
-    influence_values = compute_influence(args, global_weights, train_dataset, test_dataset, user_groups)
+    # influence_values = compute_influence(args, global_weights, train_dataset, test_dataset, user_groups)
+    influence_values = compute_influence_edb(args, delta_t, epoch)
     runtimes['if'] += time.time() - start_time
 
     return model, abv_simple, abv_hessian, shapley_values, influence_values, runtimes

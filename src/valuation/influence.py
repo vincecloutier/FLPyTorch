@@ -94,7 +94,7 @@ def compute_influence(args, global_weights, train_dataset, test_dataset, user_gr
     scores = analyzer.load_pairwise_scores(scores_name)["all_modules"]
     print(f"Scores shape: {scores.shape}")
 
-    client_influence = defaultdict(float)
+    client_influences = defaultdict(float)
     
     # sum influence scores over all test samples for each training sample -> shape: [num_train_samples]
     influence_scores = scores.sum(dim=0)
@@ -106,6 +106,20 @@ def compute_influence(args, global_weights, train_dataset, test_dataset, user_gr
         sample_indices = torch.tensor(list(sample_indices), dtype=torch.long, device=scores.device)
         # aggregate the influence scores for the client's training samples
         client_influence_score = influence_scores[sample_indices].sum().item()
-        client_influence[client_id] = client_influence_score
+        client_influences[client_id] = client_influence_score
     
-    return client_influence
+    return client_influences
+
+
+
+def compute_influence_edb(args, delta_t_i, epoch):
+    """Compute distances for each client using the method from Efficient Debugging."""
+    # sum over all keys in delta_t_i
+    client_influences = defaultdict(float)
+
+    for key in delta_t_i:
+        for i in range(epoch // 2, epoch):
+            client_influences[key] += delta_t_i[i][key].sum().item()
+
+    print(client_influences)
+    return client_influences
