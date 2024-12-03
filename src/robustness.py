@@ -21,8 +21,6 @@ os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:128"
 
 
 def train_client(idx, args, global_weights, train_dataset, user_groups, epoch, device):
-    torch.cuda.set_device(device)
-
     model = initialize_model(args)
     model.load_state_dict(global_weights)
     model.to(device)
