@@ -1,4 +1,3 @@
-import torch
 from tqdm import tqdm
 from collections import defaultdict
 from update import LocalUpdate, gradient, conjugate_gradient, ClientSplit
@@ -9,34 +8,28 @@ import numpy as np
 from pydvl.influence.torch import EkfacInfluence, NystroemSketchInfluence
 from torch.utils.data import DataLoader
 import torch.nn.functional as F
+import pytorch_influence_functions as ptif
 
-import torch
-print(f"PyTorch Version: {torch.__version__}")
-print(f"CUDA Version: {torch.version.cuda}")
-print(f"Is CUDA Available: {torch.cuda.is_available()}")
 
 def compute_influence(args, global_weights, train_dataset, test_dataset, user_groups):
-    """Estimate Influence values for participants in a round using permutation sampling."""
+    """Calculate client-wise influence values."""
     device = get_device()
     model = initialize_model(args)
     model.load_state_dict(global_weights)
     model.to(device).float()
     model.eval()
 
-    influences = defaultdict(float)
-    print(f'Computing Influence Functions for {args.num_users} clients')
-    for id, indexes in user_groups.items():
-        
-        print(f'here')
-        train_data_loader = DataLoader(ClientSplit(train_dataset, indexes), batch_size=args.local_bs, shuffle=False)
-        print(f'here2')
-        influence_model = NystroemSketchInfluence(model, F.cross_entropy, rank = 10, hessian_regularization=0.1)
-        print(f'here3')
-        influence_model = influence_model.fit(train_data_loader)
-        print(f'here4')
-        all_influences = influence_model.influences(test_dataset, train_dataset, mode="up")
-        print(f'here5')
-        influences[id] = sum(np.mean(all_influences.numpy(), axis=0))
-        print(f'here6')
+    train_loader = DataLoader(train_dataset, batch_size=args.local_bs, shuffle=False)
+    test_loader = DataLoader(test_dataset, batch_size=args.local_bs, shuffle=False)
 
-    return influences
+    print(f'Computing Influence Functions')
+
+    config = ptif.get_default_config()
+    config.device = device
+    influences, harmful, helpful = ptif.calc_img_wise(config, model, train_loader, test_loader)
+
+    client_influences = defaultdict(float)
+    for id, indexes in user_groups.items():
+        client_influences[id] = sum(influences[indexes])
+
+    return client_influences
