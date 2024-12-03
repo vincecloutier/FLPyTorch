@@ -16,9 +16,9 @@ do
     BAD_CLIENT_PROP=$(echo "scale=1; 0.2 * $i" | bc)
 
     echo "Run $i with bad_client_prop=$BAD_CLIENT_PROP"
-    python retraining.py --setting 1 --processes $PROCESSES --bad_client_prop $BAD_CLIENT_PROP --num_users 10 --local_ep 10 --retrain 1
-    python retraining.py --setting 2 --processes $PROCESSES --bad_client_prop $BAD_CLIENT_PROP --num_users 10 --local_ep 10 --retrain 1
-    python retraining.py --setting 3 --processes $PROCESSES --bad_client_prop $BAD_CLIENT_PROP --num_users 10 --local_ep 10 --retrain 1
+    python retraining.py --dataset resnet --setting 1 --processes $PROCESSES --bad_client_prop $BAD_CLIENT_PROP --num_users 10 --local_ep 10 --retrain 1
+    python retraining.py --dataset resnet --setting 2 --processes $PROCESSES --bad_client_prop $BAD_CLIENT_PROP --num_users 10 --local_ep 10 --retrain 1
+    python retraining.py --dataset resnet --setting 3 --processes $PROCESSES --bad_client_prop $BAD_CLIENT_PROP --num_users 10 --local_ep 10 --retrain 1
 
 done
 
