@@ -7,7 +7,13 @@ else
     PROCESSES="$1"
 fi
 
-echo "Using $PROCESSES processes."
+# install bc if not installed
+if ! command -v bc &> /dev/null; then
+    echo "'bc' is not installed. Attempting to install it..."
+    sudo apt-get update && sudo apt-get install -y bc
+else
+    echo "'bc' is already installed."
+fi
 
 # loop to run each command nine times
 for i in {1..5}
