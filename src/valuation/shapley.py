@@ -9,18 +9,6 @@ import multiprocessing
 import torch
 
 
-_global_weights = None
-_client_weights = None
-_test_dataset = None
-
-
-def init_process(global_weights, client_weights, test_dataset):
-    global _global_weights, _client_weights, _test_dataset
-    _global_weights = global_weights
-    _client_weights = client_weights
-    _test_dataset = test_dataset
-
-
 def compute_shapley(args, global_weights, client_weights, test_dataset):
     """Estimate Shapley values for participants in a round using permutation sampling."""
     device = get_device()
@@ -39,10 +27,11 @@ def compute_shapley(args, global_weights, client_weights, test_dataset):
 
     shapley_updates = defaultdict(float)
     if t < fact(len(client_keys)):
-        args_list = [(None, client_keys, base_acc, device, args) for _ in range(t)]
+        args_list = [(None, global_weights, client_weights, test_dataset, base_acc, device, args) for _ in range(t)]
     else:
-        args_list = [(perm, client_keys, base_acc, device, args) for perm in itertools.permutations(client_keys)]
-    pool = multiprocessing.Pool(processes=args.shapley_processes, initializer=init_process, initargs=(global_weights, client_weights, test_dataset))
+        t = fact(len(client_keys))
+        args_list = [(perm, global_weights, client_weights, test_dataset, base_acc, device, args) for perm in itertools.permutations(client_keys)]
+    pool = multiprocessing.Pool(processes=args.shapley_processes)
     results = pool.map(compute_shapley_for_permutation, args_list)
     pool.close()
     pool.join()
@@ -60,29 +49,29 @@ def compute_shapley(args, global_weights, client_weights, test_dataset):
 
 
 def compute_shapley_for_permutation(args):
-    (perm, client_keys, base_acc, device, args_model) = args
+    (perm, global_weights, client_weights, test_dataset, base_acc, device, args_model) = args
 
     model = initialize_model(args_model)
-    model.load_state_dict(_global_weights)
+    model.load_state_dict(global_weights)
     model.to(device)
 
     shapley_updates_local = defaultdict(float)
 
     if perm is None:
-        perm = np.random.permutation(client_keys)
+        perm = np.random.permutation(client_weights.keys())
 
     prev_acc = base_acc
     current_weights = []
     for i in perm:
-        current_weights.append(_client_weights[i])
+        current_weights.append(client_weights[i])
         avg_weights = average_weights(current_weights)
         model.load_state_dict(avg_weights)
         with torch.no_grad():
-            curr_acc = test_inference(model, _test_dataset)[0]
+            curr_acc = test_inference(model, test_dataset)[0]
         shapley_updates_local[i] += curr_acc - prev_acc
         prev_acc = curr_acc
 
-    del model
+    del model, current_weights
     torch.cuda.empty_cache()
 
     return shapley_updates_local
