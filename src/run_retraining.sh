@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # get processes argument
-if [ -z "$1" ]; then
+if [ --processes "$1" ]; then
     PROCESSES=8  # default is eight
 else
     PROCESSES=$1
