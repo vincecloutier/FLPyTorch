@@ -58,7 +58,6 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
             m = max(int(args.frac * args.num_users), 1)
             idxs_users = np.random.choice(range(args.num_users), m, replace=False)
        
-        print(torch.cuda.memory_summary(device=device))
 
         train_client_partial = partial(train_client, args=args, global_weights=copy.deepcopy(global_weights), train_dataset=train_dataset, user_groups=user_groups, epoch=epoch)
         with multiprocessing.Pool(processes=args.processes) as pool:
@@ -109,7 +108,6 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
             break
 
         print(f'Epoch {epoch+1}/{args.epochs} - Test Accuracy: {acc}, Test Loss: {loss}, Runtimes: {runtimes}s')
-        print(torch.cuda.memory_summary(device=device))
         
     runtimes['total'] = time.time() - start_time
     return model, abv_simple, abv_hessian, runtimes
