@@ -116,10 +116,11 @@ def compute_influence_edb(args, delta_t_i, epoch):
     """Compute distances for each client using the method from Efficient Debugging."""
     # sum over all keys in delta_t_i
     client_influences = defaultdict(float)
-
+    print(delta_t_i)
+    
     for key in delta_t_i:
         for i in range(epoch // 2, epoch):
-            client_influences[key] += delta_t_i[i][key].sum().item()
+            client_influences[key] += torch.norm(delta_t_i[i][key], 2).item()
 
     print(client_influences)
     return client_influences
