@@ -25,7 +25,9 @@ def compute_influence(args, global_weights, train_dataset, test_dataset, user_gr
     print(f'Computing Influence Functions')
 
     config = ptif.get_default_config()
-    config.device = device
+    config['gpu'] = 0
+    config['recursion_depth'] = 1000
+    config['r'] = 5
     influences, _, _ = ptif.calc_img_wise(config, model, train_loader, test_loader)
 
     print("Sample influence entry:", next(iter(influences.values())))
