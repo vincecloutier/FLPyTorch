@@ -10,7 +10,7 @@ fi
 # install bc if not installed
 if ! command -v bc &> /dev/null; then
     echo "'bc' is not installed. Attempting to install it..."
-    sudo apt-get update && sudo apt-get install -y bc
+    apt-get update && apt-get install -y bc
 else
     echo "'bc' is already installed."
 fi
