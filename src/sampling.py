@@ -97,7 +97,7 @@ def noniid(dataset, dataset_name, num_users, badclient_prop, num_cat):
         for i in range(num_users):
             start_idx = i * samples_per_class_per_client
             end_idx = (i + 1) * samples_per_class_per_client
-            dict_users[i].extend(cls_indices[start_idx:end_idx])
+            dict_users[i] = np.concatenate([dict_users[i], cls_indices[start_idx:end_idx]])
 
     # randomly select iid and non-iid clients
     all_clients = np.arange(num_users)
