@@ -9,7 +9,7 @@ from pydvl.influence.torch import EkfacInfluence, NystroemSketchInfluence
 from torch.utils.data import DataLoader
 import torch.nn.functional as F
 import pytorch_influence_functions as ptif
-
+import os
 
 def compute_influence(args, global_weights, train_dataset, test_dataset, user_groups):
     """Calculate client-wise influence values."""
@@ -23,6 +23,8 @@ def compute_influence(args, global_weights, train_dataset, test_dataset, user_gr
     test_loader = DataLoader(test_dataset, batch_size=args.local_bs, shuffle=False)
 
     print(f'Computing Influence Functions')
+
+    os.makedirs('outdir', exist_ok=True)
 
     config = ptif.get_default_config()
     config['gpu'] = 0
