@@ -98,7 +98,7 @@ def compute_influence(args, global_weights, train_dataset, test_dataset, user_gr
     
     # sum influence scores over all test samples for each training sample -> shape: [num_train_samples]
     influence_scores = scores.sum(dim=0)
-    influence_scores = influence_scores / influence_scores.max()  # Normalize between 0 and 1
+    influence_scores = influence_scores / influence_scores.max()  # normalize
     
     # iterate over each client and sum the influence scores of their training samples
     for client_id, sample_indices in user_groups.items():
