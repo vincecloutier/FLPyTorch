@@ -63,8 +63,8 @@ def compute_influence(args, global_weights, train_dataset, test_dataset, user_gr
     factors_name = "ekfac"
     factor_args = FactorArguments(strategy=factors_name)
     # use half precision (optional)
-    # factor_args = all_low_precision_factor_arguments(strategy=factors_name, dtype=torch.bfloat16)
-    # factors_name += "_half"
+    factor_args = all_low_precision_factor_arguments(strategy=factors_name, dtype=torch.bfloat16)
+    factors_name += "_half"
     # fit all factors
     analyzer.fit_all_factors(
         factors_name=factors_name,
@@ -78,8 +78,8 @@ def compute_influence(args, global_weights, train_dataset, test_dataset, user_gr
     score_args = ScoreArguments()
     scores_name = factor_args.strategy
     # use half precision (optional)
-    # score_args = all_low_precision_score_arguments(dtype=torch.bfloat16)
-    # scores_name += "_half"
+    score_args = all_low_precision_score_arguments(dtype=torch.bfloat16)
+    scores_name += "_half"
     # compute scores
     analyzer.compute_pairwise_scores(
         scores_name=scores_name,
