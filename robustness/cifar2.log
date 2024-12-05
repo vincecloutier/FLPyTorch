@@ -17,6 +17,7 @@
 2024-12-03 17:59:50,393 INFO Bad Client Accuracy Shapley: 1.0
 2024-12-03 17:59:50,393 INFO Bad Client Accuracy Influence: 0.0
 2024-12-03 17:59:50,393 INFO Runtimes: {'abvs': 0.2537076473236084, 'abvh': 173.285227060318, 'sv': 207.74450421333313, 'if': 0.021222352981567383}
+
 2024-12-03 17:59:50,394 INFO Run 1: Adding Gaussian noise with std=0.2
 2024-12-03 18:09:50,755 INFO Number Of Clients: 5, Client Selection Fraction: 0.6, Local Epochs: 10
 2024-12-03 18:09:50,756 INFO Batch Size: 128, Learning Rate: 0.01, Momentum: 0.9
@@ -36,6 +37,7 @@
 2024-12-03 18:09:50,759 INFO Bad Client Accuracy Shapley: 1.0
 2024-12-03 18:09:50,760 INFO Bad Client Accuracy Influence: 0.0
 2024-12-03 18:09:50,760 INFO Runtimes: {'abvs': 0.18151426315307617, 'abvh': 119.8447437286377, 'sv': 142.28550267219543, 'if': 0.004735231399536133}
+
 2024-12-03 18:09:50,760 INFO Run 2: Adding Gaussian noise with std=0.4
 2024-12-03 18:15:20,921 INFO Number Of Clients: 5, Client Selection Fraction: 0.6, Local Epochs: 10
 2024-12-03 18:15:20,922 INFO Batch Size: 128, Learning Rate: 0.01, Momentum: 0.9
@@ -55,6 +57,7 @@
 2024-12-03 18:15:20,926 INFO Bad Client Accuracy Shapley: 1.0
 2024-12-03 18:15:20,926 INFO Bad Client Accuracy Influence: 1.0
 2024-12-03 18:15:20,926 INFO Runtimes: {'abvs': 0.11461186408996582, 'abvh': 66.46553373336792, 'sv': 78.57320237159729, 'if': 0.002573728561401367}
+
 2024-12-03 18:15:20,927 INFO Run 3: Adding Gaussian noise with std=0.6000000000000001
 2024-12-03 18:22:01,471 INFO Number Of Clients: 5, Client Selection Fraction: 0.6, Local Epochs: 10
 2024-12-03 18:22:01,472 INFO Batch Size: 128, Learning Rate: 0.01, Momentum: 0.9
@@ -74,6 +77,7 @@
 2024-12-03 18:22:01,487 INFO Bad Client Accuracy Shapley: 1.0
 2024-12-03 18:22:01,488 INFO Bad Client Accuracy Influence: 1.0
 2024-12-03 18:22:01,489 INFO Runtimes: {'abvs': 0.1322932243347168, 'abvh': 79.93886804580688, 'sv': 95.31131100654602, 'if': 0.003885507583618164}
+
 2024-12-03 18:22:01,491 INFO Run 4: Adding Gaussian noise with std=0.8
 2024-12-03 18:34:21,426 INFO Number Of Clients: 5, Client Selection Fraction: 0.6, Local Epochs: 10
 2024-12-03 18:34:21,428 INFO Batch Size: 128, Learning Rate: 0.01, Momentum: 0.9
@@ -93,6 +97,7 @@
 2024-12-03 18:34:21,434 INFO Bad Client Accuracy Shapley: 1.0
 2024-12-03 18:34:21,434 INFO Bad Client Accuracy Influence: 0.0
 2024-12-03 18:34:21,434 INFO Runtimes: {'abvs': 0.23383164405822754, 'abvh': 146.5810101032257, 'sv': 180.56421422958374, 'if': 0.006377696990966797}
+
 2024-12-03 18:34:21,434 INFO Run 5: Adding Gaussian noise with std=1.0
 2024-12-03 18:53:21,198 INFO Number Of Clients: 5, Client Selection Fraction: 0.6, Local Epochs: 10
 2024-12-03 18:53:21,198 INFO Batch Size: 128, Learning Rate: 0.01, Momentum: 0.9
