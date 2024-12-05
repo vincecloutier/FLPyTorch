@@ -158,7 +158,3 @@ if __name__ == '__main__':
     logger.info(f'Banzhaf Values Simple: {abv_simple}')
     logger.info(f'Banzhaf Values Hessian: {abv_hessian}')
     logger.info(f'Actual Bad Clients: {actual_bad_clients}')
-    logger.info(f'Predicted Bad Clients Simple: {predicted_bad_abvs}')
-    logger.info(f'Predicted Bad Clients Hessian: {predicted_bad_abvh}')
-    logger.info(f'Bad Client Accuracy Simple: {bad_client_accuracy_abvs}')
-    logger.info(f'Bad Client Accuracy Hessian: {bad_client_accuracy_abvh}')
