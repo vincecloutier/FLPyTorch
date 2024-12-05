@@ -47,7 +47,6 @@ def graph_processed_log(log_file):
     acc_after = np.array([round(float(item[0]), 2) for item in acc_loss_after])
     loss_after = np.array([round(float(item[1]), 2) for item in acc_loss_after])
     
-
     x = range(1, len(acc_before) + 1)  # x-axis as setting indices
 
     # generate plots
