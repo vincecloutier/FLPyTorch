@@ -16,7 +16,7 @@ else
 fi
 
 # loop to run each command nine times
-for i in {1..5}
+for i in {1..4}
 do
     # calculate noise_std for this iteration
     BAD_CLIENT_PROP=$(echo "scale=1; 0.2 * $i" | bc)
