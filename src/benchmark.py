@@ -50,8 +50,8 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
                 if epoch > 0:
                     for key in global_weights.keys():
                         delta_g[idx][key] += G_t_minus_i[key] - G_t[key]
-                abv_hessian[idx] += compute_abv(args, model, valid_dataset, grad, delta_t[epoch][idx], delta_g[idx], is_hessian=True)
-                abv_simple[idx] += compute_abv(args, model, valid_dataset, grad, delta_t[epoch][idx], delta_g[idx], is_hessian=False)
+                abv_hessian[idx] += compute_abv(args, model, valid_dataset, user_groups[idx], grad, delta_t[epoch][idx], delta_g[idx], is_hessian=True)
+                abv_simple[idx] += compute_abv(args, model, valid_dataset, user_groups[idx], grad, delta_t[epoch][idx], delta_g[idx], is_hessian=False)
 
         acc, loss = test_inference(model, test_dataset)
         if early_stopping.check(epoch, acc, loss):
