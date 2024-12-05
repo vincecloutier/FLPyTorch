@@ -79,22 +79,26 @@ def process_and_graph_logs(log_files):
         avg_runtimes[key] /= len(log_files)
 
     # generate plots
-    plt.figure(figsize=(12, 4))
+    plt.figure(figsize=(10, 5))
 
     plt.subplot(1, 2, 1)
     plt.bar(['ABVS', 'ABVH', 'Shapley', 'Influence'], [abvs, abvh, sv, iv])
+    for i, v in enumerate([abvs, abvh, sv, iv]):
+        plt.text(i, v, f'{v:.2f}', ha='center', va='bottom')
     plt.title(f"Spearman Rank Correlation")
     plt.xlabel("Approximation")
     plt.ylabel("Correlation")
 
     plt.subplot(1, 2, 2)
     plt.bar(['ABVS', 'ABVH', 'Shapley', 'Influence'], [avg_runtimes['abvs'], avg_runtimes['abvh'], avg_runtimes['sv'], avg_runtimes['if']])
+    for i, v in enumerate([avg_runtimes['abvs'], avg_runtimes['abvh'], avg_runtimes['sv'], avg_runtimes['if']]):
+        plt.text(i, v, f'{v:.2f}', ha='center', va='bottom')
+    plt.yscale('log')
     plt.title(f"Runtime")
     plt.xlabel("Approximation")
     plt.ylabel("Runtime (s)")
 
     plt.tight_layout()
     plt.show()
-
 
 process_and_graph_logs(['robustness/cifar0.log', 'robustness/cifar1.log',  'robustness/cifar2.log', 'robustness/cifar3.log'])
