@@ -1,10 +1,11 @@
 import re
 import pandas as pd
 import matplotlib.pyplot as plt
-from scipy.stats import spearmanr, kendalltau
+from scipy.stats import spearmanr
 import numpy as np
+from collections import defaultdict
 
-def process_and_graph_log(file_path, plot=True):
+def process_log(file_path):
     # read the log file
     with open(file_path, 'r') as file:
         logs = file.read()
@@ -22,12 +23,6 @@ def process_and_graph_log(file_path, plot=True):
     shapley_values = [eval(f"{{{match}}}") for match in re.findall(shapley_pattern, logs)]
     influence_values = [eval(f"{{{match}}}") for match in re.findall(influence_pattern, logs)]
     runtimes = [eval(f"{{{match}}}") for match in re.findall(runtime_pattern, logs)]
-
-    print(approx_simple_values)
-    print(approx_hessian_values)
-    print(shapley_values)
-    print(influence_values)
-    print(runtimes)
 
     def process_runs(runs):
         # convert list of dictionaries to df
@@ -49,30 +44,59 @@ def process_and_graph_log(file_path, plot=True):
         correlations = upper_tri.stack()
         avg_corr = correlations.mean()
         return avg_corr
-
-    print(process_runs(approx_simple_values))
-    print(process_runs(approx_hessian_values))
-    print(process_runs(shapley_values))
-    print(process_runs(influence_values))
-
-
-    # if plot:
-    #     # Plotting
-    #     plt.figure(figsize=(10, 6))
-
-    #     # Runtimes plot
-    #     plt.subplot(1, 2, 1)
-    #     runtime_means = runtime_df.mean()
-    #     runtime_means.plot(kind="bar", title="Average Runtimes of Methods", rot=45)
-    #     plt.ylabel("Runtime (seconds)")
-
-    #     # correlation bar graph
-    #     plt.subplot(1, 2, 2)
+    
+    def process_runtimes(runtimes):
+        avg_runtimes = defaultdict(float)
+        for runtime in runtimes:
+            for key, value in runtime.items():
+                avg_runtimes[key] += value
+        for key, value in avg_runtimes.items():
+            avg_runtimes[key] /= len(runtimes)
+        return avg_runtimes
+    print(process_runtimes(runtimes))
+    return process_runs(approx_simple_values), process_runs(approx_hessian_values), process_runs(shapley_values), process_runs(influence_values), process_runtimes(runtimes)
 
 
-    #     plt.tight_layout()
-    #     plt.show()
+def process_and_graph_logs(log_files):
+    # sum over each setting
+    abvs, abvh, shapley, influence = 0, 0, 0, 0
+    avg_runtimes = defaultdict(float)
+    for log_file in log_files:
+        approx_simple, approx_hessian, shapley, influence, runtimes = process_log(log_file)
+        abvs += approx_simple
+        abvh += approx_hessian
+        shapley += shapley
+        influence += influence
+        for key, value in runtimes.items():
+            avg_runtimes[key] += value
+    
+    # average across settings
+    divisor = len(log_files)
+    abvs /= divisor
+    abvh /= divisor
+    shapley /= divisor
+    influence /= divisor
+    for key, value in avg_runtimes.items():
+        avg_runtimes[key] /= divisor
 
 
-# Run the function on the example log file
-process_and_graph_log('robustness/cifar3.log', plot=True)
+    # generate plots
+    plt.figure(figsize=(12, 4))
+
+    plt.subplot(1, 2, 1)
+    plt.bar(['ABVS', 'ABVH', 'Shapley', 'Influence'], [abvs, abvh, shapley, influence])
+    plt.title(f"Spearman Rank Correlation")
+    plt.xlabel("Approximation")
+    plt.ylabel("Correlation")
+
+    plt.subplot(1, 2, 2)
+    plt.bar(['ABVS', 'ABVH', 'Shapley', 'Influence'], [avg_runtimes['abvs'], avg_runtimes['abvh'], avg_runtimes['sv'], avg_runtimes['if']])
+    plt.title(f"Runtime")
+    plt.xlabel("Approximation")
+    plt.ylabel("Runtime (s)")
+
+    plt.tight_layout()
+    plt.show()
+
+
+process_and_graph_logs(['robustness/cifar0.log', 'robustness/cifar1.log',  'robustness/cifar2.log', 'robustness/cifar3.log'])
