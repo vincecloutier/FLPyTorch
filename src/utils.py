@@ -210,13 +210,17 @@ def get_device():
         return torch.device('cpu')
 
 
-def identify_bad_idxs(approx_banzhaf_values: dict, threshold: float = 3) -> list[int]:
+def identify_bad_idxs(approx_banzhaf_values: dict, threshold: float = 2) -> list[int]:
     if not approx_banzhaf_values:
         return []
-    banzhaf_tensor = torch.tensor(list(approx_banzhaf_values.values()))
-    median_banzhaf = torch.median(banzhaf_tensor)    
-    # bad_idxs = [key for key, banzhaf in approx_banzhaf_values.items() if (banzhaf < median_banzhaf / threshold) and (banzhaf < 0)]
+
+    # add all negative values to the list
     bad_idxs = [key for key, banzhaf in approx_banzhaf_values.items() if banzhaf < 0]
+
+    # add all clients with banzhaf values less than the mean divided by the threshold to the list
+    avg_banzhaf = np.mean(list(approx_banzhaf_values.values()))
+    bad_idxs.extend([key for key, banzhaf in approx_banzhaf_values.items() if banzhaf < avg_banzhaf / threshold])
+    
     return bad_idxs
 
 
