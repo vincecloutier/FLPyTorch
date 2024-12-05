@@ -95,9 +95,9 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
         model.load_state_dict(global_weights)
 
         if bad_clients is not None:
-            total_banzhaf = sum(abv_hessian.values())
+            total_banzhaf = sum(abv_simple.values())
             if total_banzhaf > 0:
-                selection_probabilities = np.array([abv_hessian[i] / total_banzhaf for i in range(args.num_users)])
+                selection_probabilities = np.array([abv_simple[i] / total_banzhaf for i in range(args.num_users)])
                 selection_probabilities /= selection_probabilities.sum()  # normalize
 
         acc, loss = test_inference(model, test_dataset)
@@ -138,7 +138,7 @@ if __name__ == '__main__':
         global_model = initialize_model(args)
         global_model.to(device)
         global_model.train()
-        retrained_model, _, _, retrained_runtimes = train_global_model(args, global_model, train_dataset, valid_dataset, test_dataset, user_groups, device, predicted_bad_abvh)
+        retrained_model, _, _, retrained_runtimes = train_global_model(args, global_model, train_dataset, valid_dataset, test_dataset, user_groups, device, predicted_bad_abvs)
         retrain_test_acc, retrain_test_loss = test_inference(retrained_model, test_dataset)
 
     # log results
