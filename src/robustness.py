@@ -48,8 +48,11 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
         local_weights = []
         local_weights_dict = defaultdict(dict)
 
+        start_time = time.time()
         grad = gradient(args, model, valid_dataset)
-        
+        runtimes['abvs'] += time.time() - start_time
+        runtimes['abvh'] += time.time() - start_time
+
         m = max(int(args.frac * args.num_users), 1)
         idxs_users = np.random.choice(range(args.num_users), m, replace=False)
         
