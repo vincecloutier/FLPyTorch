@@ -58,33 +58,31 @@ def process_log(file_path):
 
 
 def process_and_graph_logs(log_files):
-    # sum over each setting
-    abvs, abvh, shapley, influence = 0, 0, 0, 0
+    # collect data from each setting
+    abvs, abvh, sv, iv = [], [], [], []
     avg_runtimes = defaultdict(float)
     for log_file in log_files:
         approx_simple, approx_hessian, shapley, influence, runtimes = process_log(log_file)
-        abvs += approx_simple
-        abvh += approx_hessian
-        shapley += shapley
-        influence += influence
+        abvs.append(approx_simple)
+        abvh.append(approx_hessian)
+        sv.append(shapley)
+        iv.append(influence)
         for key, value in runtimes.items():
             avg_runtimes[key] += value
     
     # average across settings
-    divisor = len(log_files)
-    abvs /= divisor
-    abvh /= divisor
-    shapley /= divisor
-    influence /= divisor
+    abvs = np.mean(abvs, axis=0)
+    abvh = np.mean(abvh, axis=0)
+    sv = np.mean(sv, axis=0)
+    iv = np.mean(iv, axis=0)
     for key, value in avg_runtimes.items():
-        avg_runtimes[key] /= divisor
-
+        avg_runtimes[key] /= len(log_files)
 
     # generate plots
     plt.figure(figsize=(12, 4))
 
     plt.subplot(1, 2, 1)
-    plt.bar(['ABVS', 'ABVH', 'Shapley', 'Influence'], [abvs, abvh, shapley, influence])
+    plt.bar(['ABVS', 'ABVH', 'Shapley', 'Influence'], [abvs, abvh, sv, iv])
     plt.title(f"Spearman Rank Correlation")
     plt.xlabel("Approximation")
     plt.ylabel("Correlation")
