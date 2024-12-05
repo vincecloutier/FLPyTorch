@@ -52,6 +52,8 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
         
         if bad_clients is not None:
             good_clients = [i for i in range(args.num_users) if i not in bad_clients]
+            if len(good_clients) == 0: # everyone is bad so we train on everyone and reweight 
+                good_clients = range(args.num_users)
             m = max(int(args.frac * len(good_clients)), 1)
             idxs_users = np.random.choice(good_clients, m, replace=False)
         else:
