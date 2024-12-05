@@ -35,7 +35,7 @@ def train_client(idx, args, global_weights, train_dataset, user_groups, epoch):
 
 
 def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, user_groups, device, bad_clients=None):
-    start_time = time.time()
+    initial_start_time = time.time()
     global_weights = model.state_dict()
     abv_simple, abv_hessian = defaultdict(float), defaultdict(float)
     delta_t, delta_g = defaultdict(dict), defaultdict(lambda: {key: torch.zeros_like(global_weights[key]) for key in global_weights.keys()})
@@ -48,8 +48,11 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
     for epoch in tqdm(range(args.epochs)):
         local_weights = []
 
+        start_time = time.time()
         grad = gradient(args, model, valid_dataset)
-        
+        runtimes['abvs'] += time.time() - start_time
+        runtimes['abvh'] += time.time() - start_time
+
         if bad_clients is not None:
             good_clients = [i for i in range(args.num_users) if i not in bad_clients]
             if len(good_clients) == 0: # everyone is bad so we train on everyone and reweight 
@@ -107,7 +110,7 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
 
         print(f'Epoch {epoch+1}/{args.epochs} - Test Accuracy: {acc}, Test Loss: {loss}, Runtimes: {runtimes}s')
         
-    runtimes['total'] = time.time() - start_time
+    runtimes['total'] = time.time() - initial_start_time
     return model, abv_simple, abv_hessian, runtimes
 
 
