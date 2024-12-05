@@ -55,4 +55,4 @@ done
 echo "All runs completed."
 
 # chmod +x run_benchmark.sh
-# ./run_benchmark.sh --processes 8 --runs 3 --datasets cifar
+# ./run_benchmark.sh --processes 8 --runs 3 --datasets cifar,fmnist
