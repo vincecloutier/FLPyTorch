@@ -53,7 +53,7 @@ def process_log(file_path):
         for key, value in avg_runtimes.items():
             avg_runtimes[key] /= len(runtimes)
         return avg_runtimes
-    print(process_runtimes(runtimes))
+
     return process_runs(approx_simple_values), process_runs(approx_hessian_values), process_runs(shapley_values), process_runs(influence_values), process_runtimes(runtimes)
 
 
