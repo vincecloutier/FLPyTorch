@@ -48,12 +48,12 @@ def graph_processed_log(log_file):
     print("Loss Before:", loss_before)
     print("Loss After:", loss_after)
 
-    bad_client_percentages = [0.2, 0.4, 0.6, 0.8, 1.0]
+    bad_client_percentages = [0.2, 0.4, 0.6, 0.8]
     
     x = range(1, len(acc_before) + 1)  # X-axis as setting indices
 
     # Generate plots
-    fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(24, 6))
+    fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
 
     # Accuracy Plot
     axes[0].plot(x, acc_before, marker='o', label='Initial Accuracy')
@@ -78,18 +78,6 @@ def graph_processed_log(log_file):
     axes[1].set_ylim(min_loss * 0.95, max_loss * 1.05)  # Add some padding
     axes[1].legend()
     axes[1].grid(True)
-
-    # Bad Client Accuracy Detection Plot
-    bar_width = 0.35
-    indices = np.arange(len(x))
-    axes[2].bar(indices, bca_simple, width=bar_width, label='Simple', align='center')
-    axes[2].bar(indices + bar_width, bca_hessian, width=bar_width, label='Hessian', align='center')
-    axes[2].set_title("Bad Client Accuracy Detection")
-    axes[2].set_xlabel("Setting")
-    axes[2].set_ylabel("Accuracy")
-    axes[2].set_xticks(indices + bar_width / 2, [f"{perc:.1f}%" for perc in bad_client_percentages], rotation=0)
-    axes[2].legend()
-    axes[2].grid(True)
 
     plt.tight_layout()
     plt.show()
@@ -123,4 +111,4 @@ def measure_accuracy(targets, predictions):
     return (TP + TN) / (TP + TN + FP + FN)
 
 
-graph_processed_log('retraining/cifar3.log')
+graph_processed_log('retraining/cifar2.log')
