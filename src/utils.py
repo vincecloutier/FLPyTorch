@@ -251,5 +251,3 @@ def visualize_noise():
         ax.axis("off")
     plt.tight_layout()
     plt.show()
-
-visualize_noise()
