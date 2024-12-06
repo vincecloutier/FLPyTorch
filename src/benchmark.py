@@ -41,7 +41,6 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
                 delta_t[epoch][idx] = {key: (global_weights[key] - w[key]).to(device) for key in w.keys()}
         
         global_weights = average_weights(local_weights)
-        model.load_state_dict(global_weights)
 
         if isBanzhaf:
             G_t = compute_G_t(delta_t[epoch], global_weights.keys())
@@ -52,6 +51,8 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
                         delta_g[idx][key] += G_t_minus_i[key] - G_t[key]
                 abv_hessian[idx] += compute_abv(args, model, train_dataset, user_groups[idx], grad, delta_t[epoch][idx], delta_g[idx], is_hessian=True)
                 abv_simple[idx] += compute_abv(args, model, train_dataset, user_groups[idx], grad, delta_t[epoch][idx], delta_g[idx], is_hessian=False)
+
+        model.load_state_dict(global_weights)
 
         acc, loss = test_inference(model, test_dataset)
         if early_stopping.check(epoch, acc, loss):
@@ -115,7 +116,7 @@ if __name__ == '__main__':
 
     longest_client_key = max(results.keys(), key=len)
     test_loss, test_acc, abv_simple, abv_hessian = results[longest_client_key]
-    
+
     # remove any clients that are not in all metrics
     shared_clients = set(shapley_values.keys()) & set(banzhaf_values.keys()) & set(abv_simple.keys()) & set(abv_hessian.keys())
     sv = [shapley_values[client] for client in shared_clients]
