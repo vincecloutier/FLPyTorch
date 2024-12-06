@@ -243,14 +243,28 @@ def visualize_noise():
     args = args_parser()
     noise_transform = AddGaussianNoise()
     train_dataset, _, _, _, _ = get_dataset(args)
+
+    image_1, _ = train_dataset[0]
+    image_2, _ = train_dataset[1]
+    image_3, _ = train_dataset[2]
+
     noise_levels = [0, 0.25, 0.5]
-    fig, axes = plt.subplots(1, len(noise_levels), figsize=(15, 5))
-    for i, std in enumerate(noise_levels):
+    fig, axes = plt.subplots(3, 3, figsize=(12, 12))
+
+    for col, std in enumerate(noise_levels):
         noise_transform.set_std(std)
-        noisy_image = noise_transform(train_dataset[0][0])
-        ax = axes[i]
-        ax.imshow(noisy_image.squeeze().permute(1, 2, 0).numpy())
-        ax.set_title(f"Noise std: {std}")
-        ax.axis("off")
+        noisy_image_1 = noise_transform(image_1.unsqueeze(0)).squeeze(0)
+        noisy_image_2 = noise_transform(image_2.unsqueeze(0)).squeeze(0)
+        noisy_image_3 = noise_transform(image_3.unsqueeze(0)).squeeze(0)
+        axes[0, col].imshow(noisy_image_1.permute(1, 2, 0).numpy())
+        axes[0, col].axis("off")
+        axes[1, col].imshow(noisy_image_2.permute(1, 2, 0).numpy())
+        axes[1, col].axis("off")
+        axes[2, col].imshow(noisy_image_3.permute(1, 2, 0).numpy())
+        axes[2, col].axis("off")
+
+        # only put the noise std in the top row's title
+        axes[0, col].set_title(f"Noise std: {std}")
+
     plt.tight_layout()
-    plt.show()
+    plt.savefig("noise_visualization.png", dpi=300, bbox_inches='tight')
