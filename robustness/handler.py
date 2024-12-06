@@ -63,6 +63,7 @@ def process_and_graph_logs(log_files):
     avg_runtimes = defaultdict(float)
     for log_file in log_files:
         approx_simple, approx_hessian, shapley, influence, runtimes = process_log(log_file)
+        print(approx_simple, approx_hessian, shapley)
         abvs.append(approx_simple)
         abvh.append(approx_hessian)
         sv.append(shapley)
