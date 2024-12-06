@@ -264,7 +264,7 @@ def visualize_noise():
         axes[2, col].axis("off")
 
         # only put the noise std in the top row's title
-        axes[0, col].set_title(f"Noise std: {std}")
+        # axes[0, col].set_title(f"Noise std: {std}")
 
     plt.tight_layout()
     plt.savefig("noise_visualization.png", dpi=300, bbox_inches='tight')
