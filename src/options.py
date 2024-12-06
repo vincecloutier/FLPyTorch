@@ -18,7 +18,7 @@ def args_parser():
     parser.add_argument('--noise_std', type=float, default=0.0, help= "Standard deviation of Gaussian noise to add to the dataset.")
 
     # training arguments
-    parser.add_argument('--local_ep', type=int, default=3, help="the number of local epochs: E")
+    parser.add_argument('--local_ep', type=int, default=10, help="the number of local epochs: E")
     parser.add_argument('--local_bs', type=int, default=128, help="local batch size: B")
     parser.add_argument('--optimizer', type=str, default='adam', help="type of optimizer")
     parser.add_argument('--lr', type=float, default=0.01, help='learning rate')
