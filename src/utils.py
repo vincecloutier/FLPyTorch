@@ -59,10 +59,11 @@ class AddGaussianNoise(object):
     def __init__(self, mean=0.0, std=0.0):
         self.mean = mean
         self.std = std
-
+        self.device = None
+    
     def __call__(self, tensor):
         if self.std > 0:
-            noise = torch.randn(tensor.size()) * self.std + self.mean
+            noise = torch.randn(tensor.size(), device=self.device) * self.std + self.mean
             return tensor + noise
         return tensor
 
@@ -72,6 +73,8 @@ class AddGaussianNoise(object):
     def set_std(self, std):
         self.std = std
 
+    def to(self, device):
+        self.device = device
 
 def get_dataset(args):
     """Returns train, validation, and test datasets along with a user group,
