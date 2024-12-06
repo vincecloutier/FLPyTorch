@@ -73,7 +73,7 @@ class AddGaussianNoise(object):
         self.std = std
 
 
-def get_dataset(args, noise_transform=None):
+def get_dataset(args):
     """Returns train, validation, and test datasets along with a user group,
     which is a dict where the keys are the user index and the values are the
     corresponding data for each of those users.
@@ -107,9 +107,6 @@ def get_dataset(args, noise_transform=None):
         dataset_name = 'imagenet'
         data_dir = './data/imagenet/'
         dataset_class = datasets.ImageNet
-
-    if noise_transform is not None:
-        t_dict[dataset_name]['train'] = transforms.Compose([t_dict[dataset_name]['train'], noise_transform])
 
     if dataset_name == 'imagenet':
         if not os.path.exists(data_dir):
@@ -236,3 +233,23 @@ def measure_accuracy(targets, predictions):
     universe = targets | predictions
     TN = len(universe - (targets | predictions))
     return (TP + TN) / (TP + TN + FP + FN)
+
+def visualize_noise():
+    import matplotlib.pyplot as plt
+    from options import args_parser
+    args = args_parser()
+    noise_transform = AddGaussianNoise()
+    train_dataset, _, _, _, _ = get_dataset(args)
+    noise_levels = [0, 0.25, 0.5]
+    fig, axes = plt.subplots(1, len(noise_levels), figsize=(15, 5))
+    for i, std in enumerate(noise_levels):
+        noise_transform.set_std(std)
+        noisy_image = noise_transform(train_dataset[0][0])
+        ax = axes[i]
+        ax.imshow(noisy_image.squeeze().permute(1, 2, 0).numpy())
+        ax.set_title(f"Noise std: {std}")
+        ax.axis("off")
+    plt.tight_layout()
+    plt.show()
+
+visualize_noise()

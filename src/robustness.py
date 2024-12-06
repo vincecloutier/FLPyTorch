@@ -20,14 +20,14 @@ import os
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:128"
 
 
-def train_client(idx, args, global_weights, train_dataset, user_groups, epoch, device):
+def train_client(idx, args, global_weights, train_dataset, user_groups, epoch, device, noise_transform):
     model = initialize_model(args)
     model.load_state_dict(global_weights)
     model.to(device)
     model.train()
 
     local_model = LocalUpdate(args=args, dataset=train_dataset, idxs=user_groups[idx])
-    w, _ = local_model.update_weights(model=model, global_round=epoch)
+    w, _ = local_model.update_weights(model=model, global_round=epoch, noise_transform=noise_transform)
     delta = {key: (global_weights[key] - w[key]).to(device) for key in global_weights.keys()}
 
     del local_model, model
@@ -36,7 +36,7 @@ def train_client(idx, args, global_weights, train_dataset, user_groups, epoch, d
     return idx, w, delta
 
 
-def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, user_groups, device):
+def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, user_groups, device, noise_transform):
     global_weights = model.state_dict()
     abv_simple, abv_hessian, shapley_values, influence_values = defaultdict(float), defaultdict(float), defaultdict(float), defaultdict(float)
     delta_t, delta_g = defaultdict(dict), defaultdict(lambda: {key: torch.zeros_like(global_weights[key]) for key in global_weights.keys()})
@@ -55,7 +55,7 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
         # no randomization about this here
         idxs_users = range(args.num_users)
         
-        train_client_partial = partial(train_client, args=args, global_weights=copy.deepcopy(global_weights), train_dataset=train_dataset, user_groups=user_groups, epoch=epoch, device=device)
+        train_client_partial = partial(train_client, args=args, global_weights=copy.deepcopy(global_weights), train_dataset=train_dataset, user_groups=user_groups, epoch=epoch, device=device, noise_transform=noise_transform)
         with multiprocessing.Pool(processes=args.processes) as pool:
             results = pool.map(train_client_partial, idxs_users)
         pool.close()
@@ -115,19 +115,19 @@ if __name__ == '__main__':
     print(args)
 
     device = get_device()
-    noise_transform = AddGaussianNoise()
-    train_dataset, valid_dataset, test_dataset, user_groups, actual_bad_clients = get_dataset(args, noise_transform=noise_transform)
+    train_dataset, valid_dataset, test_dataset, user_groups, actual_bad_clients = get_dataset(args)
     
-    # train the global model
     global_model = initialize_model(args)
     global_model.to(device)
 
-    for i in range(6):
-        print(f'Run {i+1} with noise std {i*0.2}')
-        logger.info(f'Run {i}: Adding Gaussian noise with std={i*0.2}')
-        noise_transform.set_std(i*0.2)
+    noise_transform = AddGaussianNoise()
 
-        global_model, abv_simple, abv_hessian, shapley_values, influence_values, runtimes = train_global_model(args, global_model, train_dataset, valid_dataset, test_dataset, user_groups, device)
+    for i in range(3):
+        print(f'Run {i+1} with noise std {i*0.25}')
+        logger.info(f'Run {i}: Adding Gaussian noise with std={i*0.25}')
+        noise_transform.set_std(i*0.25)
+
+        global_model, abv_simple, abv_hessian, shapley_values, influence_values, runtimes = train_global_model(args, global_model, train_dataset, valid_dataset, test_dataset, user_groups, device, noise_transform)
         test_acc, test_loss = test_inference(global_model, test_dataset)
 
         predicted_bad_abvs = identify_bad_idxs(abv_simple)
