@@ -213,14 +213,9 @@ def get_device():
 def identify_bad_idxs(approx_banzhaf_values: dict, threshold: float = 2) -> list[int]:
     if not approx_banzhaf_values:
         return []
-
-    # add all negative values to the list
-    bad_idxs = [key for key, banzhaf in approx_banzhaf_values.items() if banzhaf < 0]
-
-    # add all clients with banzhaf values less than the mean divided by the threshold to the list
+    # add all clients with negative bv or bv less than the mean divided by the threshold
     avg_banzhaf = np.mean(list(approx_banzhaf_values.values()))
-    bad_idxs.extend([key for key, banzhaf in approx_banzhaf_values.items() if banzhaf < avg_banzhaf / threshold])
-    
+    bad_idxs = [key for key, banzhaf in approx_banzhaf_values.items() if banzhaf < avg_banzhaf / threshold or banzhaf < 0]
     return bad_idxs
 
 
