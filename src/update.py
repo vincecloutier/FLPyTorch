@@ -61,8 +61,7 @@ class LocalUpdate(object):
 
             epoch_loss.append(sum(batch_loss)/len(batch_loss))
 
-            if self.args.verbose:
-                print(f'| Global Round : {global_round+1} | Local Epoch : {iter+1} | Loss: {sum(batch_loss) / len(batch_loss):.6f}')
+            print(f'| Global Round : {global_round+1} | Local Epoch : {iter+1} | Loss: {sum(batch_loss) / len(batch_loss):.6f}')
 
         return model.state_dict(), sum(epoch_loss) / len(epoch_loss)
 
@@ -94,8 +93,7 @@ class LocalUpdate(object):
 
     #         epoch_loss.append(sum(batch_loss)/len(batch_loss))
 
-    #         if self.args.verbose:
-    #             print(f'| Global Round : {global_round+1} | Local Epoch : {iter+1} | Loss: {sum(batch_loss) / len(batch_loss):.6f}')
+    #         print(f'| Global Round : {global_round+1} | Local Epoch : {iter+1} | Loss: {sum(batch_loss) / len(batch_loss):.6f}')
 
     #     return model.state_dict(), sum(epoch_loss) / len(epoch_loss)
 
