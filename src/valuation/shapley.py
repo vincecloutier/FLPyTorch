@@ -22,8 +22,8 @@ def compute_shapley(args, global_weights, client_weights, test_dataset):
         base_acc = test_inference(model, test_dataset)[0]
 
     client_keys = list(client_weights.keys())
-    epsilon, delta, r = 0.25, 0.25, 1  # allow 25% error at 75% confidence (if t is less than the number of permutations)
-    t = int((2 * r**2 / epsilon**2) * np.log(2 * len(client_keys) / delta))
+    e, d, r = 0.5, 0.25, 1  
+    t = int((2 * r**2 / e**2) * np.log(2 * len(client_keys) / d))
 
     shapley_updates = defaultdict(float)
     if t < fact(len(client_keys)):
