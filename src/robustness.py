@@ -123,7 +123,7 @@ if __name__ == '__main__':
     noise_transform = AddGaussianNoise()
     noise_transform.to(device)
 
-    for i in range(1, 3): #TODO: add run 0 
+    for i in range(3):
         print(f'Run {i+1} with noise std {i*0.25}')
         logger.info(f'Run {i}: Adding Gaussian noise with std={i*0.25}')
         noise_transform.set_std(i*0.25)
