@@ -9,10 +9,10 @@ fi
 
 echo "Using $PROCESSES processes."
 
-python robustness.py --dataset resnet --setting 0 --processes $PROCESSES --num_users 10 --local_ep 10 --epochs 15
-python robustness.py --dataset resnet --setting 1 --processes $PROCESSES --num_users 10 --local_ep 10 --epochs 15
-python robustness.py --dataset resnet --setting 2 --processes $PROCESSES --num_users 10 --local_ep 10 --epochs 15
-python robustness.py --dataset resnet --setting 3 --processes $PROCESSES --num_users 10 --local_ep 10 --epochs 15
+python robustness.py --dataset cifar --setting 0 --processes $PROCESSES --num_users 10 --local_ep 10 --epochs 15
+python robustness.py --dataset cifar --setting 1 --processes $PROCESSES --num_users 10 --local_ep 10 --epochs 15
+python robustness.py --dataset cifar --setting 2 --processes $PROCESSES --num_users 10 --local_ep 10 --epochs 15
+python robustness.py --dataset cifar --setting 3 --processes $PROCESSES --num_users 10 --local_ep 10 --epochs 15
 
 echo "All runs completed."
 
