@@ -115,17 +115,7 @@ if __name__ == '__main__':
 
     longest_client_key = max(results.keys(), key=len)
     test_loss, test_acc, abv_simple, abv_hessian = results[longest_client_key]
-
-    identified_bad_clients_simple = identify_bad_idxs(abv_simple)
-    identified_bad_clients_hessian = identify_bad_idxs(abv_hessian)
-    bad_client_accuracy_simple = measure_accuracy(actual_bad_clients, identified_bad_clients_simple)
-    bad_client_accuracy_hessian = measure_accuracy(actual_bad_clients, identified_bad_clients_hessian)
-
-    print(shapley_values)
-    print(banzhaf_values)
-    print(abv_simple)
-    print(abv_hessian)
-
+    
     # remove any clients that are not in all metrics
     shared_clients = set(shapley_values.keys()) & set(banzhaf_values.keys()) & set(abv_simple.keys()) & set(abv_hessian.keys())
     sv = [shapley_values[client] for client in shared_clients]
@@ -155,8 +145,4 @@ if __name__ == '__main__':
     logger.info(f'Pearson Correlation Between Banzhaf And Approximate Banzhaf Values Simple: {pearsonr(bv, abv_simple)}')
     logger.info(f'Pearson Correlation Between Banzhaf And Approximate Banzhaf Values Hessian: {pearsonr(bv, abv_hessian)}')
     logger.info(f'Actual Bad Clients: {actual_bad_clients}')
-    logger.info(f'Identified Bad Clients Simple: {identified_bad_clients_simple}')
-    logger.info(f'Identified Bad Clients Hessian: {identified_bad_clients_hessian}')
-    logger.info(f'Bad Client Accuracy Simple: {bad_client_accuracy_simple}')
-    logger.info(f'Bad Client Accuracy Hessian: {bad_client_accuracy_hessian}')
     logger.info(f'Total Run Time: {time.time() - start_time}')
