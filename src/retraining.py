@@ -43,7 +43,7 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
     selection_probabilities = np.full(args.num_users, 1 / args.num_users)
 
     runtimes = {'abvs': 0, 'abvh': 0, 'total': 0}
-    early_stopping = EarlyStopping()
+    early_stopping = EarlyStopping(args)
 
     for epoch in tqdm(range(args.epochs)):
         local_weights = []

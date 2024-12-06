@@ -22,7 +22,7 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
     if isBanzhaf:
         delta_t, delta_g = defaultdict(dict), defaultdict(lambda: {key: torch.zeros_like(global_weights[key]) for key in global_weights.keys()})
 
-    early_stopping = EarlyStopping()
+    early_stopping = EarlyStopping(args)
 
     for epoch in tqdm(range(args.epochs), desc=f"Global Training For Subset {clients}"):
         local_weights = []

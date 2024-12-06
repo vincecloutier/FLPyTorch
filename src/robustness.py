@@ -42,7 +42,7 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
     delta_t, delta_g = defaultdict(dict), defaultdict(lambda: {key: torch.zeros_like(global_weights[key]) for key in global_weights.keys()})
 
     runtimes = {'abvs': 0, 'abvh': 0, 'sv': 0, 'if': 0}
-    early_stopping = EarlyStopping()
+    early_stopping = EarlyStopping(args)
 
     for epoch in tqdm(range(args.epochs), desc="Training Epochs"):
         local_weights = []

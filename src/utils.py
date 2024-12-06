@@ -13,13 +13,14 @@ import zipfile
 
 
 class EarlyStopping:
-    def __init__(self, patience=3, epoch_threshold=15, acc_threshold=0.80):
+    def __init__(self, args, patience=3, epoch_threshold=15, acc_threshold=0.80):
         self.best_acc = -float('inf')
         self.best_loss = float('inf')
         self.no_improvement_count = 0
         self.patience = patience
         self.epoch_threshold = epoch_threshold
         self.acc_threshold = acc_threshold
+        self.args = args
 
     def check(self, epoch, acc, loss):
         if acc > self.best_acc * 1.01 or loss < self.best_loss * 0.99:
@@ -27,8 +28,12 @@ class EarlyStopping:
             self.no_improvement_count = 0
         else:
             self.no_improvement_count += 1
-            if self.no_improvement_count > self.patience and (epoch > self.epoch_threshold or acc > self.acc_threshold):
-                return True
+            if self.args.acc_stopping == 0:
+                if self.no_improvement_count > self.patience and epoch > self.epoch_threshold:
+                    return True
+            else:
+                if self.no_improvement_count > self.patience and (epoch > self.epoch_threshold or acc > self.acc_threshold):
+                    return True
         return False
 
 
