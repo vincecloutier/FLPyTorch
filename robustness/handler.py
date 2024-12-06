@@ -102,4 +102,4 @@ def process_and_graph_logs(log_files):
     plt.tight_layout()
     plt.show()
 
-process_and_graph_logs(['robustness/cifar0.log', 'robustness/cifar1.log',  'robustness/cifar2.log', 'robustness/cifar3.log'])
+process_and_graph_logs(['robustness/resnet0.log', 'robustness/resnet1.log',  'robustness/resnet2.log', 'robustness/resnet3.log', 'robustness/cifar1.log'])

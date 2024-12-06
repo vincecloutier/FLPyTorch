@@ -1,0 +1,119 @@
+2024-12-03 16:31:09,215 INFO Run 0: Adding Gaussian noise with std=0.0
+2024-12-03 16:43:36,702 INFO Number Of Clients: 5, Client Selection Fraction: 0.6, Local Epochs: 10
+2024-12-03 16:43:36,710 INFO Batch Size: 128, Learning Rate: 0.01, Momentum: 0.9
+2024-12-03 16:43:36,711 INFO Dataset: resnet, Setting: Non IID with 1 Bad Clients and 4 Categories Per Bad Client, Number Of Rounds: 50
+2024-12-03 16:43:36,711 INFO Test Accuracy: 66.91%, Test Loss: 103.6918694972992
+2024-12-03 16:43:36,712 INFO Banzhaf Values Simple: defaultdict(<class 'float'>, {4: 2.303843474481255, 1: 1.6028606481850147, 2: 2.4069506200030446, 3: -3.5347407553344965, 0: 1.5535326804965734})
+2024-12-03 16:43:36,712 INFO Banzhaf Values Hessian: defaultdict(<class 'float'>, {4: 441.26016173511744, 1: 98.94643509015441, 2: 296.9232348706573, 3: -0.01261138916015625, 0: 291.5826625227928})
+2024-12-03 16:43:36,712 INFO Shapley Values: defaultdict(<class 'float'>, {4: 0.9335166666666668, 1: 0.6866166666666668, 2: 0.6524999999999997, 3: -2.420283333333333, 0: 0.7126166666666667})
+2024-12-03 16:43:36,712 INFO Influence Function Values: defaultdict(<class 'float'>, {3: 3982.393798828125, 0: 3187.932861328125, 4: 4781.1846923828125, 2: 4779.8524169921875, 1: 2388.6937866210938})
+2024-12-03 16:43:36,713 INFO Actual Bad Clients: [3]
+2024-12-03 16:43:36,713 INFO Predicted Bad Clients Banzhaf Simple: [3]
+2024-12-03 16:43:36,713 INFO Predicted Bad Clients Banzhaf Hessian: [3]
+2024-12-03 16:43:36,713 INFO Predicted Bad Clients Shapley: [3]
+2024-12-03 16:43:36,713 INFO Predicted Bad Clients Influence: []
+2024-12-03 16:43:36,714 INFO Bad Client Accuracy Banzhaf Simple: 1.0
+2024-12-03 16:43:36,714 INFO Bad Client Accuracy Banzhaf Hessian: 1.0
+2024-12-03 16:43:36,714 INFO Bad Client Accuracy Shapley: 1.0
+2024-12-03 16:43:36,714 INFO Bad Client Accuracy Influence: 0.0
+2024-12-03 16:43:36,714 INFO Runtimes: {'abvs': 0.3159816265106201, 'abvh': 91.44940185546875, 'sv': 275.46961975097656, 'if': 0.015643835067749023}
+
+2024-12-03 16:43:36,715 INFO Run 1: Adding Gaussian noise with std=0.2
+2024-12-03 16:56:05,101 INFO Number Of Clients: 5, Client Selection Fraction: 0.6, Local Epochs: 10
+2024-12-03 16:56:05,106 INFO Batch Size: 128, Learning Rate: 0.01, Momentum: 0.9
+2024-12-03 16:56:05,107 INFO Dataset: resnet, Setting: Non IID with 1 Bad Clients and 4 Categories Per Bad Client, Number Of Rounds: 50
+2024-12-03 16:56:05,108 INFO Test Accuracy: 68.64%, Test Loss: 100.39890611171722
+2024-12-03 16:56:05,108 INFO Banzhaf Values Simple: defaultdict(<class 'float'>, {1: 1.3194915552157909, 4: 2.626407379284501, 0: 2.424261920619756, 3: -3.8889903239905834, 2: 2.7000885289162397})
+2024-12-03 16:56:05,109 INFO Banzhaf Values Hessian: defaultdict(<class 'float'>, {1: 108.45681101083755, 4: 457.87739914655685, 0: 810.0240068733692, 3: -101.39322829246521, 2: 556.0023386478424})
+2024-12-03 16:56:05,109 INFO Shapley Values: defaultdict(<class 'float'>, {1: 0.35561666666666675, 4: 0.5882666666666666, 0: 0.8385999999999998, 3: -2.3490499999999996, 2: 0.5839})
+2024-12-03 16:56:05,109 INFO Influence Function Values: defaultdict(<class 'float'>, {2: 3982.2103271484375, 0: 5577.608947753906, 4: 3982.0001220703125, 3: 4776.356689453125, 1: 797.0576171875})
+2024-12-03 16:56:05,110 INFO Actual Bad Clients: [3]
+2024-12-03 16:56:05,111 INFO Predicted Bad Clients Banzhaf Simple: [3]
+2024-12-03 16:56:05,111 INFO Predicted Bad Clients Banzhaf Hessian: [3]
+2024-12-03 16:56:05,111 INFO Predicted Bad Clients Shapley: [3]
+2024-12-03 16:56:05,112 INFO Predicted Bad Clients Influence: []
+2024-12-03 16:56:05,112 INFO Bad Client Accuracy Banzhaf Simple: 1.0
+2024-12-03 16:56:05,112 INFO Bad Client Accuracy Banzhaf Hessian: 1.0
+2024-12-03 16:56:05,113 INFO Bad Client Accuracy Shapley: 1.0
+2024-12-03 16:56:05,113 INFO Bad Client Accuracy Influence: 0.0
+2024-12-03 16:56:05,113 INFO Runtimes: {'abvs': 0.31423473358154297, 'abvh': 91.23278665542603, 'sv': 278.3552074432373, 'if': 0.009764432907104492}
+
+2024-12-03 16:56:05,114 INFO Run 2: Adding Gaussian noise with std=0.4
+2024-12-03 17:08:01,299 INFO Number Of Clients: 5, Client Selection Fraction: 0.6, Local Epochs: 10
+2024-12-03 17:08:01,314 INFO Batch Size: 128, Learning Rate: 0.01, Momentum: 0.9
+2024-12-03 17:08:01,314 INFO Dataset: resnet, Setting: Non IID with 1 Bad Clients and 4 Categories Per Bad Client, Number Of Rounds: 50
+2024-12-03 17:08:01,315 INFO Test Accuracy: 76.83%, Test Loss: 81.01578325033188
+2024-12-03 17:08:01,315 INFO Banzhaf Values Simple: defaultdict(<class 'float'>, {0: 2.238862658618018, 4: 2.781158938072622, 2: 2.3002636880264618, 3: -1.4942770935595036, 1: 0.6751729641109705})
+2024-12-03 17:08:01,316 INFO Banzhaf Values Hessian: defaultdict(<class 'float'>, {0: 294.9829487800598, 4: 612.3655544111971, 2: 314.11635345220566, 3: 81.20793151855469, 1: 66.69864602386951})
+2024-12-03 17:08:01,317 INFO Shapley Values: defaultdict(<class 'float'>, {0: 0.4080166666666665, 4: 0.5502166666666668, 2: 0.30565000000000003, 3: -1.4827000000000001, 1: 0.3005833333333333})
+2024-12-03 17:08:01,317 INFO Influence Function Values: defaultdict(<class 'float'>, {3: 2388.9931640625, 0: 4780.90771484375, 4: 5576.8450927734375, 2: 3982.5686645507812, 1: 2388.3899536132812})
+2024-12-03 17:08:01,318 INFO Actual Bad Clients: [3]
+2024-12-03 17:08:01,318 INFO Predicted Bad Clients Banzhaf Simple: [3]
+2024-12-03 17:08:01,319 INFO Predicted Bad Clients Banzhaf Hessian: []
+2024-12-03 17:08:01,319 INFO Predicted Bad Clients Shapley: [3]
+2024-12-03 17:08:01,321 INFO Predicted Bad Clients Influence: []
+2024-12-03 17:08:01,321 INFO Bad Client Accuracy Banzhaf Simple: 1.0
+2024-12-03 17:08:01,322 INFO Bad Client Accuracy Banzhaf Hessian: 0.0
+2024-12-03 17:08:01,322 INFO Bad Client Accuracy Shapley: 1.0
+2024-12-03 17:08:01,323 INFO Bad Client Accuracy Influence: 0.0
+2024-12-03 17:08:01,324 INFO Runtimes: {'abvs': 0.3016650676727295, 'abvh': 91.28027272224426, 'sv': 269.9482207298279, 'if': 0.010790586471557617}
+
+2024-12-03 17:08:01,324 INFO Run 3: Adding Gaussian noise with std=0.6000000000000001
+2024-12-03 17:20:28,936 INFO Number Of Clients: 5, Client Selection Fraction: 0.6, Local Epochs: 10
+2024-12-03 17:20:28,937 INFO Batch Size: 128, Learning Rate: 0.01, Momentum: 0.9
+2024-12-03 17:20:28,938 INFO Dataset: resnet, Setting: Non IID with 1 Bad Clients and 4 Categories Per Bad Client, Number Of Rounds: 50
+2024-12-03 17:20:28,939 INFO Test Accuracy: 70.23%, Test Loss: 102.62155133485794
+2024-12-03 17:20:28,940 INFO Banzhaf Values Simple: defaultdict(<class 'float'>, {2: 2.7699987441301346, 3: -2.6072685706894845, 0: 1.7273459252901375, 4: 1.6764429826289415, 1: 1.2347738668322563})
+2024-12-03 17:20:28,941 INFO Banzhaf Values Hessian: defaultdict(<class 'float'>, {2: 582.0364997666329, 3: -139.9004177749157, 0: 158.6309470180422, 4: 312.1267478466034, 1: 106.1933171749115})
+2024-12-03 17:20:28,949 INFO Shapley Values: defaultdict(<class 'float'>, {2: 0.6906833333333333, 3: -1.9035333333333333, 0: 0.3769499999999999, 4: 0.5284500000000001, 1: 0.24175000000000002})
+2024-12-03 17:20:28,950 INFO Influence Function Values: defaultdict(<class 'float'>, {4: 4784.8446044921875, 2: 4784.728576660156, 1: 1592.7626953125, 0: 4782.64404296875, 3: 3184.3643798828125})
+2024-12-03 17:20:28,951 INFO Actual Bad Clients: [3]
+2024-12-03 17:20:28,952 INFO Predicted Bad Clients Banzhaf Simple: [3]
+2024-12-03 17:20:28,953 INFO Predicted Bad Clients Banzhaf Hessian: [3]
+2024-12-03 17:20:28,954 INFO Predicted Bad Clients Shapley: [3]
+2024-12-03 17:20:28,955 INFO Predicted Bad Clients Influence: []
+2024-12-03 17:20:28,956 INFO Bad Client Accuracy Banzhaf Simple: 1.0
+2024-12-03 17:20:28,957 INFO Bad Client Accuracy Banzhaf Hessian: 1.0
+2024-12-03 17:20:28,958 INFO Bad Client Accuracy Shapley: 1.0
+2024-12-03 17:20:28,959 INFO Bad Client Accuracy Influence: 0.0
+2024-12-03 17:20:28,960 INFO Runtimes: {'abvs': 0.36876392364501953, 'abvh': 91.32849144935608, 'sv': 276.9192726612091, 'if': 0.010033130645751953}
+
+2024-12-03 17:20:28,961 INFO Run 4: Adding Gaussian noise with std=0.8
+2024-12-03 17:32:42,813 INFO Number Of Clients: 5, Client Selection Fraction: 0.6, Local Epochs: 10
+2024-12-03 17:32:42,815 INFO Batch Size: 128, Learning Rate: 0.01, Momentum: 0.9
+2024-12-03 17:32:42,816 INFO Dataset: resnet, Setting: Non IID with 1 Bad Clients and 4 Categories Per Bad Client, Number Of Rounds: 50
+2024-12-03 17:32:42,817 INFO Test Accuracy: 70.89999999999999%, Test Loss: 102.3864233493805
+2024-12-03 17:32:42,818 INFO Banzhaf Values Simple: defaultdict(<class 'float'>, {2: 1.7999679760541767, 3: -2.794467842904851, 1: 2.535182232502848, 4: 2.2487673657014966, 0: 1.6763214278034866})
+2024-12-03 17:32:42,819 INFO Banzhaf Values Hessian: defaultdict(<class 'float'>, {2: 224.9651446044445, 3: -144.2819916009903, 1: 519.2441540956497, 4: 404.37656205892563, 0: 275.24425233900547})
+2024-12-03 17:32:42,820 INFO Shapley Values: defaultdict(<class 'float'>, {2: 0.5481666666666667, 3: -2.0951, 1: 0.6678833333333332, 4: 0.42199999999999993, 0: 0.46338333333333326})
+2024-12-03 17:32:42,821 INFO Influence Function Values: defaultdict(<class 'float'>, {1: 3187.7792358398438, 4: 3187.99560546875, 0: 4782.856994628906, 3: 4782.2890625, 2: 3188.206298828125})
+2024-12-03 17:32:42,822 INFO Actual Bad Clients: [3]
+2024-12-03 17:32:42,823 INFO Predicted Bad Clients Banzhaf Simple: [3]
+2024-12-03 17:32:42,824 INFO Predicted Bad Clients Banzhaf Hessian: [3]
+2024-12-03 17:32:42,824 INFO Predicted Bad Clients Shapley: [3]
+2024-12-03 17:32:42,826 INFO Predicted Bad Clients Influence: [0]
+2024-12-03 17:32:42,826 INFO Bad Client Accuracy Banzhaf Simple: 1.0
+2024-12-03 17:32:42,827 INFO Bad Client Accuracy Banzhaf Hessian: 1.0
+2024-12-03 17:32:42,828 INFO Bad Client Accuracy Shapley: 1.0
+2024-12-03 17:32:42,829 INFO Bad Client Accuracy Influence: 0.0
+2024-12-03 17:32:42,830 INFO Runtimes: {'abvs': 0.3579552173614502, 'abvh': 91.44615864753723, 'sv': 278.5801775455475, 'if': 0.01221156120300293}
+
+2024-12-03 17:32:42,831 INFO Run 5: Adding Gaussian noise with std=1.0
+2024-12-03 17:44:59,126 INFO Number Of Clients: 5, Client Selection Fraction: 0.6, Local Epochs: 10
+2024-12-03 17:44:59,126 INFO Batch Size: 128, Learning Rate: 0.01, Momentum: 0.9
+2024-12-03 17:44:59,127 INFO Dataset: resnet, Setting: Non IID with 1 Bad Clients and 4 Categories Per Bad Client, Number Of Rounds: 50
+2024-12-03 17:44:59,127 INFO Test Accuracy: 70.22%, Test Loss: 107.45381486415863
+2024-12-03 17:44:59,127 INFO Banzhaf Values Simple: defaultdict(<class 'float'>, {2: 1.8419325333088636, 1: 2.2035717330873013, 4: 2.529232207685709, 3: -5.050305368378758, 0: 2.1560339527204633})
+2024-12-03 17:44:59,128 INFO Banzhaf Values Hessian: defaultdict(<class 'float'>, {2: 417.74313896894455, 1: 401.04890751838684, 4: 565.9429510608315, 3: -341.84814892709255, 0: 631.8312307149172})
+2024-12-03 17:44:59,128 INFO Shapley Values: defaultdict(<class 'float'>, {2: 0.6203333333333334, 1: 0.5331999999999999, 4: 0.6561166666666667, 3: -2.4842166666666667, 0: 0.6674999999999999})
+2024-12-03 17:44:59,129 INFO Influence Function Values: defaultdict(<class 'float'>, {4: 3988.2770385742188, 0: 4785.28564453125, 3: 5582.33447265625, 1: 3189.4329833984375, 2: 1597.2390747070312})
+2024-12-03 17:44:59,129 INFO Actual Bad Clients: [3]
+2024-12-03 17:44:59,129 INFO Predicted Bad Clients Banzhaf Simple: [3]
+2024-12-03 17:44:59,129 INFO Predicted Bad Clients Banzhaf Hessian: [3]
+2024-12-03 17:44:59,129 INFO Predicted Bad Clients Shapley: [3]
+2024-12-03 17:44:59,130 INFO Predicted Bad Clients Influence: []
+2024-12-03 17:44:59,130 INFO Bad Client Accuracy Banzhaf Simple: 1.0
+2024-12-03 17:44:59,130 INFO Bad Client Accuracy Banzhaf Hessian: 1.0
+2024-12-03 17:44:59,131 INFO Bad Client Accuracy Shapley: 1.0
+2024-12-03 17:44:59,131 INFO Bad Client Accuracy Influence: 0.0
+2024-12-03 17:44:59,131 INFO Runtimes: {'abvs': 0.3294060230255127, 'abvh': 95.2740728855133, 'sv': 272.4183840751648, 'if': 0.010753154754638672}
