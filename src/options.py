@@ -22,7 +22,6 @@ def args_parser():
     parser.add_argument('--local_bs', type=int, default=128, help="local batch size: B")
     parser.add_argument('--optimizer', type=str, default='adam', help="type of optimizer")
     parser.add_argument('--lr', type=float, default=0.01, help='learning rate')
-    parser.add_argument('--momentum', type=float, default=0.9, help='SGD momentum (default: 0.9)')
     parser.add_argument('--acc_stopping', type=int, default=1, help='Stopping criterion based on accuracy (default: 1)')
 
     # simulation arguments

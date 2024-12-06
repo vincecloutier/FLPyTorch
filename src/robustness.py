@@ -153,7 +153,7 @@ if __name__ == '__main__':
             setting_str = f"Noisy with {len(actual_bad_clients)} Bad Clients and {100 * args.badsample_prop}% Bad Samples Per Bad Client"
         
         logger.info(f'Number Of Clients: {args.num_users}, Client Selection Fraction: {args.frac}, Local Epochs: {args.local_ep}')
-        logger.info(f'Batch Size: {args.local_bs}, Learning Rate: {args.lr}, Momentum: {args.momentum}')
+        logger.info(f'Batch Size: {args.local_bs}, Learning Rate: {args.lr}')
         logger.info(f'Dataset: {args.dataset}, Setting: {setting_str}, Number Of Rounds: {args.epochs}')
         logger.info(f'Test Accuracy: {100*test_acc}%, Test Loss: {test_loss}')
         logger.info(f'Banzhaf Values Simple: {abv_simple}')
