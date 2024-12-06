@@ -42,8 +42,7 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
     delta_t, delta_g = defaultdict(dict), defaultdict(lambda: {key: torch.zeros_like(global_weights[key]) for key in global_weights.keys()})
 
     runtimes = {'abvs': 0, 'abvh': 0, 'sv': 0, 'if': 0}
-    early_stopping = EarlyStopping(args)
-
+    
     for epoch in tqdm(range(args.epochs), desc="Training Epochs"):
         local_weights = []
         local_weights_dict = defaultdict(dict)
@@ -97,9 +96,6 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
         model.load_state_dict(global_weights)
 
         acc, loss = test_inference(model, test_dataset)    
-        if early_stopping.check(epoch, acc, loss):
-            print(f'Convergence Reached At Round {epoch + 1}')
-            break
     
         print(f'Epoch {epoch+1}/{args.epochs} - Test Accuracy: {acc}, Test Loss: {loss}, Runtimes: {runtimes}')
     
@@ -173,5 +169,3 @@ if __name__ == '__main__':
         logger.info(f'Bad Client Accuracy Shapley: {bad_client_accuracy_sv}')
         logger.info(f'Bad Client Accuracy Influence: {bad_client_accuracy_if}')
         logger.info(f'Runtimes: {runtimes}')
-
-# TODO: if this doesn't work try to use the noise transform on only the training data (not the validation data)
