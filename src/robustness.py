@@ -67,11 +67,11 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
             delta_t[epoch][idx] = delta
 
         # compute shapley values
-        start_time = time.time()
-        shapley_updates = compute_shapley(args, global_weights, local_weights_dict, test_dataset)
-        for k, v in shapley_updates.items():
-            shapley_values[k] += v  
-        runtimes['sv'] += time.time() - start_time
+        # start_time = time.time()
+        # shapley_updates = compute_shapley(args, global_weights, local_weights_dict, test_dataset)
+        # for k, v in shapley_updates.items():
+        #     shapley_values[k] += v  
+        # runtimes['sv'] += time.time() - start_time
 
         global_weights = average_weights(local_weights)
        
@@ -100,8 +100,8 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
         print(f'Epoch {epoch+1}/{args.epochs} - Test Accuracy: {acc}, Test Loss: {loss}, Runtimes: {runtimes}')
     
     start_time = time.time()
-    # influence_values = compute_influence(args, global_weights, train_dataset, test_dataset, user_groups)
-    influence_values = compute_influence_edb(args, delta_t, epoch)
+    influence_values = compute_influence(args, global_weights, train_dataset, test_dataset, user_groups)
+    # influence_values = compute_influence_edb(args, delta_t, epoch)
     runtimes['if'] += time.time() - start_time
 
     return model, abv_simple, abv_hessian, shapley_values, influence_values, runtimes
