@@ -86,7 +86,7 @@ def compute_influence(args, global_weights, train_dataset, test_dataset, user_gr
         score_args=score_args,
         factors_name=factors_name,
         query_dataset=test_dataset,
-        query_indices=list(range(1000)),
+        query_indices=list(range(len(test_dataset))),
         train_dataset=train_dataset,
         per_device_query_batch_size=1000,
         overwrite_output_dir=True,
