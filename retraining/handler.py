@@ -88,8 +88,8 @@ def graph_processed_log(log_file):
     fig, axes = plt.subplots(nrows=3, ncols=2, figsize=(10, 15))
 
     # use the loss from the lowest quality data setting to set the y-axis limits for all plots
-    min_loss = min(lb1.min(), lb2.min(), lb3.min())
-    max_loss = max(lb1.max(), lb2.max(), lb3.max())
+    min_loss = min(lb1.min(), lb2.min(), lb3.min(), la1.min(), la2.min(), la3.min())
+    max_loss = max(lb1.max(), lb2.max(), lb3.max(), la1.max(), la2.max(), la3.max())
 
     # accuracy and loss plots for lowest quality data setting
     make_accuracy_plot(axes[0, 0], x, ab1, aa1, x_label)
@@ -105,33 +105,5 @@ def graph_processed_log(log_file):
 
     plt.tight_layout()
     plt.savefig(f"retraining/graphs/{log_file.split('/')[-1].split('.')[0]}.png")
-
-
-# TEMPORARY UTILS
-def identify_bad_idxs(approx_banzhaf_values: dict, threshold: float = 2) -> list[int]:
-    if not approx_banzhaf_values:
-        return []
-
-    # add all negative values to the list
-    bad_idxs = [key for key, banzhaf in approx_banzhaf_values.items() if banzhaf < 0]
-
-    # add all clients with banzhaf values less than the mean divided by the threshold to the list
-    avg_banzhaf = np.mean(list(approx_banzhaf_values.values()))
-    bad_idxs.extend([key for key, banzhaf in approx_banzhaf_values.items() if banzhaf < avg_banzhaf / threshold])
-    
-    return bad_idxs
-
-def measure_accuracy(targets, predictions):
-    if targets is None or predictions is None:
-        return 0.0
-    if len(targets) == 0 and len(predictions) == 0:
-        return 1.0
-    targets, predictions = set(targets), set(predictions)
-    TP = len(predictions & targets)
-    FP = len(predictions - targets)
-    FN = len(targets - predictions)
-    universe = targets | predictions
-    TN = len(universe - (targets | predictions))
-    return (TP + TN) / (TP + TN + FP + FN)
 
 graph_processed_log('retraining/resnet2.log')
