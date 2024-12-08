@@ -10,8 +10,8 @@ def process_log(file_path):
         logs = file.read()
 
     # regex patterns
-    before_pattern = r"Test Accuracy Before Retraining: ([\d\.]+), Test Loss Before Retraining: ([\d\.]+)"
-    after_pattern = r"Test Accuracy After Retraining: ([\d\.]+), Test Loss After Retraining: ([\d\.]+)"
+    before_pattern = r"Test Accuracy Before Retraining: ([\d\.]+), Test Loss Before Retraining: ([\d\.]+), in ([\d\.]+)s"
+    after_pattern = r"Test Accuracy After Retraining: ([\d\.]+), Test Loss After Retraining: ([\d\.]+), in ([\d\.]+)s"
 
     # extract all values
     acc_loss_before = [tuple(eval(f"({match})")) for match in re.findall(before_pattern, logs)]
@@ -30,18 +30,26 @@ def process_log(file_path):
     # convert to numpy arrays
     ab1 = np.array([round(float(item[0]), 2) for item in acc_loss_before_1])
     lb1 = np.array([round(float(item[1]), 2) for item in acc_loss_before_1])
+    rb1 = np.array([round(float(item[2]), 2) for item in acc_loss_before_1])
     aa1 = np.array([round(float(item[0]), 2) for item in acc_loss_after_1])
     la1 = np.array([round(float(item[1]), 2) for item in acc_loss_after_1])
+    ra1 = np.array([round(float(item[2]), 2) for item in acc_loss_after_1])
 
     ab2 = np.array([round(float(item[0]), 2) for item in acc_loss_before_2])
     lb2 = np.array([round(float(item[1]), 2) for item in acc_loss_before_2])
+    rb2 = np.array([round(float(item[2]), 2) for item in acc_loss_before_2])
     aa2 = np.array([round(float(item[0]), 2) for item in acc_loss_after_2])
     la2 = np.array([round(float(item[1]), 2) for item in acc_loss_after_2])
+    ra2 = np.array([round(float(item[2]), 2) for item in acc_loss_after_2])
 
     ab3 = np.array([round(float(item[0]), 2) for item in acc_loss_before_3])
     lb3 = np.array([round(float(item[1]), 2) for item in acc_loss_before_3])
+    rb3 = np.array([round(float(item[2]), 2) for item in acc_loss_before_3])
     aa3 = np.array([round(float(item[0]), 2) for item in acc_loss_after_3])
     la3 = np.array([round(float(item[1]), 2) for item in acc_loss_after_3])
+    ra3 = np.array([round(float(item[2]), 2) for item in acc_loss_after_3])
+
+    # TODO: do something with runtime
 
     return ab1, lb1, aa1, la1, ab2, lb2, aa2, la2, ab3, lb3, aa3, la3
 
