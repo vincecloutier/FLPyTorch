@@ -52,11 +52,9 @@ def process_log(file_path):
     return ab1, lb1, aa1, la1, ab2, lb2, aa2, la2, ab3, lb3, aa3, la3
 
 
-def make_accuracy_plot(ax, x, acc_before, acc_after, x_label):
+def make_accuracy_plot(ax, x, acc_before, acc_after):
     ax.plot(x, acc_before, marker='o', linestyle='-', color='tab:orange', label='Initial Accuracy')
     ax.plot(x, acc_after, marker='s', linestyle='--', color='tab:blue', label='Retrained Accuracy')
-    ax.set_title("Accuracy Before and After Retraining", fontsize=14)
-    ax.set_xlabel(x_label, fontsize=12)
     ax.set_ylabel("Accuracy (%)", fontsize=12)
     ax.set_xticks(x)
     ax.set_xticklabels([f"{n}" for n in x], fontsize=10)
@@ -64,66 +62,79 @@ def make_accuracy_plot(ax, x, acc_before, acc_after, x_label):
     ax.legend(fontsize=10)
     ax.grid(True, linestyle='--', alpha=0.6)
 
-
-def make_loss_plot(ax, x, loss_before, loss_after, x_label, min_loss, max_loss):
+def make_loss_plot(ax, x, loss_before, loss_after, min_loss, max_loss):
     ax.plot(x, loss_before, marker='o', linestyle='-', color='tab:orange', label='Initial Loss')
     ax.plot(x, loss_after, marker='s', linestyle='--', color='tab:blue', label='Retrained Loss')
-    ax.set_title("Loss Before and After Retraining", fontsize=14)
-    ax.set_xlabel(x_label, fontsize=12)
     ax.set_ylabel("Loss", fontsize=12)
     ax.yaxis.set_label_position("right")
     ax.yaxis.tick_right()
-    ax.set_xticks(x)
-    ax.set_xticklabels([f"{n}" for n in x], fontsize=10)
     ax.set_ylim(min_loss * 0.95, max_loss * 1.05)
     ax.legend(fontsize=10)
     ax.grid(True, linestyle='--', alpha=0.6)
 
-
 def graph_processed_log(log_file):
-    # collect data from each setting
+    # determine x-axis labels based on the log file identifier
     if "1" in log_file:
-        x_label_1 = "Number of Clients with Non-IID Data (4 Categories)"
-        x_label_2 = "Number of Clients with Non-IID Data (6 Categories)"
-        x_label_3 = "Number of Clients with Non-IID Data (8 Categories)"        
+        title = "Accuracy and Loss Before and After Retraining (Non-IID Data)"
+        x_labels = [
+            "Number of Clients with Only 4 Categories Of Data",
+            "Number of Clients with Only 6 Categories Of Data",
+            "Number of Clients with Only 8 Categories Of Data"
+        ]
     elif "2" in log_file:
-        x_label_1 = "Number of Clients with Mislabeled Data (60%)"
-        x_label_2 = "Number of Clients with Mislabeled Data (40%)"
-        x_label_3 = "Number of Clients with Mislabeled Data (20%)"
+        title = "Accuracy and Loss Before and After Retraining (Mislabelled Data)"
+        x_labels = [
+            "Number of Clients with Mislabelled Sample Ratio 60%",
+            "Number of Clients with Mislabelled Sample Ratio 40%",
+            "Number of Clients with Mislabelled Sample Ratio 20%"
+        ]
     elif "3" in log_file:
-        x_label_1 = "Number of Clients with Noisy Data (60%)"
-        x_label_2 = "Number of Clients with Noisy Data (40%)"
-        x_label_3 = "Number of Clients with Noisy Data (20%)"
+        title = "Accuracy and Loss Before and After Retraining (Poisoned Data)"
+        x_labels = [
+            "Number of Clients with Poison Sample Ratio 60%",
+            "Number of Clients with Poison Sample Ratio 40%",
+            "Number of Clients with Poison Sample Ratio 20%"
+        ]
+    else:
+        x_labels = ["Setting 1", "Setting 2", "Setting 3"]  # Default labels if none match
 
+    # process the log file to extract necessary data
     ab1, lb1, aa1, la1, ab2, lb2, aa2, la2, ab3, lb3, aa3, la3 = process_log(log_file)
 
-    # x-axis as setting indices
+    # define x-axis values based on the number of data points
     x = range(1, len(ab1) + 1)
 
-    # generate plots
-    fig, axes = plt.subplots(nrows=3, ncols=2, figsize=(10, 15))
+    # create the main figure
+    fig = plt.figure(figsize=(8, 10), layout="constrained") 
 
-    # use same y-axis limits for all loss plots
+    # create 3 subfigures, each representing a row
+    subfigs = fig.subfigures(nrows=3, ncols=1,)
+
+    # determine the minimum and maximum loss across all settings for consistent y-axis limits
     all_losses = np.concatenate([lb1, la1, lb2, la2, lb3, la3])
     min_loss = all_losses.min()
     max_loss = all_losses.max()
 
-    # accuracy and loss plots for lowest quality data setting
-    make_accuracy_plot(axes[0, 0], x, ab1, aa1, x_label_1)
-    make_loss_plot(axes[0, 1], x, lb1, la1, x_label_1, min_loss, max_loss)
+    # list of all settings to iterate through
+    settings = [
+        (ab1, aa1, lb1, la1, x_labels[0]),
+        (ab2, aa2, lb2, la2, x_labels[1]),
+        (ab3, aa3, lb3, la3, x_labels[2]),
+    ]
 
-    # accuracy and loss plots for middle quality data setting
-    make_accuracy_plot(axes[1, 0], x, ab2, aa2, x_label_2)
-    make_loss_plot(axes[1, 1], x, lb2, la2, x_label_2, min_loss, max_loss)
+    for subfig, (ab, aa, lb, la, x_label) in zip(subfigs, settings):
+        # create two subplots within each subfigure
+        axs = subfig.subplots(1, 2, sharey=False, sharex=True)
+        # generate accuracy and loss plots
+        make_accuracy_plot(axs[0], x, ab, aa)
+        make_loss_plot(axs[1], x, lb, la, min_loss, max_loss)
+        # add a super x-label for the subfigure
+        subfig.supxlabel(x_label, fontsize=12)
+  
+    # add a main title for the entire figure
+    fig.suptitle(title, fontsize=14)
 
-    # accuracy and loss plots for highest quality data setting
-    make_accuracy_plot(axes[2, 0], x, ab3, aa3, x_label_3)
-    make_loss_plot(axes[2, 1], x, lb3, la3, x_label_3, min_loss, max_loss)
-
-    # for row in range(3): 
-    #     fig.text(0.5, 0.15 + row * 0.3, f"{x_label_1 if row == 0 else x_label_2 if row ==1 else x_label_3}", ha='center', fontsize=12)
-
-    plt.tight_layout()
+    # save the figure to the specified directory with the log file's base name
     plt.savefig(f"retraining/graphs/{log_file.split('/')[-1].split('.')[0]}.png", dpi=300)
 
 graph_processed_log('retraining/resnet2.log')
