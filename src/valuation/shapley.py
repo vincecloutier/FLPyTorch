@@ -19,18 +19,18 @@ def compute_shapley(args, global_weights, client_weights, test_dataset):
     model.to(device)
 
     with torch.no_grad():
-        base_acc = test_inference(model, test_dataset)[0]
+        base_score = test_inference(model, test_dataset)[1]
 
     client_keys = list(client_weights.keys())
-    e, d, r = 0.25, 0.25, 1  
-    t = int((2 * r**2 / e**2) * np.log(2 * len(client_keys) / d))
+    e, d  = 0.25, 0.25 
+    t = int((2 / e**2) * np.log(2 * len(client_keys) / d))
 
     shapley_updates = defaultdict(float)
     if t < fact(len(client_keys)):
-        args_list = [(None, global_weights, client_weights, test_dataset, base_acc, device, args) for _ in range(t)]
+        args_list = [(None, global_weights, client_weights, test_dataset, base_score, device, args) for _ in range(t)]
     else:
         t = fact(len(client_keys))
-        args_list = [(perm, global_weights, client_weights, test_dataset, base_acc, device, args) for perm in itertools.permutations(client_keys)]
+        args_list = [(perm, global_weights, client_weights, test_dataset, base_score, device, args) for perm in itertools.permutations(client_keys)]
     pool = multiprocessing.Pool(processes=args.shapley_processes)
     with tqdm(total=t) as pbar:
         results = pool.map(compute_shapley_for_permutation, args_list)
@@ -50,7 +50,7 @@ def compute_shapley(args, global_weights, client_weights, test_dataset):
 
 
 def compute_shapley_for_permutation(args):
-    (perm, global_weights, client_weights, test_dataset, base_acc, device, args_model) = args
+    (perm, global_weights, client_weights, test_dataset, base_score, device, args_model) = args
 
     model = initialize_model(args_model)
     model.load_state_dict(global_weights)
@@ -61,16 +61,16 @@ def compute_shapley_for_permutation(args):
     if perm is None:
         perm = np.random.permutation(list(client_weights.keys()))
 
-    prev_acc = base_acc
+    prev_score = base_score
     current_weights = []
     for i in perm:
         current_weights.append(client_weights[i])
         avg_weights = average_weights(current_weights)
         model.load_state_dict(avg_weights)
         with torch.no_grad():
-            curr_acc = test_inference(model, test_dataset)[0]
-        shapley_updates_local[i] += curr_acc - prev_acc
-        prev_acc = curr_acc
+            curr_score = test_inference(model, test_dataset)[1]
+        shapley_updates_local[i] += prev_score - curr_score
+        prev_score = curr_score
 
     del model, current_weights
     torch.cuda.empty_cache()
