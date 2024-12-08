@@ -137,4 +137,6 @@ def graph_processed_log(log_file):
     # save the figure to the specified directory with the log file's base name
     plt.savefig(f"retraining/graphs/{log_file.split('/')[-1].split('.')[0]}.png", dpi=300)
 
+graph_processed_log('retraining/resnet1.log')
 graph_processed_log('retraining/resnet2.log')
+graph_processed_log('retraining/resnet3.log')
