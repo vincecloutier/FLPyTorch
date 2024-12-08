@@ -10,27 +10,65 @@ def process_log(file_path):
         logs = file.read()
 
     # regex patterns
-    approx_simple_pattern = r"Banzhaf Values Simple: defaultdict\(<class 'float'>, \{(.*?)\}\)"
-    approx_hessian_pattern = r"Banzhaf Values Hessian: defaultdict\(<class 'float'>, \{(.*?)\}\)"
     before_pattern = r"Test Accuracy Before Retraining: ([\d\.]+), Test Loss Before Retraining: ([\d\.]+)"
     after_pattern = r"Test Accuracy After Retraining: ([\d\.]+), Test Loss After Retraining: ([\d\.]+)"
-    bad_clients_pattern = r"Actual Bad Clients: \[([-\d\s,]+)\]"
 
-    # extract values
-    abv_simple = [eval(f"{{{match}}}") for match in re.findall(approx_simple_pattern, logs)]
-    abv_hessian = [eval(f"{{{match}}}") for match in re.findall(approx_hessian_pattern, logs)]
+    # extract all values
     acc_loss_before = [tuple(eval(f"({match})")) for match in re.findall(before_pattern, logs)]
     acc_loss_after = [tuple(eval(f"({match})")) for match in re.findall(after_pattern, logs)]
-    bad_clients = [[int(num) for num in re.findall(r'-?\d+', match)] for match in re.findall(bad_clients_pattern, logs) if match]
     
-    bca_simple, bca_hessian = [], []
-    for i in range(len(bad_clients)):
-        bca_simple.append(measure_accuracy(bad_clients[i], identify_bad_idxs(abv_simple[i])))
-        bca_hessian.append(measure_accuracy(bad_clients[i], identify_bad_idxs(abv_hessian[i])))
+    # 1 is the lowest quality data setting, 3 is the highest
+    acc_loss_before_1 = [al for i, al in enumerate(acc_loss_before) if i in [0, 3, 6, 9]]
+    acc_loss_after_1 = [al for i, al in enumerate(acc_loss_after) if i in [0, 3, 6, 9]]
 
-    return acc_loss_before, acc_loss_after, bca_simple, bca_hessian
+    acc_loss_before_2 = [al for i, al in enumerate(acc_loss_before) if i in [1, 4, 7, 10]]
+    acc_loss_after_2 = [al for i, al in enumerate(acc_loss_after) if i in [1, 4, 7, 10]]
+
+    acc_loss_before_3 = [al for i, al in enumerate(acc_loss_before) if i in [2, 5, 8, 11]]
+    acc_loss_after_3 = [al for i, al in enumerate(acc_loss_after) if i in [2, 5, 8, 11]]
+
+    # convert to numpy arrays
+    ab1 = np.array([round(float(item[0]), 2) for item in acc_loss_before_1])
+    lb1 = np.array([round(float(item[1]), 2) for item in acc_loss_before_1])
+    aa1 = np.array([round(float(item[0]), 2) for item in acc_loss_after_1])
+    la1 = np.array([round(float(item[1]), 2) for item in acc_loss_after_1])
+
+    ab2 = np.array([round(float(item[0]), 2) for item in acc_loss_before_2])
+    lb2 = np.array([round(float(item[1]), 2) for item in acc_loss_before_2])
+    aa2 = np.array([round(float(item[0]), 2) for item in acc_loss_after_2])
+    la2 = np.array([round(float(item[1]), 2) for item in acc_loss_after_2])
+
+    ab3 = np.array([round(float(item[0]), 2) for item in acc_loss_before_3])
+    lb3 = np.array([round(float(item[1]), 2) for item in acc_loss_before_3])
+    aa3 = np.array([round(float(item[0]), 2) for item in acc_loss_after_3])
+    la3 = np.array([round(float(item[1]), 2) for item in acc_loss_after_3])
+
+    return ab1, lb1, aa1, la1, ab2, lb2, aa2, la2, ab3, lb3, aa3, la3
 
 
+def make_accuracy_plot(ax, x, acc_before, acc_after, x_label):
+    ax.plot(x, acc_before, marker='o', label='Initial Accuracy')
+    ax.plot(x, acc_after, marker='s', label='Retrained Accuracy')
+    if ax == [0, 0]:
+        ax.set_title("Accuracy Before and After Retraining")
+    ax.set_xlabel(x_label)
+    ax.set_ylabel("Accuracy (%)")
+    ax.set_xticks(x, [f"{n}" for n in range(2, 10, 2)], rotation=0)
+    ax.set_ylim(0, 100)  # set fixed y-axis limits for accuracy
+    ax.legend()
+    ax.grid(True)
+
+def make_loss_plot(ax, x, loss_before, loss_after, x_label, min_loss, max_loss):
+    ax.plot(x, loss_before, marker='o', label='Initial Loss')
+    ax.plot(x, loss_after, marker='s', label='Retrained Loss')
+    if ax == 0:
+        ax.set_title("Loss Before and After Retraining")
+    ax.set_xlabel(x_label)
+    ax.set_ylabel("Loss")
+    ax.set_xticks(x, [f"{n}" for n in range(2, 10, 2)], rotation=0)
+    ax.set_ylim(min_loss * 0.95, max_loss * 1.05)  # add some padding
+    ax.legend()
+    ax.grid(True)
 
 def graph_processed_log(log_file):
     # collect data from each setting
@@ -41,43 +79,32 @@ def graph_processed_log(log_file):
     elif "3" in log_file:
         x_label = "Number of Clients with Noisy Data"
 
-    acc_loss_before, acc_loss_after, _, _ = process_log(log_file)
-    acc_before = np.array([round(float(item[0]), 2) for item in acc_loss_before])
-    loss_before = np.array([round(float(item[1]), 2) for item in acc_loss_before])
-    acc_after = np.array([round(float(item[0]), 2) for item in acc_loss_after])
-    loss_after = np.array([round(float(item[1]), 2) for item in acc_loss_after])
-    
-    x = range(1, len(acc_before) + 1)  # x-axis as setting indices
+    ab1, lb1, aa1, la1, ab2, lb2, aa2, la2, ab3, lb3, aa3, la3 = process_log(log_file)
+
+    # x-axis as setting indices
+    x = range(1, len(ab1) + 1)
 
     # generate plots
-    fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
+    fig, axes = plt.subplots(nrows=3, ncols=2, figsize=(10, 15))
 
-    # accuracy plot
-    axes[0].plot(x, acc_before, marker='o', label='Initial Accuracy')
-    axes[0].plot(x, acc_after, marker='s', label='Retrained Accuracy')
-    axes[0].set_title("Accuracy Before and After Retraining")
-    axes[0].set_xlabel(x_label)
-    axes[0].set_ylabel("Accuracy (%)")
-    axes[0].set_xticks(x, [f"{n}" for n in range(2, 10, 2)], rotation=0)
-    axes[0].set_ylim(0, 100)  # set fixed y-axis limits for accuracy
-    axes[0].legend()
-    axes[0].grid(True)
+    # use the loss from the lowest quality data setting to set the y-axis limits for all plots
+    min_loss = min(lb1.min(), lb2.min(), lb3.min())
+    max_loss = max(lb1.max(), lb2.max(), lb3.max())
 
-    # loss plot
-    axes[1].plot(x, loss_before, marker='o', label='Initial Loss')
-    axes[1].plot(x, loss_after, marker='s', label='Retrained Loss')
-    axes[1].set_title("Loss Before and After Retraining")
-    axes[1].set_xlabel(x_label)
-    axes[1].set_ylabel("Loss")
-    axes[1].set_xticks(x, [f"{n}" for n in range(2, 10, 2)], rotation=0)
-    min_loss = min(loss_before.min(), loss_after.min())
-    max_loss = max(loss_before.max(), loss_after.max())
-    axes[1].set_ylim(min_loss * 0.95, max_loss * 1.05)  # add some padding
-    axes[1].legend()
-    axes[1].grid(True)
+    # accuracy and loss plots for lowest quality data setting
+    make_accuracy_plot(axes[0, 0], x, ab1, aa1, x_label)
+    make_loss_plot(axes[0, 1], x, lb1, la1, x_label, min_loss, max_loss)
+
+    # accuracy and loss plots for middle quality data setting
+    make_accuracy_plot(axes[1, 0], x, ab2, aa2, x_label)
+    make_loss_plot(axes[1, 1], x, lb2, la2, x_label, min_loss, max_loss)
+
+    # accuracy and loss plots for highest quality data setting
+    make_accuracy_plot(axes[2, 0], x, ab3, aa3, x_label)
+    make_loss_plot(axes[2, 1], x, lb3, la3, x_label, min_loss, max_loss)
 
     plt.tight_layout()
-    plt.show()
+    plt.savefig(f"retraining/graphs/{log_file.split('/')[-1].split('.')[0]}.png")
 
 
 # TEMPORARY UTILS
@@ -107,5 +134,4 @@ def measure_accuracy(targets, predictions):
     TN = len(universe - (targets | predictions))
     return (TP + TN) / (TP + TN + FP + FN)
 
-
-graph_processed_log('retraining/cifar2.log')
+graph_processed_log('retraining/resnet2.log')
