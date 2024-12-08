@@ -83,23 +83,26 @@ def process_and_graph_logs(log_files):
     plt.figure(figsize=(10, 5))
 
     plt.subplot(1, 2, 1)
-    plt.bar(['ABVS', 'ABVH', 'Shapley', 'Influence'], [abvs, abvh, sv, iv])
+    plt.bar(['FBVS', 'FBVH', 'FSV', 'Influence'], [abvs, abvh, sv, iv])
     for i, v in enumerate([abvs, abvh, sv, iv]):
         plt.text(i, v, f'{v:.2f}', ha='center', va='bottom')
     plt.title(f"Spearman Rank Correlation")
-    plt.xlabel("Approximation")
+    plt.xlabel("Approximation Method")
+    plt.ylim(0, 1)
     plt.ylabel("Correlation")
 
     plt.subplot(1, 2, 2)
-    plt.bar(['ABVS', 'ABVH', 'Shapley', 'Influence'], [avg_runtimes['abvs'], avg_runtimes['abvh'], avg_runtimes['sv'], avg_runtimes['if']])
+    plt.bar(['FBVS', 'FBVH', 'FSV', 'Influence'], [avg_runtimes['abvs'], avg_runtimes['abvh'], avg_runtimes['sv'], avg_runtimes['if']])
     for i, v in enumerate([avg_runtimes['abvs'], avg_runtimes['abvh'], avg_runtimes['sv'], avg_runtimes['if']]):
         plt.text(i, v, f'{v:.2f}', ha='center', va='bottom')
     plt.yscale('log')
     plt.title(f"Runtime")
-    plt.xlabel("Approximation")
+    plt.xlabel("Approximation Method")
     plt.ylabel("Runtime (s)")
 
     plt.tight_layout()
-    plt.show()
+    # extract the word from the first log file name that comes after / and before a digit
+    dataset = re.search(r'/(.+)\d', log_files[0]).group(1)
+    plt.savefig(f"robustness/graphs/{dataset}.png", dpi=300, bbox_inches='tight')
 
 process_and_graph_logs(['robustness/resnet0.log', 'robustness/resnet1.log',  'robustness/resnet2.log', 'robustness/resnet3.log', 'robustness/cifar1.log'])
