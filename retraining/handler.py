@@ -55,7 +55,7 @@ def process_log(file_path):
 def make_accuracy_plot(ax, x, acc_before, acc_after, x_label):
     ax.plot(x, acc_before, marker='o', linestyle='-', color='tab:orange', label='Initial Accuracy')
     ax.plot(x, acc_after, marker='s', linestyle='--', color='tab:blue', label='Retrained Accuracy')
-    ax.set_title("Accuracy Before and After Retraining", fontsize=14, fontweight='bold')
+    ax.set_title("Accuracy Before and After Retraining", fontsize=14)
     ax.set_xlabel(x_label, fontsize=12)
     ax.set_ylabel("Accuracy (%)", fontsize=12)
     ax.set_xticks(x)
@@ -68,7 +68,7 @@ def make_accuracy_plot(ax, x, acc_before, acc_after, x_label):
 def make_loss_plot(ax, x, loss_before, loss_after, x_label, min_loss, max_loss):
     ax.plot(x, loss_before, marker='o', linestyle='-', color='tab:orange', label='Initial Loss')
     ax.plot(x, loss_after, marker='s', linestyle='--', color='tab:blue', label='Retrained Loss')
-    ax.set_title("Loss Before and After Retraining", fontsize=14, fontweight='bold')
+    ax.set_title("Loss Before and After Retraining", fontsize=14)
     ax.set_xlabel(x_label, fontsize=12)
     ax.set_ylabel("Loss", fontsize=12)
     ax.yaxis.set_label_position("right")
@@ -120,7 +120,10 @@ def graph_processed_log(log_file):
     make_accuracy_plot(axes[2, 0], x, ab3, aa3, x_label_3)
     make_loss_plot(axes[2, 1], x, lb3, la3, x_label_3, min_loss, max_loss)
 
+    # for row in range(3): 
+    #     fig.text(0.5, 0.15 + row * 0.3, f"{x_label_1 if row == 0 else x_label_2 if row ==1 else x_label_3}", ha='center', fontsize=12)
+
     plt.tight_layout()
-    plt.savefig(f"retraining/graphs/{log_file.split('/')[-1].split('.')[0]}.png")
+    plt.savefig(f"retraining/graphs/{log_file.split('/')[-1].split('.')[0]}.png", dpi=300)
 
 graph_processed_log('retraining/resnet2.log')
