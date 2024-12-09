@@ -105,4 +105,4 @@ def process_and_graph_logs(log_files):
     dataset = re.search(r'/(.+)\d', log_files[0]).group(1)
     plt.savefig(f"robustness/graphs/{dataset}.png", dpi=300, bbox_inches='tight')
 
-process_and_graph_logs(['robustness/resnet0.log', 'robustness/resnet1.log',  'robustness/resnet2.log', 'robustness/resnet3.log', 'robustness/cifar1.log'])
+process_and_graph_logs(['robustness/cifar0.log', 'robustness/cifar1.log', 'robustness/cifar2.log', 'robustness/cifar3.log'])
