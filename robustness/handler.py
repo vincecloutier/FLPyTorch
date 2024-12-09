@@ -56,15 +56,17 @@ def process_and_graph_logs(log_files):
             runtime_metrics["Influence"].append(run["if"])
     
     # compute summary statistics across settings
-    methods = ["FBVS", "FBVH", "FSV", "Influence"]
+    methods = ["FBVS", "FBVH", "Influence", "FSV"]
     avg_corrs = [np.mean(corr_metrics[m]) for m in methods]
     avg_runtimes = [np.mean(runtime_metrics[m]) for m in methods]
 
     # generate plots
     dataset = re.search(r'/(.+)\d', log_files[0]).group(1)
+    colors = plt.get_cmap('tab10').colors
+    colors = [colors[0], colors[2], colors[1], colors[3]]
 
     plt.figure(figsize=(4, 5), layout="constrained")
-    plt.bar(methods, avg_corrs, capsize=5)
+    plt.bar(methods, avg_corrs, capsize=5, color=colors)
     for i, mean in enumerate(avg_corrs):
         plt.text(i, mean, f'{mean:.2f}', ha='center', va='bottom')
     plt.title("Average Spearman Rank Correlation")
@@ -75,7 +77,7 @@ def process_and_graph_logs(log_files):
     plt.savefig(f"robustness/graphs/robustness_{dataset}_scc.png", dpi=300, bbox_inches='tight')
 
     plt.figure(figsize=(4, 5), layout="constrained")
-    plt.bar(methods, avg_runtimes)
+    plt.bar(methods, avg_runtimes, color=colors)
     for i, v in enumerate(avg_runtimes):
         plt.text(i, v, f'{v:.2f}', ha='center', va='bottom')
     plt.yscale('log')
