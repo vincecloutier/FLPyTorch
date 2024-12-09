@@ -30,8 +30,7 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
         if isBanzhaf:
             grad = gradient(args, model, valid_dataset)
 
-        m = max(int(args.frac * len(clients)), 1)
-        idxs_users = np.random.choice(clients, m, replace=False)
+        idxs_users = clients
 
         for idx in idxs_users:
             local_model = LocalUpdate(args=args, dataset=train_dataset, idxs=user_groups[idx])
