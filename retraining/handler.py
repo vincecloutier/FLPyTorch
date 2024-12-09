@@ -63,8 +63,8 @@ def make_accuracy_plot(ax, x, acc_before, acc_after):
     ax.grid(True, linestyle='--', alpha=0.6)
 
 def make_loss_plot(ax, x, loss_before, loss_after, min_loss, max_loss):
-    ax.plot(x, loss_before, marker='o', linestyle='-', color='tab:orange', label='Initial Loss')
-    ax.plot(x, loss_after, marker='s', linestyle='--', color='tab:blue', label='Retrained Loss')
+    ax.plot(x, loss_before, marker='o', linestyle='-', color='tab:red', label='Initial Loss')
+    ax.plot(x, loss_after, marker='s', linestyle='--', color='tab:green', label='Retrained Loss')
     ax.set_ylabel("Loss", fontsize=12)
     ax.yaxis.set_label_position("right")
     ax.yaxis.tick_right()
@@ -135,7 +135,9 @@ def graph_processed_log(log_file):
     fig.suptitle(title, fontsize=14)
 
     # save the figure to the specified directory with the log file's base name
-    plt.savefig(f"retraining/graphs/{log_file.split('/')[-1].split('.')[0]}.png", dpi=300)
+    dataset_name = log_file.split('/')[-1].split('.')[0][:-1]
+    number = log_file.split('/')[-1].split('.')[0][-1]
+    plt.savefig(f"retraining/graphs/retrain_{dataset_name}_{number}.png", dpi=300)
 
 graph_processed_log('retraining/fmnist1.log')
 graph_processed_log('retraining/fmnist2.log')
