@@ -61,9 +61,9 @@ def process_and_graph_logs(log_files):
     avg_runtimes = [np.mean(runtime_metrics[m]) for m in methods]
 
     # generate plots
-    plt.figure(figsize=(10, 5))
+    dataset = re.search(r'/(.+)\d', log_files[0]).group(1)
 
-    plt.subplot(1, 2, 1)
+    plt.figure(figsize=(4, 5), layout="constrained")
     plt.bar(methods, avg_corrs, capsize=5)
     for i, mean in enumerate(avg_corrs):
         plt.text(i, mean, f'{mean:.2f}', ha='center', va='bottom')
@@ -72,17 +72,17 @@ def process_and_graph_logs(log_files):
     plt.ylim(0, 1)
     plt.ylabel("Correlation")
 
-    plt.subplot(1, 2, 2)
+    plt.savefig(f"robustness/graphs/robustness_{dataset}_scc.png", dpi=300, bbox_inches='tight')
+
+    plt.figure(figsize=(4, 5), layout="constrained")
     plt.bar(methods, avg_runtimes)
     for i, v in enumerate(avg_runtimes):
         plt.text(i, v, f'{v:.2f}', ha='center', va='bottom')
     plt.yscale('log')
-    plt.title("Average Runtime (s)")
+    plt.title("Average Runtime")
     plt.xlabel("Data Valuation Method")
     plt.ylabel("Runtime (s)")
 
-    plt.tight_layout()
-    dataset = re.search(r'/(.+)\d', log_files[0]).group(1)
-    plt.savefig(f"robustness/graphs/{dataset}.png", dpi=300, bbox_inches='tight')
+    plt.savefig(f"robustness/graphs/robustness_{dataset}_runtime.png", dpi=300, bbox_inches='tight')
 
-process_and_graph_logs(['robustness/cifar0.log', 'robustness/cifar1.log', 'robustness/cifar2.log', 'robustness/cifar3.log'])
+process_and_graph_logs(['robustness/cifar1.log', 'robustness/cifar2.log', 'robustness/cifar3.log'])
