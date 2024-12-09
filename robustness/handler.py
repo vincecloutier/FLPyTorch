@@ -24,78 +24,64 @@ def process_log(file_path):
     influence_values = [eval(f"{{{match}}}") for match in re.findall(influence_pattern, logs)]
     runtimes = [eval(f"{{{match}}}") for match in re.findall(runtime_pattern, logs)]
 
-    def process_runs(runs):
-        # convert list of dictionaries to df
-        df = pd.DataFrame(runs)
-        # sort columns based on client ids
-        df = df.sort_index(axis=1)
-        # handle missing values
-        df = df.fillna(np.nan) 
-        # rank the values within each run
-        ranked_df = df.rank(axis=1, method='average', ascending=False)
-        # make each run a column
-        ranked_df_T = ranked_df.transpose()
-        # compute spearman rank correlation
-        corr_matrix = spearmanr(ranked_df_T, nan_policy='omit')[0]
-        # return the average spearman rank correlation
-        return corr_matrix.mean()
+    return approx_simple_values, approx_hessian_values, shapley_values, influence_values, runtimes
     
-    def process_runtimes(runtimes):
-        avg_runtimes = defaultdict(float)
-        for runtime in runtimes:
-            for key, value in runtime.items():
-                avg_runtimes[key] += value
-        for key, value in avg_runtimes.items():
-            avg_runtimes[key] /= len(runtimes)
-        return avg_runtimes
 
-    return process_runs(approx_simple_values), process_runs(approx_hessian_values), process_runs(shapley_values), process_runs(influence_values), process_runtimes(runtimes)
+def compute_rank_stability(runs):
+    df = pd.DataFrame(runs)
+    df = df.sort_index(axis=1)
+    df = df.fillna(np.nan)
+    ranked_df = df.rank(axis=1, method='average', ascending=False)
+    ranked_df_T = ranked_df.transpose()
+    correlations = spearmanr(ranked_df_T, nan_policy='omit')[0]
+    return correlations.mean()
 
 
 def process_and_graph_logs(log_files):
-    # collect data from each setting
-    abvs, abvh, sv, iv = [], [], [], []
-    avg_runtimes = defaultdict(float)
+    # lists to hold rank stability and runtimes per setting
+    corr_metrics = {'FBVS': [], 'FBVH': [], 'FSV': [], 'Influence': []}
+    runtime_metrics = {'FBVS': [], 'FBVH': [], 'FSV': [], 'Influence': []}
+
+    # process each log file (each representing a setting)
     for log_file in log_files:
         approx_simple, approx_hessian, shapley, influence, runtimes = process_log(log_file)
-        abvs.append(approx_simple)
-        abvh.append(approx_hessian)
-        sv.append(shapley)
-        iv.append(influence)
-        for key, value in runtimes.items():
-            avg_runtimes[key] += value
+        corr_metrics['FBVS'].append(compute_rank_stability(approx_simple))
+        corr_metrics['FBVH'].append(compute_rank_stability(approx_hessian))
+        corr_metrics['FSV'].append(compute_rank_stability(shapley))
+        corr_metrics['Influence'].append(compute_rank_stability(influence))
+        for run in runtimes:
+            runtime_metrics["FBVS"].append(run["abvs"])
+            runtime_metrics["FBVH"].append(run["abvh"])
+            runtime_metrics["FSV"].append(run["sv"])
+            runtime_metrics["Influence"].append(run["if"])
     
-    # average across settings
-    abvs = np.mean(abvs, axis=0)
-    abvh = np.mean(abvh, axis=0)
-    sv = np.mean(sv, axis=0)
-    iv = np.mean(iv, axis=0)
-    for key, value in avg_runtimes.items():
-        avg_runtimes[key] /= len(log_files)
+    # compute summary statistics across settings
+    methods = list(corr_metrics.keys())
+    avg_corrs = [np.mean(corr_metrics[m]) for m in methods]
+    avg_runtimes = [np.mean(runtime_metrics[m]) for m in methods]
 
     # generate plots
     plt.figure(figsize=(10, 5))
 
     plt.subplot(1, 2, 1)
-    plt.bar(['FBVS', 'FBVH', 'FSV', 'Influence'], [abvs, abvh, sv, iv])
-    for i, v in enumerate([abvs, abvh, sv, iv]):
-        plt.text(i, v, f'{v:.2f}', ha='center', va='bottom')
-    plt.title(f"Average Spearman Rank Correlation")
+    plt.bar(methods, avg_corrs, capsize=5)
+    for i, mean in enumerate(avg_corrs):
+        plt.text(i, mean, f'{mean:.2f}', ha='center', va='bottom')
+    plt.title("Average Spearman Rank Correlation")
     plt.xlabel("Data Valuation Method")
     plt.ylim(0, 1)
     plt.ylabel("Correlation")
 
     plt.subplot(1, 2, 2)
-    plt.bar(['FBVS', 'FBVH', 'FSV', 'Influence'], [avg_runtimes['abvs'], avg_runtimes['abvh'], avg_runtimes['sv'], avg_runtimes['if']])
-    for i, v in enumerate([avg_runtimes['abvs'], avg_runtimes['abvh'], avg_runtimes['sv'], avg_runtimes['if']]):
+    plt.bar(methods, avg_runtimes)
+    for i, v in enumerate(avg_runtimes):
         plt.text(i, v, f'{v:.2f}', ha='center', va='bottom')
     plt.yscale('log')
-    plt.title(f"Average Runtime (s)")
+    plt.title("Average Runtime (s)")
     plt.xlabel("Data Valuation Method")
     plt.ylabel("Runtime (s)")
 
     plt.tight_layout()
-    # extract the word from the first log file name that comes after / and before a digit
     dataset = re.search(r'/(.+)\d', log_files[0]).group(1)
     plt.savefig(f"robustness/graphs/{dataset}.png", dpi=300, bbox_inches='tight')
 
