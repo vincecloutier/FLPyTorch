@@ -37,13 +37,8 @@ def process_log(file_path):
         ranked_df_T = ranked_df.transpose()
         # compute spearman rank correlation
         corr_matrix = spearmanr(ranked_df_T, nan_policy='omit')[0]
-        # convert to df for better readability
-        corr_df = pd.DataFrame(corr_matrix, index=[f'Run {i+1}' for i in range(len(runs))], columns=[f'Run {i+1}' for i in range(len(runs))])    
-        # average pairwise correlations
-        upper_tri = corr_df.where(np.triu(np.ones(corr_df.shape), k=1).astype(bool))
-        correlations = upper_tri.stack()
-        avg_corr = correlations.mean()
-        return avg_corr
+        # return the average spearman rank correlation
+        return corr_matrix.mean()
     
     def process_runtimes(runtimes):
         avg_runtimes = defaultdict(float)
@@ -63,7 +58,6 @@ def process_and_graph_logs(log_files):
     avg_runtimes = defaultdict(float)
     for log_file in log_files:
         approx_simple, approx_hessian, shapley, influence, runtimes = process_log(log_file)
-        print(approx_simple, approx_hessian, shapley)
         abvs.append(approx_simple)
         abvh.append(approx_hessian)
         sv.append(shapley)
@@ -86,8 +80,8 @@ def process_and_graph_logs(log_files):
     plt.bar(['FBVS', 'FBVH', 'FSV', 'Influence'], [abvs, abvh, sv, iv])
     for i, v in enumerate([abvs, abvh, sv, iv]):
         plt.text(i, v, f'{v:.2f}', ha='center', va='bottom')
-    plt.title(f"Spearman Rank Correlation")
-    plt.xlabel("Approximation Method")
+    plt.title(f"Average Spearman Rank Correlation")
+    plt.xlabel("Data Valuation Method")
     plt.ylim(0, 1)
     plt.ylabel("Correlation")
 
@@ -96,8 +90,8 @@ def process_and_graph_logs(log_files):
     for i, v in enumerate([avg_runtimes['abvs'], avg_runtimes['abvh'], avg_runtimes['sv'], avg_runtimes['if']]):
         plt.text(i, v, f'{v:.2f}', ha='center', va='bottom')
     plt.yscale('log')
-    plt.title(f"Runtime")
-    plt.xlabel("Approximation Method")
+    plt.title(f"Average Runtime (s)")
+    plt.xlabel("Data Valuation Method")
     plt.ylabel("Runtime (s)")
 
     plt.tight_layout()
