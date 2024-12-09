@@ -56,7 +56,7 @@ def process_and_graph_logs(log_files):
             runtime_metrics["Influence"].append(run["if"])
     
     # compute summary statistics across settings
-    methods = list(corr_metrics.keys())
+    methods = ["FBVS", "FBVH", "FSV", "Influence"]
     avg_corrs = [np.mean(corr_metrics[m]) for m in methods]
     avg_runtimes = [np.mean(runtime_metrics[m]) for m in methods]
 
