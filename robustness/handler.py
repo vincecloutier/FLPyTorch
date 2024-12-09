@@ -87,4 +87,4 @@ def process_and_graph_logs(log_files):
 
     plt.savefig(f"robustness/graphs/robustness_{dataset}_runtime.png", dpi=300, bbox_inches='tight')
 
-process_and_graph_logs(['robustness/cifar1.log', 'robustness/cifar2.log', 'robustness/cifar3.log'])
+process_and_graph_logs(['robustness/cifar0.log', 'robustness/cifar1.log', 'robustness/cifar2.log', 'robustness/cifar3.log'])
