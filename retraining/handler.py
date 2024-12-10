@@ -74,25 +74,25 @@ def wrap_label(label):
 def graph_processed_log(log_file):
     # determine scenario labels based on the log file identifier
     if "1" in log_file:
-        title = "Accuracy and Loss Before and After Retraining (Non-IID Data)"
+        title = "Accuracy and Loss Before and After Retraining (Heterogenous)"
         scenario_labels = [
             "Number of Clients with Only 4 Categories Of Data",
             "Number of Clients with Only 6 Categories Of Data",
             "Number of Clients with Only 8 Categories Of Data"
         ]
     elif "2" in log_file:
-        title = "Accuracy and Loss Before and After Retraining (Mislabelled Data)"
+        title = "Accuracy and Loss Before and After Retraining (Mislabelled)"
         scenario_labels = [
             "Number of Clients with Mislabelled Sample Ratio 60%",
             "Number of Clients with Mislabelled Sample Ratio 40%",
             "Number of Clients with Mislabelled Sample Ratio 20%"
         ]
     elif "3" in log_file:
-        title = "Accuracy and Loss Before and After Retraining (Poisoned Data)"
+        title = "Accuracy and Loss Before and After Retraining (Poisoned)"
         scenario_labels = [
-            "Number of Clients with Poison Sample Ratio 60%",
-            "Number of Clients with Poison Sample Ratio 40%",
-            "Number of Clients with Poison Sample Ratio 20%"
+            "Number of Clients with Poisoned Sample Ratio 60%",
+            "Number of Clients with Poisoned Sample Ratio 40%",
+            "Number of Clients with Poisoned Sample Ratio 20%"
         ]
     else:
         title = "Accuracy and Loss Before and After Retraining"
