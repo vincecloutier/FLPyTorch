@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.stats import pearsonr
 import numpy as np
-from sklearn.preprocessing import MinMaxScaler, Normalizer
+from sklearn.preprocessing import MinMaxScaler
 
 def process_and_graph_log(file_path, plot=False):
     # read the log file
@@ -14,18 +14,21 @@ def process_and_graph_log(file_path, plot=False):
     shapley_pattern = r"Shapley Values: \[([-\d.,\s]+)\]"
     approx_simple_pattern = r"Approximate Banzhaf Values Simple: \[([-\d.,\s]+)\]"
     approx_hessian_pattern = r"Approximate Banzhaf Values Hessian: \[([-\d.,\s]+)\]"
+    banzhaf_pattern = r"Banzhaf Values: \[([-\d.,\s]+)\]"
     bad_clients_pattern = r"Actual Bad Clients: \[([-\d\s,]+)\]"
 
     # extract values
     shapley_values = [list(map(float, match.split(','))) for match in re.findall(shapley_pattern, logs)]
     approx_simple_values = [list(map(float, match.split(','))) for match in re.findall(approx_simple_pattern, logs)]
     approx_hessian_values = [list(map(float, match.split(','))) for match in re.findall(approx_hessian_pattern, logs)]
+    banzhaf_values = [list(map(float, match.split(','))) for match in re.findall(banzhaf_pattern, logs)]
     bad_idxs = [[int(num) for num in re.findall(r'-?\d+', match)] for match in re.findall(bad_clients_pattern, logs) if match]
 
     # concatenate across runs
     shapley_all = np.array([val for run in shapley_values for val in run])
     approx_simple_all = np.array([val for run in approx_simple_values for val in run])
     approx_hessian_all = np.array([val for run in approx_hessian_values for val in run])
+    banzhaf_all = np.array([val for run in banzhaf_values for val in run])
     bad_idxs_all = np.array([i + 15 + (5 * idx) for idx, subarray in enumerate(bad_idxs) for i in subarray])
 
     # min_max scale the data to 0-1
@@ -33,23 +36,29 @@ def process_and_graph_log(file_path, plot=False):
     shapley_all = scaler.fit_transform(np.array(shapley_all).reshape(-1, 1)).flatten()
     approx_simple_all = scaler.fit_transform(np.array(approx_simple_all).reshape(-1, 1)).flatten()
     approx_hessian_all = scaler.fit_transform(np.array(approx_hessian_all).reshape(-1, 1)).flatten()
+    banzhaf_all = scaler.fit_transform(np.array(banzhaf_all).reshape(-1, 1)).flatten()
     
     # create a dataframe for easier processing
     data = pd.DataFrame({
         'Shapley': shapley_all,
         'Approx_Simple': approx_simple_all,
-        'Approx_Hessian': approx_hessian_all
+        'Approx_Hessian': approx_hessian_all,
+        'Banzhaf': banzhaf_all
     })
 
     # calculate pearson correlation coefficients
     corr_shapley_simple = pearsonr(data['Shapley'], data['Approx_Simple'])[0]
     corr_shapley_hessian = pearsonr(data['Shapley'], data['Approx_Hessian'])[0]
+    corr_banzhaf_simple = pearsonr(data['Banzhaf'], data['Approx_Simple'])[0]
+    corr_banzhaf_hessian = pearsonr(data['Banzhaf'], data['Approx_Hessian'])[0]
 
     # print correlations
     print("Pearson Correlation Coefficients:")
     print(f"Shapley and Approx Simple: {corr_shapley_simple:.4f}")
     print(f"Shapley and Approx Hessian: {corr_shapley_hessian:.4f}")
-    
+    print(f"Banzhaf and Approx Simple: {corr_banzhaf_simple:.4f}")
+    print(f"Banzhaf and Approx Hessian: {corr_banzhaf_hessian:.4f}")
+
     if plot:    
         # generate plots with colored groups
         group_size = 15
@@ -89,5 +98,4 @@ def process_and_graph_log(file_path, plot=False):
         plt.tight_layout()
         plt.show()
 
-process_and_graph_log('pcc/cifar.log', plot=True)
-process_and_graph_log('pcc/cifar2.log', plot=True)
+process_and_graph_log('pcc/cifar.log')
