@@ -156,7 +156,9 @@ def graph_processed_log(log_file):
     # save the figure
     dataset_name = log_file.split('/')[-1].split('.')[0][:-1]
     number = log_file.split('/')[-1].split('.')[0][-1]
-    plt.savefig(f"retraining/graphs/retrain_{dataset_name}_{number}_test.png", dpi=300)
+    plt.savefig(f"retraining/graphs/retrain_{dataset_name}_{number}.png", dpi=300)
 
 
 graph_processed_log('retraining/fmnist1.log')
+graph_processed_log('retraining/fmnist2.log')
+graph_processed_log('retraining/fmnist3.log')
