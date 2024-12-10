@@ -69,7 +69,7 @@ def wrap_label(label):
     # Find the middle space to split the label into two lines
     words = label.split()
     mid = len(words) // 2
-    return ' '.join(words[:mid]) + '\n' + ' '.join(words[mid:])
+    return ' '.join(words[:mid]) + '\n' + ' '.join(words[mid:]) + '\n \n'
 
 def graph_processed_log(log_file):
     # determine scenario labels based on the log file identifier
@@ -131,7 +131,7 @@ def graph_processed_log(log_file):
         # Plot loss on the bottom row
         make_loss_plot(axs[1, col], x, lb, la, min_loss, max_loss)
         # make this two lines
-        axs[1, col].set_xlabel(wrap_label(scenario_label), fontsize=16, labelpad=10)
+        axs[1, col].set_xlabel(wrap_label(scenario_label), fontsize=16)
 
         # Set x ticks and labels consistently
         axs[0, col].set_xticks(x)
@@ -148,7 +148,7 @@ def graph_processed_log(log_file):
     handles.extend(h)
     labels.extend(l)
 
-    fig.legend(handles, labels, loc='upper center', ncol=4, fontsize=12)
+    fig.legend(handles, labels, loc='lower center', ncol=4, fontsize=16)
 
     # Add a main title for the entire figure
     fig.suptitle(title, fontsize=18)
