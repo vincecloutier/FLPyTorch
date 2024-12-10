@@ -99,3 +99,4 @@ def process_and_graph_log(file_path, plot=False):
         plt.show()
 
 process_and_graph_log('pcc/cifar.log')
+process_and_graph_log('pcc/fmnist.log')
