@@ -52,18 +52,24 @@ def process_log(file_path):
     return ab1, lb1, aa1, la1, ab2, lb2, aa2, la2, ab3, lb3, aa3, la3
 
 def make_accuracy_plot(ax, x, acc_before, acc_after):
+    # Remove legend calls here; just plot with labels
     ax.plot(x, acc_before, marker='o', linestyle='-', color='tab:orange', label='Initial Accuracy')
     ax.plot(x, acc_after, marker='s', linestyle='--', color='tab:blue', label='Retrained Accuracy')
     ax.set_ylim(0, 100)
-    ax.legend(fontsize=10)
     ax.grid(True, linestyle='--', alpha=0.6)
 
 def make_loss_plot(ax, x, loss_before, loss_after, min_loss, max_loss):
+    # Remove legend calls here; just plot with labels
     ax.plot(x, loss_before, marker='o', linestyle='-', color='tab:red', label='Initial Loss')
     ax.plot(x, loss_after, marker='s', linestyle='--', color='tab:green', label='Retrained Loss')
     ax.set_ylim(min_loss * 0.95, max_loss * 1.05)
-    ax.legend(fontsize=10)
     ax.grid(True, linestyle='--', alpha=0.6)
+
+def wrap_label(label):
+    # Find the middle space to split the label into two lines
+    words = label.split()
+    mid = len(words) // 2
+    return ' '.join(words[:mid]) + '\n' + ' '.join(words[mid:])
 
 def graph_processed_log(log_file):
     # determine scenario labels based on the log file identifier
@@ -133,6 +139,16 @@ def graph_processed_log(log_file):
         axs[0, col].set_xticklabels([str(n) for n in x], fontsize=14)
         axs[1, col].set_xticklabels([str(n) for n in x], fontsize=14)
 
+    # after plotting all subplots, create a common legend (since all subplots have the same lines)
+    handles, labels = [], []
+    h, l = axs[0, 0].get_legend_handles_labels()
+    handles.extend(h)
+    labels.extend(l)
+    h, l = axs[1, 0].get_legend_handles_labels()
+    handles.extend(h)
+    labels.extend(l)
+
+    fig.legend(handles, labels, loc='upper center', ncol=4, fontsize=12)
 
     # Add a main title for the entire figure
     fig.suptitle(title, fontsize=18)
@@ -143,13 +159,4 @@ def graph_processed_log(log_file):
     plt.savefig(f"retraining/graphs/retrain_{dataset_name}_{number}_test.png", dpi=300)
 
 
-def wrap_label(label):
-    # Find the middle space to split the label into two lines
-    words = label.split()
-    mid = len(words) // 2
-    return ' '.join(words[:mid]) + '\n' + ' '.join(words[mid:])
-
-
 graph_processed_log('retraining/fmnist1.log')
-# graph_processed_log('retraining/fmnist2.log')
-# graph_processed_log('retraining/fmnist3.log')
