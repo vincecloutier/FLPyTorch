@@ -255,9 +255,9 @@ def visualize_noise():
         axes[col].imshow(noisy_image_1.permute(1, 2, 0).numpy())
         axes[col].axis("off")
 
-    axes[0].set_title(f"No Noise")
-    axes[1].set_title(f"Noise Drawn From N(0, 0.25)")
-    axes[2].set_title(f"Noise Drawn From N(0, 0.5)")
+    axes[0].set_title(f"No Noise", fontsize=18)
+    axes[1].set_title(f"Noise Drawn From N(0, 0.25)", fontsize=18)
+    axes[2].set_title(f"Noise Drawn From N(0, 0.5)", fontsize=18)    
 
     plt.tight_layout()
-    plt.savefig("noise_visualization2.png", dpi=300, bbox_inches='tight')
+    plt.savefig("noise_visualization.png", dpi=300, bbox_inches='tight')
