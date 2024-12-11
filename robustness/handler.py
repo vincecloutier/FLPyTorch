@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.stats import spearmanr
 import numpy as np
-from collections import defaultdict
+import pingouin as pg
 
 def process_log(file_path):
     # read the log file
@@ -37,7 +37,18 @@ def compute_rank_stability(runs):
     return correlations.mean()
 
 
-def process_and_graph_logs(log_files):
+def compute_IIC(runs):
+    df = pd.DataFrame(runs)
+    df = df.sort_index(axis=1)
+    df = df.fillna(np.nan)
+    # columns: 'rater' (original row index), 'target' (original column), 'rating' (valuation)
+    df_melted = df.reset_index().melt(id_vars='index', var_name='target', value_name='rating')
+    df_melted.rename(columns={'index': 'rater'}, inplace=True)
+    icc_result = pg.intraclass_corr(data=df_melted, targets='target', raters='rater', ratings='rating')
+    return icc_result['ICC'].iloc[5]
+
+
+def process_and_graph_logs(log_files, plot=False):
     # lists to hold rank stability and runtimes per setting
     corr_metrics = {'FBVS': [], 'FBVH': [], 'FSV': [], 'Influence': []}
     runtime_metrics = {'FBVS': [], 'FBVH': [], 'FSV': [], 'Influence': []}
@@ -60,31 +71,32 @@ def process_and_graph_logs(log_files):
     avg_corrs = [np.mean(corr_metrics[m]) for m in methods]
     avg_runtimes = [np.mean(runtime_metrics[m]) for m in methods]
 
-    # generate plots
-    dataset = re.search(r'/(.+)\d', log_files[0]).group(1)
-    colors = plt.get_cmap('tab10').colors
-    colors = [colors[0], colors[2], colors[1], colors[3]]
+    if plot:
+        # generate plots
+        dataset = re.search(r'/(.+)\d', log_files[0]).group(1)
+        colors = plt.get_cmap('tab10').colors
+        colors = [colors[0], colors[2], colors[1], colors[3]]
 
-    plt.figure(figsize=(4, 5), layout="constrained")
-    plt.bar(methods, avg_corrs, capsize=5, color=colors)
-    for i, mean in enumerate(avg_corrs):
-        plt.text(i, mean, f'{mean:.2f}', ha='center', va='bottom')
-    plt.title("Average Spearman Rank Correlation")
-    plt.xlabel("Data Valuation Method")
-    plt.ylim(0, 1)
-    plt.ylabel("Correlation")
+        plt.figure(figsize=(4, 5), layout="constrained")
+        plt.bar(methods, avg_corrs, capsize=5, color=colors)
+        for i, mean in enumerate(avg_corrs):
+            plt.text(i, mean, f'{mean:.2f}', ha='center', va='bottom')
+        plt.title("Average Spearman Rank Correlation")
+        plt.xlabel("Data Valuation Method")
+        plt.ylim(0, 1)
+        plt.ylabel("Correlation")
 
-    plt.savefig(f"robustness/graphs/robustness_{dataset}_scc.png", dpi=300, bbox_inches='tight')
+        plt.savefig(f"robustness/graphs/robustness_{dataset}_scc.png", dpi=300, bbox_inches='tight')
 
-    plt.figure(figsize=(4, 5), layout="constrained")
-    plt.bar(methods, avg_runtimes, color=colors)
-    for i, v in enumerate(avg_runtimes):
-        plt.text(i, v, f'{v:.2f}', ha='center', va='bottom')
-    plt.yscale('log')
-    plt.title("Average Runtime")
-    plt.xlabel("Data Valuation Method")
-    plt.ylabel("Runtime (s)")
+        plt.figure(figsize=(4, 5), layout="constrained")
+        plt.bar(methods, avg_runtimes, color=colors)
+        for i, v in enumerate(avg_runtimes):
+            plt.text(i, v, f'{v:.2f}', ha='center', va='bottom')
+        plt.yscale('log')
+        plt.title("Average Runtime")
+        plt.xlabel("Data Valuation Method")
+        plt.ylabel("Runtime (s)")
 
-    plt.savefig(f"robustness/graphs/robustness_{dataset}_runtime.png", dpi=300, bbox_inches='tight')
+        plt.savefig(f"robustness/graphs/robustness_{dataset}_runtime.png", dpi=300, bbox_inches='tight')
 
-process_and_graph_logs(['robustness/cifar0.log', 'robustness/cifar1.log', 'robustness/cifar2.log', 'robustness/cifar3.log'])
+process_and_graph_logs(['robustness/cifar0.log', 'robustness/cifar1.log', 'robustness/cifar2.log', 'robustness/cifar3.log'], plot=True)
