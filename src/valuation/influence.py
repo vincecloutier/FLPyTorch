@@ -94,7 +94,7 @@ def compute_influence(args, global_weights, train_dataset, test_dataset, user_gr
         query_dataset=test_dataset,
         query_indices=list(range(1000)),
         train_dataset=t_dataset,
-        per_device_query_batch_size=128,
+        per_device_query_batch_size=512,
         overwrite_output_dir=True
     )
     scores = analyzer.load_pairwise_scores(scores_name)["all_modules"]
