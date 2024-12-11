@@ -71,131 +71,27 @@ import torch
 #         return out
 
 
-class MK_Block(nn.Module):
-    def __init__(self, in_channels):
-        super(MK_Block, self).__init__()
-        
-        # Define convolutional layers with different kernel sizes
-        self.conv3 = nn.Conv2d(in_channels, 32, kernel_size=3, padding=1)
-        self.conv5 = nn.Conv2d(in_channels, 16, kernel_size=5, padding=2)
-        self.conv7 = nn.Conv2d(in_channels, 8, kernel_size=7, padding=3)
-        
-        self.bn3 = nn.BatchNorm2d(32)
-        self.bn5 = nn.BatchNorm2d(16)
-        self.bn7 = nn.BatchNorm2d(8)
-        
-        # After first set of conv layers
-        self.conv3_2 = nn.Conv2d(32, 32, kernel_size=3, padding=1)
-        self.conv5_2 = nn.Conv2d(32, 16, kernel_size=5, padding=2)
-        self.bn3_2 = nn.BatchNorm2d(32)
-        self.bn5_2 = nn.BatchNorm2d(16)
-        
-        # Apply conv5_main to out_1_5 (16 channels)
-        self.conv5_main = nn.Conv2d(16, 24, kernel_size=5, padding=2)
-        self.bn5_main = nn.BatchNorm2d(24)
-        
-        # Apply conv7_main to out_1_7 (8 channels)
-        self.conv7_main = nn.Conv2d(8, 12, kernel_size=7, padding=3)
-        self.bn7_main = nn.BatchNorm2d(12)
-        
-        # Final convolution before concatenation
-        self.conv3_final = nn.Conv2d(24, 36, kernel_size=3, padding=1)
-        self.bn3_final = nn.BatchNorm2d(36)
-        
-        # Adjust conv1x1 to match the final concatenated channels
-        # Example: Concatenating x (in_channels), out_3_b_3 (104), out_4_b_3 (36) = 24 + 104 + 36 = 164
-        self.conv1x1 = nn.Conv2d(164, 24, kernel_size=1)
-        self.bn1x1 = nn.BatchNorm2d(24)
-        
-        self.pool = nn.MaxPool2d(2, 2)
-
-    def forward(self, x):
-        # First set of convolutions
-        out_1_3 = F.relu(self.bn3(self.conv3(x)))   # [batch,32,H,W]
-        out_1_5 = F.relu(self.bn5(self.conv5(x)))   # [batch,16,H,W]
-        out_1_7 = F.relu(self.bn7(self.conv7(x)))   # [batch,8,H,W]
-        
-        # Concatenations after first set
-        out_1_3_5 = torch.cat([x, out_1_3, out_1_5], dim=1)    # [batch,72,H,W]
-        out_1_5_7 = torch.cat([x, out_1_3, out_1_5, out_1_7], dim=1)  # [batch,80,H,W]
-                
-        # Second set of convolutions
-        out_2_3 = F.relu(self.bn3_2(self.conv3_2(out_1_3)))    # [batch,32,H,W]
-        out_2_5_2 = F.relu(self.bn5_2(self.conv5_2(out_1_3)))  # [batch,16,H,W]
-        out_2_3 = torch.cat([x, out_2_3, out_2_5_2, out_1_3], dim=1)  # [batch,104,H,W]
-        
-        # Apply conv5_main to out_1_5
-        out_2_5 = F.relu(self.bn5_main(self.conv5_main(out_1_5)))  # [batch,24,H,W]
-        
-        # Apply conv7_main to out_1_7 (Corrected)
-        out_2_7 = F.relu(self.bn7_main(self.conv7_main(out_1_7)))  # [batch,12,H,W]
-        
-        # Third set of convolutions
-        out_3_5_7 = torch.cat([x, out_2_5, out_2_7], dim=1)    # [batch,60,H,W]
-        out_3_b_5_7 = self.bn5_main(out_2_5)                  # [batch,24,H,W]
-        out_3_b_3 = self.bn5_2(out_2_3)                        # [batch,16,H,W]
-        
-        out_4_3 = F.relu(self.bn3_final(self.conv3_final(out_3_5_7)))  # [batch,36,H,W]
-        out_4_b_3 = self.bn3_final(out_4_3)                         # [batch,36,H,W]
-        
-        # Final concatenation to match conv1x1 input channels (164)
-        out = torch.cat([
-            x,             # 24
-            out_3_b_3,     # 16
-            out_4_b_3      # 36
-        ], dim=1)           # Total: 24 + 16 + 36 = 76 channels
-        
-        # Adjust conv1x1 accordingly
-        # Since the current concatenation is 76 channels, redefine conv1x1:
-        self.conv1x1 = nn.Conv2d(76, 24, kernel_size=1)
-        self.bn1x1 = nn.BatchNorm2d(24)
-        
-        out = F.relu(self.bn1x1(self.conv1x1(out)))  # [batch,24,H,W]
-        out = self.pool(out)                           # [batch,24,H/2,W/2]
-        
-        return out
-
-class CNNFashion(nn.Module):
-    def __init__(self, args):
-        super(CNNFashion, self).__init__()
-        self.rescaling = nn.Sequential(nn.Conv2d(1, 24, kernel_size=1), nn.BatchNorm2d(24))
-        self.block1 = MK_Block(in_channels=24)
-        self.block2 = MK_Block(in_channels=24)  # Output channels from block1
-        self.block3 = MK_Block(in_channels=24)  # Output channels from block2
-        
-        self.flatten = nn.Flatten()
-        
-        self.fc1 = nn.Linear(24 * 3 * 3, 256) 
-        self.dropout1 = nn.Dropout(0.3)
-        self.fc2 = nn.Linear(256, 128)
-        self.dropout2 = nn.Dropout(0.3)
-        self.fc3 = nn.Linear(128, 128)
-        self.dropout3 = nn.Dropout(0.3)
-        self.fc4 = nn.Linear(128, 64)
-        self.dropout4 = nn.Dropout(0.3)
-        self.fc5 = nn.Linear(64, 10)
+class SimpleCNN(nn.Module):
+    def __init__(self):
+        super(SimpleCNN, self).__init__()
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=3, padding=1)
+        self.bn1 = nn.BatchNorm2d(32)
+        self.conv2 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, padding=1)
+        self.bn2 = nn.BatchNorm2d(64)
+        self.fc1 = nn.Linear(64 * 7 * 7, 128)
+        self.dropout1 = nn.Dropout(0.5)
+        self.fc2 = nn.Linear(128, 10)
         
     def forward(self, x):
-        x = self.rescaling(x)  # [batch_size,24,28,28]
-
-        x = self.block1(x)  # Output: [batch_size,24,14,14]
-        x = self.block2(x)  # Output: [batch_size,24,7,7]
-        x = self.block3(x)  # Output: [batch_size,24,3,3]
-        
-        x = self.flatten(x)  # Output: [batch_size, 24*3*3 = 216]
-        
+        x = F.relu(self.bn1(self.conv1(x)))
+        x = F.max_pool2d(x, 2)
+        x = F.relu(self.bn2(self.conv2(x)))
+        x = F.max_pool2d(x, 2)
+        x = x.view(-1, 64 * 7 * 7)
         x = F.relu(self.fc1(x))
         x = self.dropout1(x)
-        x = F.relu(self.fc2(x))
-        x = self.dropout2(x)
-        x = F.relu(self.fc3(x))
-        x = self.dropout3(x)
-        x = F.relu(self.fc4(x))
-        x = self.dropout4(x)
-        x = self.fc5(x)  # Output logits
-        
+        x = self.fc2(x)
         return x
-
 
 class CNNCifar(nn.Module):
     def __init__(self, args):
