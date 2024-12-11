@@ -146,9 +146,9 @@ class MK_Block(nn.Module):
         
         return out
 
-class CustomCNN(nn.Module):
-    def __init__(self):
-        super(CustomCNN, self).__init__()
+class CNNFashion(nn.Module):
+    def __init__(self, args):
+        super(CNNFashion, self).__init__()
         self.rescaling = nn.Sequential(
             nn.Conv2d(1, 1, kernel_size=1), 
             nn.BatchNorm2d(1)
