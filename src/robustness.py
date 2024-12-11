@@ -66,32 +66,32 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
             local_weights_dict[idx] = copy.deepcopy(w)
             delta_t[epoch][idx] = delta
 
-        # # compute shapley values
-        # start_time = time.time()
-        # shapley_updates = compute_shapley(args, global_weights, local_weights_dict, test_dataset)
-        # for k, v in shapley_updates.items():
-        #     shapley_values[k] += v  
-        # runtimes['sv'] += time.time() - start_time
+        # compute shapley values
+        start_time = time.time()
+        shapley_updates = compute_shapley(args, global_weights, local_weights_dict, test_dataset)
+        for k, v in shapley_updates.items():
+            shapley_values[k] += v  
+        runtimes['sv'] += time.time() - start_time
 
         global_weights = average_weights(local_weights)
        
-        # # compute banzhaf values
-        # start_time = time.time()
-        # G_t = compute_G_t(delta_t[epoch], global_weights.keys())
-        # for idx in idxs_users:
-        #     G_t_minus_i = compute_G_minus_i_t(delta_t[epoch], global_weights.keys(), idx)
-        #     if epoch > 0:
-        #         for key in global_weights.keys():
-        #             delta_g[idx][key] += G_t_minus_i[key] - G_t[key]
-        #     t_time = time.time() - start_time
-        #     runtimes['abvh'] += t_time
-        #     runtimes['abvs'] += t_time
-        #     start_time = time.time()
-        #     abv_hessian[idx] += compute_abv(args, model, train_dataset, user_groups[idx], grad, delta_t[epoch][idx], delta_g[idx], is_hessian=True)
-        #     runtimes['abvh'] += time.time() - start_time
-        #     start_time = time.time()
-        #     abv_simple[idx] += compute_abv(args, model, train_dataset, user_groups[idx], grad, delta_t[epoch][idx], delta_g[idx], is_hessian=False)
-        #     runtimes['abvs'] += time.time() - start_time
+        # compute banzhaf values
+        start_time = time.time()
+        G_t = compute_G_t(delta_t[epoch], global_weights.keys())
+        for idx in idxs_users:
+            G_t_minus_i = compute_G_minus_i_t(delta_t[epoch], global_weights.keys(), idx)
+            if epoch > 0:
+                for key in global_weights.keys():
+                    delta_g[idx][key] += G_t_minus_i[key] - G_t[key]
+            t_time = time.time() - start_time
+            runtimes['abvh'] += t_time
+            runtimes['abvs'] += t_time
+            start_time = time.time()
+            abv_hessian[idx] += compute_abv(args, model, train_dataset, user_groups[idx], grad, delta_t[epoch][idx], delta_g[idx], is_hessian=True)
+            runtimes['abvh'] += time.time() - start_time
+            start_time = time.time()
+            abv_simple[idx] += compute_abv(args, model, train_dataset, user_groups[idx], grad, delta_t[epoch][idx], delta_g[idx], is_hessian=False)
+            runtimes['abvs'] += time.time() - start_time
 
         model.load_state_dict(global_weights)
 
@@ -99,9 +99,9 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
     
         print(f'Epoch {epoch+1}/{args.epochs} - Test Accuracy: {acc}, Test Loss: {loss}, Runtimes: {runtimes}')
     
+    # compute influence values
     start_time = time.time()
     influence_values = compute_influence(args, global_weights, train_dataset, test_dataset, user_groups, noise_transform)
-    # influence_values = compute_influence_edb(args, delta_t, epoch)
     runtimes['if'] += time.time() - start_time
 
     return model, abv_simple, abv_hessian, shapley_values, influence_values, runtimes
