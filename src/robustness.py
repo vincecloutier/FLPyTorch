@@ -123,24 +123,13 @@ if __name__ == '__main__':
     noise_transform = AddGaussianNoise()
     noise_transform.to(device)
 
-    for i in range(2,3): #TODO restore to range(3)
+    for i in range(3):
         print(f'Run {i+1} with noise std {i*0.25}')
         logger.info(f'Run {i}: Adding Gaussian noise with std={i*0.25}')
         noise_transform.set_std(i*0.25)
 
         global_model, abv_simple, abv_hessian, shapley_values, influence_values, runtimes = train_global_model(args, global_model, train_dataset, valid_dataset, test_dataset, user_groups, device, noise_transform)
         test_acc, test_loss = test_inference(global_model, test_dataset)
-
-        predicted_bad_abvs = identify_bad_idxs(abv_simple)
-        predicted_bad_abvh = identify_bad_idxs(abv_hessian)
-        predicted_bad_sv = identify_bad_idxs(shapley_values)
-        # predicted_bad_if = identify_bad_idxs(influence_values)
-        median_influence = np.median(list(influence_values.values()))
-        predicted_bad_if = [cid for cid in influence_values if influence_values[cid] / median_influence > 1.5]
-        bad_client_accuracy_abvs = measure_accuracy(actual_bad_clients, predicted_bad_abvs)
-        bad_client_accuracy_abvh = measure_accuracy(actual_bad_clients, predicted_bad_abvh)
-        bad_client_accuracy_sv = measure_accuracy(actual_bad_clients, predicted_bad_sv)
-        bad_client_accuracy_if = measure_accuracy(actual_bad_clients, predicted_bad_if)
 
         # log results   
         if args.setting == 0:
@@ -161,12 +150,4 @@ if __name__ == '__main__':
         logger.info(f'Shapley Values: {shapley_values}')
         logger.info(f'Influence Function Values: {influence_values}')
         logger.info(f'Actual Bad Clients: {actual_bad_clients}')
-        logger.info(f'Predicted Bad Clients Banzhaf Simple: {predicted_bad_abvs}')
-        logger.info(f'Predicted Bad Clients Banzhaf Hessian: {predicted_bad_abvh}')
-        logger.info(f'Predicted Bad Clients Shapley: {predicted_bad_sv}')
-        logger.info(f'Predicted Bad Clients Influence: {predicted_bad_if}')
-        logger.info(f'Bad Client Accuracy Banzhaf Simple: {bad_client_accuracy_abvs}')
-        logger.info(f'Bad Client Accuracy Banzhaf Hessian: {bad_client_accuracy_abvh}')
-        logger.info(f'Bad Client Accuracy Shapley: {bad_client_accuracy_sv}')
-        logger.info(f'Bad Client Accuracy Influence: {bad_client_accuracy_if}')
         logger.info(f'Runtimes: {runtimes}')
