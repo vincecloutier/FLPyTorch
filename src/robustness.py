@@ -100,7 +100,7 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
         print(f'Epoch {epoch+1}/{args.epochs} - Test Accuracy: {acc}, Test Loss: {loss}, Runtimes: {runtimes}')
     
     start_time = time.time()
-    influence_values = compute_influence(args, global_weights, train_dataset, test_dataset, user_groups)
+    influence_values = compute_influence(args, global_weights, train_dataset, test_dataset, user_groups, noise_transform)
     # influence_values = compute_influence_edb(args, delta_t, epoch)
     runtimes['if'] += time.time() - start_time
 
@@ -123,7 +123,7 @@ if __name__ == '__main__':
     noise_transform = AddGaussianNoise()
     noise_transform.to(device)
 
-    for i in range(3):
+    for i in range(2,3): #TODO restore to range(3)
         print(f'Run {i+1} with noise std {i*0.25}')
         logger.info(f'Run {i}: Adding Gaussian noise with std={i*0.25}')
         noise_transform.set_std(i*0.25)
