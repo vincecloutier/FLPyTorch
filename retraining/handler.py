@@ -102,7 +102,7 @@ def graph_processed_log(log_file):
     ab1, lb1, aa1, la1, ab2, lb2, aa2, la2, ab3, lb3, aa3, la3 = process_log(log_file)
 
     # define x-axis values based on the number of data points
-    x = range(1, len(ab1) + 1)
+    x = [2, 4, 6, 8]
 
     # determine the minimum and maximum loss across all settings for consistent y-axis limits
     all_losses = np.concatenate([lb1, la1, lb2, la2, lb3, la3])
