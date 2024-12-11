@@ -90,64 +90,70 @@ class MK_Block(nn.Module):
         self.bn3_2 = nn.BatchNorm2d(32)
         self.bn5_2 = nn.BatchNorm2d(16)
         
+        # Apply conv5_main to out_1_5 (16 channels)
         self.conv5_main = nn.Conv2d(16, 24, kernel_size=5, padding=2)
-        self.conv7_main = nn.Conv2d(8, 12, kernel_size=7, padding=3)
         self.bn5_main = nn.BatchNorm2d(24)
+        
+        # Apply conv7_main to out_1_7 (8 channels)
+        self.conv7_main = nn.Conv2d(8, 12, kernel_size=7, padding=3)
         self.bn7_main = nn.BatchNorm2d(12)
         
+        # Final convolution before concatenation
         self.conv3_final = nn.Conv2d(24, 36, kernel_size=3, padding=1)
         self.bn3_final = nn.BatchNorm2d(36)
         
-        # Calculate the number of input channels for conv1x1
-        # in_channels + 32 + 16 + 8 + 24 + 12 + 36 = in_channels + 128
-        self.conv1x1 = nn.Conv2d(in_channels + 32 + 16 + 8 + 24 + 12 + 36, 24, kernel_size=1)
+        # Adjust conv1x1 to match the final concatenated channels
+        # Example: Concatenating x (in_channels), out_3_b_3 (104), out_4_b_3 (36) = 24 + 104 + 36 = 164
+        self.conv1x1 = nn.Conv2d(164, 24, kernel_size=1)
         self.bn1x1 = nn.BatchNorm2d(24)
+        
         self.pool = nn.MaxPool2d(2, 2)
 
     def forward(self, x):
         # First set of convolutions
-        out_1_3 = F.relu(self.bn3(self.conv3(x)))  # [batch,32,H,W]
-        out_1_5 = F.relu(self.bn5(self.conv5(x)))  # [batch,16,H,W]
-        out_1_7 = F.relu(self.bn7(self.conv7(x)))  # [batch,8,H,W]
+        out_1_3 = F.relu(self.bn3(self.conv3(x)))   # [batch,32,H,W]
+        out_1_5 = F.relu(self.bn5(self.conv5(x)))   # [batch,16,H,W]
+        out_1_7 = F.relu(self.bn7(self.conv7(x)))   # [batch,8,H,W]
         
         # Concatenations after first set
-        out_1_3_5 = torch.cat([x, out_1_3, out_1_5], dim=1)  # [batch, in_channels +32 +16, H, W]
-        out_1_5_7 = torch.cat([x, out_1_3, out_1_5, out_1_7], dim=1)  # [batch, in_channels +32 +16 +8, H, W]
+        out_1_3_5 = torch.cat([x, out_1_3, out_1_5], dim=1)    # [batch,72,H,W]
+        out_1_5_7 = torch.cat([x, out_1_3, out_1_5, out_1_7], dim=1)  # [batch,80,H,W]
                 
         # Second set of convolutions
-        out_2_3 = F.relu(self.bn3_2(self.conv3_2(out_1_3)))  # [batch,32,H,W]
+        out_2_3 = F.relu(self.bn3_2(self.conv3_2(out_1_3)))    # [batch,32,H,W]
         out_2_5_2 = F.relu(self.bn5_2(self.conv5_2(out_1_3)))  # [batch,16,H,W]
-        out_2_3 = torch.cat([x, out_2_3, out_2_5_2, out_1_3], dim=1)  # [batch, in_channels +32 +16 +32, H, W]
+        out_2_3 = torch.cat([x, out_2_3, out_2_5_2, out_1_3], dim=1)  # [batch,104,H,W]
         
-        # **Fixed:** Apply conv5_main to out_1_5 instead of out_1_3_5
+        # Apply conv5_main to out_1_5
         out_2_5 = F.relu(self.bn5_main(self.conv5_main(out_1_5)))  # [batch,24,H,W]
-        out_2_7 = F.relu(self.bn7_main(self.conv7_main(out_1_5_7)))  # [batch,12,H,W]
         
-        out_3_5_7 = torch.cat([x, out_2_5, out_2_7], dim=1)  # [batch, in_channels +24 +12, H, W]
-        out_3_b_5_7 = self.bn5_main(out_2_5)  # Already normalized
-        # **Fixed:** Removed incorrect BatchNorm
-        out_3_b_3 = out_2_3  # Skipping BatchNorm
+        # Apply conv7_main to out_1_7 (Corrected)
+        out_2_7 = F.relu(self.bn7_main(self.conv7_main(out_1_7)))  # [batch,12,H,W]
         
         # Third set of convolutions
-        out_4_3 = F.relu(self.bn3_final(self.conv3_final(out_3_5_7)))  # [batch,36,H,W]
-        out_4_b_3 = self.bn3_final(out_4_3)                         # Already normalized
+        out_3_5_7 = torch.cat([x, out_2_5, out_2_7], dim=1)    # [batch,60,H,W]
+        out_3_b_5_7 = self.bn5_main(out_2_5)                  # [batch,24,H,W]
+        out_3_b_3 = self.bn5_2(out_2_3)                        # [batch,16,H,W]
         
-        # Final concatenation
+        out_4_3 = F.relu(self.bn3_final(self.conv3_final(out_3_5_7)))  # [batch,36,H,W]
+        out_4_b_3 = self.bn3_final(out_4_3)                         # [batch,36,H,W]
+        
+        # Final concatenation to match conv1x1 input channels (164)
         out = torch.cat([
-            x, 
-            out_3_b_3, 
-            out_1_3, 
-            out_1_3_5, 
-            out_1_5_7, 
-            out_3_b_5_7, 
-            out_4_b_3
-        ], dim=1)  # [batch, in_channels +32 +16 +24 +12 +36, H, W]
+            x,             # 24
+            out_3_b_3,     # 16
+            out_4_b_3      # 36
+        ], dim=1)           # Total: 24 + 16 + 36 = 76 channels
+        
+        # Adjust conv1x1 accordingly
+        # Since the current concatenation is 76 channels, redefine conv1x1:
+        self.conv1x1 = nn.Conv2d(76, 24, kernel_size=1)
+        self.bn1x1 = nn.BatchNorm2d(24)
         
         out = F.relu(self.bn1x1(self.conv1x1(out)))  # [batch,24,H,W]
-        out = self.pool(out)                          # [batch,24,H/2,W/2]
+        out = self.pool(out)                           # [batch,24,H/2,W/2]
         
         return out
-
 
 class CNNFashion(nn.Module):
     def __init__(self, args):
@@ -171,7 +177,7 @@ class CNNFashion(nn.Module):
         
     def forward(self, x):
         x = self.rescaling(x)  # [batch_size,24,28,28]
-    
+
         x = self.block1(x)  # Output: [batch_size,24,14,14]
         x = self.block2(x)  # Output: [batch_size,24,7,7]
         x = self.block3(x)  # Output: [batch_size,24,3,3]
