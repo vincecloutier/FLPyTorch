@@ -28,26 +28,23 @@ from torchvision.models import resnet50, resnet18
 
 
 class CNNFashion(nn.Module):
-    def __init__(self, args):
+    def __init__(self):
         super(CNNFashion, self).__init__()
-        self.features = nn.Sequential(
-            nn.Conv2d(1, 16, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.Conv2d(16, 32, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2)
-        )
-        self.classifier = nn.Sequential(
-            nn.Linear(32 * 7 * 7, 128),
-            nn.ReLU(inplace=True),
-            nn.Linear(128, 10)
-        )
-
+        self.conv1 = nn.Conv2d(1, 64, kernel_size=5)
+        self.conv2 = nn.Conv2d(64, 128, kernel_size=5)
+        self.fc1 = nn.Linear(128*4*4, 1024)
+        self.fc2 = nn.Linear(1024, 10)
+        self.relu = nn.ReLU()
+        self.pool = nn.MaxPool2d(2)
+        self.dropout = nn.Dropout(0.5)
+    
     def forward(self, x):
-        x = self.features(x)
-        x = x.view(x.size(0), -1)
-        x = self.classifier(x)
+        x = self.relu(self.pool(self.conv1(x)))
+        x = self.relu(self.pool(self.conv2(x)))
+        x = x.view(-1, 128*4*4)
+        x = self.relu(self.fc1(x))
+        x = self.dropout(x)
+        x = self.fc2(x)
         return x
 
 
