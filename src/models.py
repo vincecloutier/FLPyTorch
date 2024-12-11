@@ -39,14 +39,14 @@ class CNNFashion(nn.Module):
             nn.MaxPool2d(kernel_size=2, stride=2)
         )
         self.classifier = nn.Sequential(
-            nn.Linear(64 * 8 * 8, 128),
+            nn.Linear(32 * 7 * 7, 128),
             nn.ReLU(inplace=True),
             nn.Linear(128, 10)
         )
 
     def forward(self, x):
         x = self.features(x)
-        x = x.view(x.size(0), 64 * 8 * 8)
+        x = x.view(x.size(0), -1)
         x = self.classifier(x)
         return x
 
