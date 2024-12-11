@@ -1,6 +1,5 @@
+import copy
 from collections import defaultdict
-from utils import get_device, initialize_model
-import torch.nn.functional as F
 from typing import Tuple
 import torch
 import torch.nn.functional as F
@@ -11,7 +10,7 @@ from kronfluence.task import Task
 from kronfluence.utils.common.factor_arguments import all_low_precision_factor_arguments
 from kronfluence.utils.common.score_arguments import all_low_precision_score_arguments
 from kronfluence.utils.dataset import DataLoaderKwargs
-
+from utils import get_device, initialize_model
 
 BATCH_TYPE = Tuple[torch.Tensor, torch.Tensor]
 
@@ -42,7 +41,11 @@ class ClassificationTask(Task):
         return -margins.sum()
 
 
-def compute_influence(args, global_weights, train_dataset, test_dataset, user_groups):
+def compute_influence(args, global_weights, train_dataset, test_dataset, user_groups, noise_transform):
+    # applying noise transform to train_dataset
+    t_dataset = copy.deepcopy(train_dataset)
+    t_dataset.data = [noise_transform(data) for data in t_dataset.data]
+
     # prepare the model
     device = get_device()
     model = initialize_model(args)
@@ -69,7 +72,7 @@ def compute_influence(args, global_weights, train_dataset, test_dataset, user_gr
     analyzer.fit_all_factors(
         factors_name=factors_name,
         factor_args=factor_args,
-        dataset=train_dataset,
+        dataset=t_dataset,
         per_device_batch_size=None,
         overwrite_output_dir=True,
     )
@@ -87,7 +90,7 @@ def compute_influence(args, global_weights, train_dataset, test_dataset, user_gr
         factors_name=factors_name,
         query_dataset=test_dataset,
         query_indices=list(range(1000)),
-        train_dataset=train_dataset,
+        train_dataset=t_dataset,
         per_device_query_batch_size=128,
         overwrite_output_dir=True
     )
