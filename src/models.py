@@ -46,7 +46,7 @@ class CNNFashion(nn.Module):
 
     def forward(self, x):
         x = self.features(x)
-        x = x.view(x.size(0), 64 * 7 * 7)
+        x = x.view(x.size(0), 64 * 8 * 8)
         x = self.classifier(x)
         return x
 
