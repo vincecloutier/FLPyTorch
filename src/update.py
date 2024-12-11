@@ -35,7 +35,7 @@ class LocalUpdate(object):
                 return x
 
         scaler = GradScaler()
-        optimizer = torch.optim.Adam(model.parameters(), lr=self.args.lr, weight_decay=1e-4)        
+        optimizer = torch.optim.Adam(model.parameters(), lr=self.args.lr, weight_decay=self.args.weight_decay)        
         sched = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=self.args.lr, epochs=self.args.local_ep, steps_per_epoch=len(self.trainloader))
 
         for iter in range(self.args.local_ep):
