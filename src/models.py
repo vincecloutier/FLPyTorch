@@ -71,7 +71,7 @@ from torchvision.models import resnet50, resnet18
 
 
 class CNNFashion(nn.Module):
-    def __init__(self, args, in_channels = 3, num_classes = 10):
+    def __init__(self, args, in_channels=1, num_classes=10):
         super().__init__()
         self.conv1 = conv_block(in_channels, 64)
         self.conv2 = conv_block(64, 128, pool=True)
@@ -79,7 +79,7 @@ class CNNFashion(nn.Module):
         self.conv3 = conv_block(128, 256, pool=True)
         self.conv4 = conv_block(256, 512, pool=True)
         self.res2 = nn.Sequential(conv_block(512, 512), conv_block(512, 512))
-        self.classifier = nn.Sequential(nn.AdaptiveMaxPool2d((1,1)), nn.Flatten(), nn.Dropout(0.2), nn.Linear(512, num_classes))
+        self.classifier = nn.Sequential(nn.AdaptiveMaxPool2d((1,1)), nn.Flatten(), nn.Linear(512, num_classes))
         
     def forward(self, xb):
         out = self.conv1(xb)
