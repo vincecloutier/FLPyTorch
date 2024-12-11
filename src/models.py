@@ -39,7 +39,7 @@ class CNNFashion(nn.Module):
             nn.MaxPool2d(kernel_size=2, stride=2)
         )
         self.classifier = nn.Sequential(
-            nn.Linear(64 * 7 * 7, 128),
+            nn.Linear(64 * 8 * 8, 128),
             nn.ReLU(inplace=True),
             nn.Linear(128, 10)
         )
