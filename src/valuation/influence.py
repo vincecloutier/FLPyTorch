@@ -43,9 +43,10 @@ class ClassificationTask(Task):
 
 def compute_influence(args, global_weights, train_dataset, test_dataset, user_groups, noise_transform):
     # applying noise transform to train_dataset
-    device = get_device()
     t_dataset = copy.deepcopy(train_dataset)
-    t_dataset.data = [noise_transform(torch.tensor(data, dtype=torch.float32).to(device))for data in t_dataset.data]
+    noise_transform.to('cpu')
+    t_dataset.data = [noise_transform(torch.tensor(data, dtype=torch.float32)) for data in t_dataset.data]
+    noise_transform.to(get_device())
 
     # prepare the model
     device = get_device()
