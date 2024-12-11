@@ -22,7 +22,7 @@ def compute_shapley(args, global_weights, client_weights, test_dataset):
         base_score = test_inference(model, test_dataset)[1]
 
     client_keys = list(client_weights.keys())
-    e, d  = 0.25, 0.25 
+    e, d  = 0.25, 0.5
     t = int((2 / e**2) * np.log(2 * len(client_keys) / d))
 
     shapley_updates = defaultdict(float)
@@ -41,7 +41,7 @@ def compute_shapley(args, global_weights, client_weights, test_dataset):
         for k, v in result.items():
             shapley_updates[k] += v
 
-    del results
+    del model, results
     torch.cuda.empty_cache()
 
     # average the values over all permutations
