@@ -46,9 +46,8 @@ def compute_influence(args, global_weights, train_dataset, test_dataset, user_gr
 
     # applying noise transform to train_dataset
     t_dataset = copy.deepcopy(train_dataset)
-    noise_transform.to('cpu')
-    t_dataset.data = [noise_transform(torch.tensor(data, dtype=torch.float32)) for data in t_dataset.data]
-    noise_transform.to(device)
+    t_dataset.data = [torch.tensor(data, dtype=torch.float32, device=device) for data in t_dataset.data]
+    t_dataset.data = [noise_transform(d) for d in t_dataset.data]
 
     # prepare the model
     model = initialize_model(args)
