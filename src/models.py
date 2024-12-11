@@ -28,7 +28,7 @@ from torchvision.models import resnet50, resnet18
 
 
 class CNNFashion(nn.Module):
-    def __init__(self,):
+    def __init__(self, args):
         super(CNNFashion, self).__init__()
         self.conv1 = nn.Conv2d(1, 64, kernel_size=5)
         self.conv2 = nn.Conv2d(64, 128, kernel_size=5)
