@@ -66,7 +66,7 @@ def compute_influence(args, global_weights, train_dataset, test_dataset, user_gr
 
     # compute influence factors
     factor_args = FactorArguments(
-        strategy=factors_name,
+        strategy='ekfac',
         use_empirical_fisher=True,
         amp_dtype=None,
         amp_scale=2.0**16,
