@@ -65,91 +65,31 @@ def compute_influence(args, global_weights, train_dataset, test_dataset, user_gr
     analyzer.set_dataloader_kwargs(dataloader_kwargs)
 
     # compute influence factors
-    factor_args = FactorArguments(
-        strategy='ekfac',
-        use_empirical_fisher=True,
-        amp_dtype=None,
-        amp_scale=2.0**16,
-
-        covariance_max_examples=100_000,
-        covariance_data_partitions=1,
-        covariance_module_partitions=1,
-        activation_covariance_dtype=torch.float16,
-        gradient_covariance_dtype=torch.float16,
-
-        eigendecomposition_dtype=torch.float16, 
-        lambda_max_examples=100_000,
-        lambda_data_partitions=1,
-        lambda_module_partitions=1,
-        use_iterative_lambda_aggregation=False,
-        offload_activations_to_cpu=False,
-        per_sample_gradient_dtype=torch.float16,  
-        lambda_dtype=torch.float16,
-    )
-    factors_name = factor_args.strategy
-
-    # fit all factors
+    factor_args = FactorArguments(strategy='ekfac')
     analyzer.fit_all_factors(
-        factors_name=factors_name,
-        factor_args=factor_args,
+        factors_name='ekfac',
         dataset=t_dataset,
         per_device_batch_size=None,
+        factor_args=factor_args,
         overwrite_output_dir=True,
     )
 
-    # compute pairwise scores
-    score_args = ScoreArguments(
-        damping_factor=1e-10,
-        amp_dtype=None,
-        offload_activations_to_cpu=False,
-
-        data_partitions=1,
-        module_partitions=1,
-        compute_per_module_scores=False,
-        compute_per_token_scores=False,
-        use_measurement_for_self_influence=False,
-        aggregate_query_gradients=False,
-        aggregate_train_gradients=False,
-
-        query_gradient_low_rank=None,
-        use_full_svd=False,
-        query_gradient_svd_dtype=torch.float16,
-        query_gradient_accumulation_steps=1,
-        
-        score_dtype=torch.float16,
-        per_sample_gradient_dtype=torch.float16,
-        precondition_dtype=torch.float16,
-    )
-    scores_name = factor_args.strategy
-
-    # compute 
-    analyzer.compute_pairwise_scores(
-        scores_name=scores_name,
-        score_args=score_args,
-        factors_name=factors_name,
-        query_dataset=test_dataset,
-        query_indices=list(range(2000)),
+    # compute self-influence scores
+    analyzer.compute_self_scores(
+        scores_name='ekfac',
+        factors_name='ekfac',
         train_dataset=t_dataset,
-        per_device_query_batch_size=512,
-        overwrite_output_dir=True
+        overwrite_output_dir=False,
     )
+    scores = analyzer.load_self_scores('ekfac')["all_modules"]
 
-    scores = analyzer.load_pairwise_scores(scores_name)["all_modules"]
     print(f"Scores shape: {scores.shape}")
 
     client_influences = defaultdict(float)
-    
-    # sum influence scores over all test samples for each training sample -> shape: [num_train_samples]
-    influence_scores = scores.sum(dim=0)
-    
-    # iterate over each client and sum the influence scores of their training samples
     for client_id, sample_indices in user_groups.items():
-        # convert sample_indices to a tensor if they aren't already
         sample_indices = torch.tensor(list(sample_indices), dtype=torch.long, device=scores.device)
-        # aggregate the influence scores for the client's training samples
-        client_influence_score = influence_scores[sample_indices].sum().item()
-        client_influences[client_id] = client_influence_score
-    
+        client_influence_score = scores[sample_indices].sum().item()
+        client_influences[client_id] = client_influence_score    
     return client_influences
 
 
