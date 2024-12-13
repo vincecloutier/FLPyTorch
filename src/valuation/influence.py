@@ -79,7 +79,7 @@ def compute_influence(args, global_weights, train_dataset, test_dataset, user_gr
         scores_name='ekfac',
         factors_name='ekfac',
         train_dataset=t_dataset,
-        overwrite_output_dir=False,
+        overwrite_output_dir=True,
     )
     scores = analyzer.load_self_scores('ekfac')["all_modules"]
 
