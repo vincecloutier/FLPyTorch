@@ -1,4 +1,3 @@
-import os
 import numpy as np
 from update import test_inference
 from utils import average_weights, initialize_model, get_device
@@ -22,8 +21,7 @@ def compute_shapley(args, global_weights, client_weights, test_dataset):
         base_score = test_inference(model, test_dataset)[1]
 
     client_keys = list(client_weights.keys())
-    e, d  = 0.25, 0.5
-    t = int((2 / e**2) * np.log(2 * len(client_keys) / d))
+    t = int((2 / 0.5**2) * np.log(2 * len(client_keys) / 0.5))
 
     shapley_updates = defaultdict(float)
     if t < fact(len(client_keys)):
