@@ -56,24 +56,28 @@ class CNNFashion(nn.Module):
 #         return out
 
 
-# rename this to an MLP actually
 class CNNFashion2(nn.Module):
     def __init__(self, args):
         super(CNNFashion2, self).__init__()
-        # Flatten 28x28 into 784 input features
-        self.fc1 = nn.Linear(784, 2048)
-        self.fc2 = nn.Linear(2048, 1024)
-        self.fc3 = nn.Linear(1024, 512)
-        self.fc4 = nn.Linear(512, 10)
-        self.relu = nn.ReLU(inplace=True)
-        
+        self.features = nn.Sequential(
+            nn.Conv2d(1, 16, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Conv2d(16, 32, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2)
+        )
+        self.classifier = nn.Sequential(
+            nn.Linear(32 * 7 * 7, 128),
+            nn.ReLU(inplace=True),
+            nn.Linear(128, 10)
+        )
+
     def forward(self, x):
+        x = self.features(x)
         x = x.view(x.size(0), -1)
-        x = self.relu(self.fc1(x))
-        x = self.relu(self.fc2(x))
-        x = self.relu(self.fc3(x))
-        out = self.fc4(x)
-        return out
+        x = self.classifier(x)
+        return x
 
 
 class CNNCifar(nn.Module):
