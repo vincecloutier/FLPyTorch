@@ -58,7 +58,7 @@ class CNNFashion(nn.Module):
 
 # rename this to an MLP actually
 class CNNFashion2(nn.Module):
-    def __init__(self):
+    def __init__(self, args):
         super(CNNFashion2, self).__init__()
         # Flatten 28x28 into 784 input features
         self.fc1 = nn.Linear(784, 2048)
