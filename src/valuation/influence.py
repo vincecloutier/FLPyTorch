@@ -71,8 +71,8 @@ def compute_influence(args, global_weights, train_dataset, user_groups, noise_tr
         amp_scale=2.0**16,
 
         # TODO: trying this explicitly
-        covariance_max_examples = 1024,
-        lambda_max_examples = 1024,
+        # covariance_max_examples = 1024,
+        # lambda_max_examples = 1024,
 
         # precision settings
         eigendecomposition_dtype=torch.float32,
@@ -98,7 +98,7 @@ def compute_influence(args, global_weights, train_dataset, user_groups, noise_tr
         
         # TODO: trying this explicitly
         # use_full_svd = True,
-        # query_gradient_low_rank=10,
+        query_gradient_low_rank=10,
 
         # precision settings
         query_gradient_svd_dtype=torch.bfloat16,
