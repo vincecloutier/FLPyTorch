@@ -71,8 +71,8 @@ def compute_influence(args, global_weights, train_dataset, user_groups, noise_tr
         has_shared_parameters=False,
 
         # settings for fitting covariance matrix
-        covariance_max_examples=25_000,
-        covariance_data_partitions=1,
+        covariance_max_examples=5000,
+        covariance_data_partitions=10,
         covariance_module_partitions=1,
         activation_covariance_dtype=torch.bfloat16,
         gradient_covariance_dtype=torch.bfloat16,
@@ -81,8 +81,8 @@ def compute_influence(args, global_weights, train_dataset, user_groups, noise_tr
         eigendecomposition_dtype=torch.float32,
         
         # settings for fitting lambda matrix
-        lambda_max_examples=25_000,
-        lambda_data_partitions=1,
+        lambda_max_examples=5000,
+        lambda_data_partitions=10,
         lambda_module_partitions=1,
         use_iterative_lambda_aggregation=False,
         offload_activations_to_cpu=False,
@@ -99,7 +99,7 @@ def compute_influence(args, global_weights, train_dataset, user_groups, noise_tr
 
     # compute influence scores
     score_args = ScoreArguments(
-        damping_factor=1e-04,
+        damping_factor=1e-2,
         amp_dtype=None,
         offload_activations_to_cpu=False,
 
