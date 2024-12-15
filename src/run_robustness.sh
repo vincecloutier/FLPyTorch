@@ -26,7 +26,7 @@ else
 fi
 
 if [ -z "$5" ]; then
-    STRATEGY=diagonal
+    STRATEGY=identity
 else
     STRATEGY=$5
 fi
