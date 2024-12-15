@@ -67,14 +67,10 @@ def compute_influence(args, global_weights, train_dataset, user_groups, noise_tr
     # compute influence factors
     factor_args = FactorArguments(
         strategy=args.strategy,
+        # TODO: test empirical fisher
         use_empirical_fisher=True,
         amp_dtype=torch.bfloat16,
         amp_scale=2.0**16,
-
-        # TODO: currently testing this
-        # settings for fitting covariance and lambda matrix
-        # covariance_max_examples=5000,
-        # lambda_max_examples=5000,
 
         # precision settings
         eigendecomposition_dtype=torch.float32,
@@ -94,7 +90,7 @@ def compute_influence(args, global_weights, train_dataset, user_groups, noise_tr
     # compute influence scores
     score_args = ScoreArguments(
         # TODO: test damping 1e-8, 1e-4
-        damping_factor=1e-2,
+        damping_factor=1e-8,
         amp_dtype=torch.bfloat16,
         
         # TODO: test this w/ old measurement?
