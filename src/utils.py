@@ -5,7 +5,7 @@ from torch.utils.data import Dataset
 from sampling import iid, noniid, mislabeled, noisy
 import logging
 import numpy as np
-from models import CNNFashion, CNNCifar, ResNet9, ImageNetModel
+from models import CNNFashion, CNNCifar, ResNet9, ImageNetModel, CNNFashion2
 import os
 import json
 import subprocess
@@ -187,7 +187,8 @@ def initialize_model(args):
         'fmnist': CNNFashion,
         'cifar': CNNCifar,
         'resnet': ResNet9,
-        'imagenet': ImageNetModel
+        'imagenet': ImageNetModel,
+        'fmnist2': CNNFashion2
     }
     if args.dataset in model_dict:
         return model_dict[args.dataset](args=args)

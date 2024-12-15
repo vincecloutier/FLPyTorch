@@ -28,9 +28,9 @@ class CNNFashion(nn.Module):
         return x
 
 
-class FashionCNN(nn.Module):
+class CNNFashion2(nn.Module):
     def __init__(self, args):
-        super(FashionCNN, self).__init__()
+        super(CNNFashion2, self).__init__()
         self.layer1 = nn.Sequential(
             nn.Conv2d(in_channels=1, out_channels=32, kernel_size=3, padding=1),
             nn.BatchNorm2d(32),
