@@ -91,8 +91,7 @@ def compute_influence(args, global_weights, train_dataset, user_groups, noise_tr
         damping_factor=1e-1,
         amp_dtype=torch.bfloat16,
         
-        # TODO: currently testing this w/ old measurement?
-        use_measurement_for_self_influence=True,
+        # use_measurement_for_self_influence=False,
 
         # precision settings
         query_gradient_svd_dtype=torch.bfloat16,
