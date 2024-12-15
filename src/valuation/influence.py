@@ -40,7 +40,7 @@ class ClassificationTask(Task):
         return -margins.sum()
 
 
-def compute_influence(args, global_weights, train_dataset, test_dataset, user_groups, noise_transform):
+def compute_influence(args, global_weights, train_dataset, user_groups, noise_transform):
     device = get_device()
 
     # applying noise transform to train_dataset
@@ -65,9 +65,9 @@ def compute_influence(args, global_weights, train_dataset, test_dataset, user_gr
     analyzer.set_dataloader_kwargs(dataloader_kwargs)
 
     # compute influence factors
-    factor_args = FactorArguments(strategy='ekfac')
+    factor_args = FactorArguments(strategy=args.strategy)
     analyzer.fit_all_factors(
-        factors_name='ekfac',
+        factors_name=args.strategy,
         dataset=t_dataset,
         per_device_batch_size=None,
         factor_args=factor_args,
@@ -76,12 +76,12 @@ def compute_influence(args, global_weights, train_dataset, test_dataset, user_gr
 
     # compute self-influence scores
     analyzer.compute_self_scores(
-        scores_name='ekfac',
-        factors_name='ekfac',
+        scores_name=args.strategy,
+        factors_name=args.strategy,
         train_dataset=t_dataset,
         overwrite_output_dir=True,
     )
-    scores = analyzer.load_self_scores('ekfac')["all_modules"]
+    scores = analyzer.load_self_scores(args.strategy)["all_modules"]
 
     print(f"Scores shape: {scores.shape}")
 
