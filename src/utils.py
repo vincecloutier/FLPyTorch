@@ -102,7 +102,7 @@ def get_dataset(args):
         dataset_name = 'cifar'
         data_dir = './data/cifar/'
         dataset_class = datasets.CIFAR10
-    elif args.dataset == 'fmnist':
+    elif args.dataset in ['fmnist', 'fmnist2']:
         dataset_name = 'fmnist'
         data_dir = './data/fmnist/'
         dataset_class = datasets.FashionMNIST
