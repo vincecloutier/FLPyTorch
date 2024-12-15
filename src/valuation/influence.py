@@ -35,8 +35,8 @@ class ClassificationTask(Task):
         cloned_logits = logits.clone()
         cloned_logits[bindex, labels] = torch.tensor(-torch.inf, device=logits.device, dtype=logits.dtype)
 
-        margins = torch.exp(logits_correct) / torch.exp(cloned_logits).sum(dim=-1)
-        # margins = logits_correct - cloned_logits.logsumexp(dim=-1)
+        # margins = torch.exp(logits_correct) / torch.exp(cloned_logits).sum(dim=-1)
+        margins = logits_correct - cloned_logits.logsumexp(dim=-1)
         return -margins.sum()
 
 
