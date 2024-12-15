@@ -74,11 +74,11 @@ def compute_influence(args, global_weights, train_dataset, user_groups, noise_tr
         covariance_max_examples=25_000,
         covariance_data_partitions=1,
         covariance_module_partitions=1,
-        activation_covariance_dtype=torch.float16,
-        gradient_covariance_dtype=torch.float16,
+        activation_covariance_dtype=torch.bfloat16,
+        gradient_covariance_dtype=torch.bfloat16,
         
         # settings for eigendecomposition
-        eigendecomposition_dtype=torch.float16,
+        eigendecomposition_dtype=torch.float32,
         
         # settings for fitting lambda matrix
         lambda_max_examples=25_000,
@@ -86,8 +86,8 @@ def compute_influence(args, global_weights, train_dataset, user_groups, noise_tr
         lambda_module_partitions=1,
         use_iterative_lambda_aggregation=False,
         offload_activations_to_cpu=False,
-        per_sample_gradient_dtype=torch.float16,
-        lambda_dtype=torch.float16,
+        per_sample_gradient_dtype=torch.bfloat16,
+        lambda_dtype=torch.bfloat16,
     )
     analyzer.fit_all_factors(
         factors_name=args.strategy,
@@ -115,13 +115,13 @@ def compute_influence(args, global_weights, train_dataset, user_groups, noise_tr
         # settings for query batching
         query_gradient_low_rank=None,
         use_full_svd=False,
-        query_gradient_svd_dtype=torch.float16,
+        query_gradient_svd_dtype=torch.bfloat16,
         query_gradient_accumulation_steps=1,
         
         # settings for dtype
-        score_dtype=torch.float16,
-        per_sample_gradient_dtype=torch.float16,
-        precondition_dtype=torch.float16,
+        score_dtype=torch.bfloat16,
+        per_sample_gradient_dtype=torch.bfloat16,
+        precondition_dtype=torch.bfloat16,
     )
 
     analyzer.compute_self_scores(
