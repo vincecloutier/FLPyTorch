@@ -7,6 +7,12 @@ else
     PROCESSES="$1"
 fi
 
+if [ -z "$2" ]; then
+    LR=1e-2  # default is 1e-2
+else
+    LR="$2"
+fi
+
 # install bc if not installed
 if ! command -v bc &> /dev/null; then
     echo "'bc' is not installed. Attempting to install it..."
@@ -27,7 +33,7 @@ do
     # python retraining.py --dataset resnet --setting 3 --processes $PROCESSES --badclient_prop $BAD_CLIENT_PROP --num_users 10 --local_ep 10 --retrain 1 --badsample_prop 0.6
 
     # python retraining.py --dataset fmnist --setting 1 --processes $PROCESSES --badclient_prop $BAD_CLIENT_PROP --num_users 10 --local_ep 10 --retrain 1 --num_categories_per_client 4 --acc_stopping 0
-    python retraining.py --dataset fmnist2 --setting 2 --processes $PROCESSES --badclient_prop $BAD_CLIENT_PROP --num_users 10 --local_ep 10 --retrain 1 --badsample_prop 0.2 --acc_stopping 0
+    python retraining.py --dataset fmnist2 --setting 2 --processes $PROCESSES --badclient_prop $BAD_CLIENT_PROP --num_users 10 --local_ep 10 --retrain 1 --badsample_prop 0.2 --lr $LR
     # python retraining.py --dataset fmnist --setting 3 --processes $PROCESSES --badclient_prop $BAD_CLIENT_PROP --num_users 10 --local_ep 10 --retrain 1 --badsample_prop 0.6 --acc_stopping 0
 
     # python retraining.py --dataset resnet --setting 1 --processes $PROCESSES --badclient_prop $BAD_CLIENT_PROP --num_users 10 --local_ep 10 --retrain 1 --num_categories_per_client 6
@@ -35,7 +41,7 @@ do
     # python retraining.py --dataset resnet --setting 3 --processes $PROCESSES --badclient_prop $BAD_CLIENT_PROP --num_users 10 --local_ep 10 --retrain 1 --badsample_prop 0.4
 
     # python retraining.py --dataset fmnist --setting 1 --processes $PROCESSES --badclient_prop $BAD_CLIENT_PROP --num_users 10 --local_ep 10 --retrain 1 --num_categories_per_client 6 --acc_stopping 0
-    python retraining.py --dataset fmnist2 --setting 2 --processes $PROCESSES --badclient_prop $BAD_CLIENT_PROP --num_users 10 --local_ep 10 --retrain 1 --badsample_prop 0.4 --acc_stopping 0
+    python retraining.py --dataset fmnist2 --setting 2 --processes $PROCESSES --badclient_prop $BAD_CLIENT_PROP --num_users 10 --local_ep 10 --retrain 1 --badsample_prop 0.4 --lr $LR
     # python retraining.py --dataset fmnist --setting 3 --processes $PROCESSES --badclient_prop $BAD_CLIENT_PROP --num_users 10 --local_ep 10 --retrain 1 --badsample_prop 0.4 --acc_stopping 0
 
     # python retraining.py --dataset resnet --setting 1 --processes $PROCESSES --badclient_prop $BAD_CLIENT_PROP --num_users 10 --local_ep 10 --retrain 1 --num_categories_per_client 8
@@ -43,7 +49,7 @@ do
     # python retraining.py --dataset resnet --setting 3 --processes $PROCESSES --badclient_prop $BAD_CLIENT_PROP --num_users 10 --local_ep 10 --retrain 1 --badsample_prop 0.2
 
     # python retraining.py --dataset fmnist --setting 1 --processes $PROCESSES --badclient_prop $BAD_CLIENT_PROP --num_users 10 --local_ep 10 --retrain 1 --num_categories_per_client 8 --acc_stopping 0
-    python retraining.py --dataset fmnist2 --setting 2 --processes $PROCESSES --badclient_prop $BAD_CLIENT_PROP --num_users 10 --local_ep 10 --retrain 1 --badsample_prop 0.6 --acc_stopping 0
+    python retraining.py --dataset fmnist2 --setting 2 --processes $PROCESSES --badclient_prop $BAD_CLIENT_PROP --num_users 10 --local_ep 10 --retrain 1 --badsample_prop 0.6 --lr $LR
     # python retraining.py --dataset fmnist --setting 3 --processes $PROCESSES --badclient_prop $BAD_CLIENT_PROP --num_users 10 --local_ep 10 --retrain 1 --badsample_prop 0.2 --acc_stopping 0
 
 done
@@ -51,4 +57,4 @@ done
 echo "All runs completed."
 
 # chmod +x run_retraining.sh
-# ./run_retraining.sh [processes]
+# ./run_retraining.sh [processes] 
