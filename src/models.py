@@ -28,31 +28,51 @@ class CNNFashion(nn.Module):
         return x
 
 
+# class CNNFashion2(nn.Module):
+#     def __init__(self, args):
+#         super(CNNFashion2, self).__init__()
+#         self.layer1 = nn.Sequential(
+#             nn.Conv2d(in_channels=1, out_channels=32, kernel_size=3, padding=1),
+#             nn.ReLU(),
+#             nn.MaxPool2d(kernel_size=2, stride=2)
+#         )
+#         self.layer2 = nn.Sequential(
+#             nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3),
+#             nn.ReLU(),
+#             nn.MaxPool2d(2)
+#         )
+#         self.fc1 = nn.Linear(in_features=64*6*6, out_features=600)
+#         self.fc2 = nn.Linear(in_features=600, out_features=120)
+#         self.fc3 = nn.Linear(in_features=120, out_features=10)
+        
+#     def forward(self, x):
+#         out = self.layer1(x)
+#         out = self.layer2(out)
+#         out = out.view(out.size(0), -1)
+#         out = self.fc1(out)
+#         out = self.fc2(out)
+#         out = self.fc3(out)
+        
+#         return out
+
+
+# rename this to an MLP actually
 class CNNFashion2(nn.Module):
-    def __init__(self, args):
+    def __init__(self):
         super(CNNFashion2, self).__init__()
-        self.layer1 = nn.Sequential(
-            nn.Conv2d(in_channels=1, out_channels=32, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2)
-        )
-        self.layer2 = nn.Sequential(
-            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3),
-            nn.ReLU(),
-            nn.MaxPool2d(2)
-        )
-        self.fc1 = nn.Linear(in_features=64*6*6, out_features=600)
-        self.fc2 = nn.Linear(in_features=600, out_features=120)
-        self.fc3 = nn.Linear(in_features=120, out_features=10)
+        # Flatten 28x28 into 784 input features
+        self.fc1 = nn.Linear(784, 2048)
+        self.fc2 = nn.Linear(2048, 1024)
+        self.fc3 = nn.Linear(1024, 512)
+        self.fc4 = nn.Linear(512, 10)
+        self.relu = nn.ReLU(inplace=True)
         
     def forward(self, x):
-        out = self.layer1(x)
-        out = self.layer2(out)
-        out = out.view(out.size(0), -1)
-        out = self.fc1(out)
-        out = self.fc2(out)
-        out = self.fc3(out)
-        
+        x = x.view(x.size(0), -1)
+        x = self.relu(self.fc1(x))
+        x = self.relu(self.fc2(x))
+        x = self.relu(self.fc3(x))
+        out = self.fc4(x)
         return out
 
 
