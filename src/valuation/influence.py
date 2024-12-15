@@ -5,10 +5,8 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 from kronfluence.analyzer import Analyzer, prepare_model
-from kronfluence.arguments import FactorArguments, ScoreArguments
+from kronfluence.arguments import FactorArguments
 from kronfluence.task import Task
-from kronfluence.utils.common.factor_arguments import all_low_precision_factor_arguments
-from kronfluence.utils.common.score_arguments import all_low_precision_score_arguments
 from kronfluence.utils.dataset import DataLoaderKwargs
 from utils import get_device, initialize_model
 
@@ -36,7 +34,7 @@ class ClassificationTask(Task):
         cloned_logits = logits.clone()
         cloned_logits[bindex, labels] = torch.tensor(-torch.inf, device=logits.device, dtype=logits.dtype)
 
-        margins = logits_correct - cloned_logits.logsumexp(dim=-1)
+        margins = torch.exp(logits_correct) / torch.exp(cloned_logits).sum(dim=-1)
         return -margins.sum()
 
 
