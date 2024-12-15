@@ -69,11 +69,6 @@ def compute_influence(args, global_weights, train_dataset, user_groups, noise_tr
         use_empirical_fisher=True,
         amp_dtype=torch.bfloat16,
         amp_scale=2.0**16,
-
-        # TODO: trying this explicitly
-        # covariance_max_examples = 1024,
-        # lambda_max_examples = 1024,
-
         # precision settings
         eigendecomposition_dtype=torch.float32,
         activation_covariance_dtype=torch.bfloat16,
@@ -95,9 +90,7 @@ def compute_influence(args, global_weights, train_dataset, user_groups, noise_tr
         amp_dtype=torch.bfloat16,
         use_measurement_for_self_influence=True,
         
-        
         # TODO: trying this explicitly
-        # use_full_svd = True,
         query_gradient_low_rank=10,
 
         # precision settings
