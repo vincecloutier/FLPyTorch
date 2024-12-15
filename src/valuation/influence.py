@@ -35,7 +35,6 @@ class ClassificationTask(Task):
         cloned_logits = logits.clone()
         cloned_logits[bindex, labels] = torch.tensor(-torch.inf, device=logits.device, dtype=logits.dtype)
 
-        # margins = torch.exp(logits_correct) / torch.exp(cloned_logits).sum(dim=-1)
         margins = logits_correct - cloned_logits.logsumexp(dim=-1)
         return -margins.sum()
 
@@ -90,9 +89,7 @@ def compute_influence(args, global_weights, train_dataset, user_groups, noise_tr
     score_args = ScoreArguments(
         damping_factor=1e-1,
         amp_dtype=torch.bfloat16,
-        
-        # use_measurement_for_self_influence=False,
-
+        use_measurement_for_self_influence=True,
         # precision settings
         query_gradient_svd_dtype=torch.bfloat16,
         per_sample_gradient_dtype=torch.bfloat16,
