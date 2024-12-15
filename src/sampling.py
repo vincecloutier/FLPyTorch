@@ -58,20 +58,19 @@ def noniid(dataset, dataset_name, num_users, badclient_prop, num_cat):
     return dict_users, non_iid_clients
 
 
-def mislabeled(dataset, dataset_name, dict_users, badclient_prop, mislabel_prop, skew=False):
+def mislabeled(dataset, dataset_name, dict_users, badclient_prop, mislabel_prop):
     """Randomly select a proportion of clients and mislabel a proportion of their samples."""
     labels = np.array(dataset.targets)
     clients_to_mislabel = np.random.choice(range(len(dict_users)), int(badclient_prop * len(dict_users)), replace=False)
     num_classes = len(np.unique(labels))
     for client_id in clients_to_mislabel:
         client_indices = np.array(list(dict_users[client_id]), dtype=int)
-        indices_of_base_images = [idx for idx in client_indices if labels[idx] != 2] if skew else client_indices
-        indices_to_mislabel = np.random.choice(indices_of_base_images, min(int(mislabel_prop * len(client_indices)), len(indices_of_base_images)), replace=False)
+        indices_to_mislabel = np.random.choice(client_indices, min(len(client_indices), int(mislabel_prop * len(client_indices))), replace=False)
         for idx in indices_to_mislabel:
             correct_label = labels[idx]
             incorrect_labels = list(range(num_classes))
             incorrect_labels.remove(correct_label)
-            new_label = np.random.choice(incorrect_labels) if skew else 2
+            new_label = np.random.choice(incorrect_labels)
             labels[idx] = new_label
     dataset.targets = labels
     return dict_users, clients_to_mislabel
@@ -91,7 +90,7 @@ def noisy(dataset, dataset_name, dict_users, badclient_prop, noisy_proportion):
             target_idx = np.random.choice(indices_of_target_class)
             base_image = data[idx]
             target_image = data[target_idx]
-            noisy_image = 0.75 * base_image + 0.25 * target_image
+            noisy_image = 0.9 * base_image + 0.1 * target_image
             data[idx] = noisy_image
             labels[idx] = labels[target_idx]
     dataset.targets = labels
