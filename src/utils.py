@@ -131,7 +131,7 @@ def get_dataset(args):
         user_groups, bad_clients = noniid(train_dataset, dataset_name, args.num_users, args.badclient_prop, args.num_categories_per_client)
     elif args.setting == 2:
         iid_user_groups = iid(train_dataset, args.num_users)
-        user_groups, bad_clients = mislabeled(train_dataset, dataset_name, iid_user_groups, args.badclient_prop, args.badsample_prop)
+        user_groups, bad_clients = mislabeled(train_dataset, dataset_name, iid_user_groups, args.badclient_prop, args.badsample_prop, skew=True)
     elif args.setting == 3:
         iid_user_groups = iid(train_dataset, args.num_users)
         user_groups, bad_clients = noisy(train_dataset, dataset_name, iid_user_groups, args.badclient_prop, args.badsample_prop)
