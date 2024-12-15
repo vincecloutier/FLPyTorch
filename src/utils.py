@@ -13,13 +13,13 @@ import zipfile
 
 
 class EarlyStopping:
-    def __init__(self, args, patience=3, epoch_threshold=15, acc_threshold=0.80):
+    def __init__(self, args, patience=3, epoch_threshold=15):
         self.best_acc = -float('inf')
         self.best_loss = float('inf')
         self.no_improvement_count = 0
         self.patience = patience
         self.epoch_threshold = epoch_threshold
-        self.acc_threshold = acc_threshold
+        self.acc_threshold = 0.90 if args.dataset == 'fmnist' else 0.80
         self.args = args
 
     def check(self, epoch, acc, loss):
