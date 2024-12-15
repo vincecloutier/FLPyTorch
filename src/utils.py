@@ -19,7 +19,7 @@ class EarlyStopping:
         self.no_improvement_count = 0
         self.patience = patience
         self.epoch_threshold = epoch_threshold
-        self.acc_threshold = 0.90 if args.dataset in ['fmnist', 'fmnist2'] else 0.80
+        self.acc_threshold = 0.85 if args.dataset in ['fmnist', 'fmnist2'] else 0.80
         self.args = args
 
     def check(self, epoch, acc, loss):
