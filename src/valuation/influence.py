@@ -67,8 +67,8 @@ def compute_influence(args, global_weights, train_dataset, user_groups, noise_tr
     # compute influence factors
     factor_args = FactorArguments(
         strategy=args.strategy,
-        # TODO: test empirical fisher
-        use_empirical_fisher=True,
+        # TODO: currently testing without empirical fisher
+        use_empirical_fisher=False,
         amp_dtype=torch.bfloat16,
         amp_scale=2.0**16,
 
@@ -89,7 +89,6 @@ def compute_influence(args, global_weights, train_dataset, user_groups, noise_tr
 
     # compute influence scores
     score_args = ScoreArguments(
-        # TODO: test damping 1e-8, 1e-4
         damping_factor=1e-8,
         amp_dtype=torch.bfloat16,
         
