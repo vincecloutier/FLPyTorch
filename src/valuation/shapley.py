@@ -30,17 +30,11 @@ def compute_shapley(args, global_weights, client_weights, test_dataset):
     else:
         t = fact(len(client_keys))
         args_list = [(perm, global_weights, client_weights, test_dataset, base_score, device, args) for perm in itertools.permutations(client_keys)]
-    # pool = multiprocessing.Pool(processes=args.shapley_processes)
-    # with tqdm(total=t) as pbar:
-    #     results = pool.map(compute_shapley_for_permutation, args_list)
-    # pool.close()
-    # pool.join()
-    with ThreadPoolExecutor(max_workers=args.shapley_processes) as executor:
-        futures = [executor.submit(compute_shapley_for_permutation, arg) for arg in args_list]
-        with tqdm(total=len(args_list), desc="Computing Shapley values") as pbar:
-            for future in as_completed(futures):
-                _ = future.result()
-                pbar.update(1)
+    pool = multiprocessing.Pool(processes=args.shapley_processes)
+    with tqdm(total=t) as pbar:
+        results = pool.map(compute_shapley_for_permutation, args_list)
+    pool.close()
+    pool.join()
 
     for result in results:
         for k, v in result.items():
