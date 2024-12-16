@@ -94,14 +94,10 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
             runtimes['abvs'] += time.time() - start_time
 
         model.load_state_dict(global_weights)
-
-        acc, loss = test_inference(model, test_dataset)    
-    
-        print(f'Epoch {epoch+1}/{args.epochs} - Test Accuracy: {acc}, Test Loss: {loss}, Runtimes: {runtimes}')
     
     # compute influence values
     start_time = time.time()
-    influence_values = compute_influence(args, global_weights, train_dataset, user_groups, noise_transform)
+    influence_values = compute_influence(args, global_weights, train_dataset, test_dataset, user_groups, noise_transform)
     runtimes['if'] += time.time() - start_time
 
     return model, abv_simple, abv_hessian, shapley_values, influence_values, runtimes
