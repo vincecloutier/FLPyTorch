@@ -58,7 +58,8 @@ def compute_influence(args, global_weights, train_dataset, test_dataset, user_gr
         device=device,
         damp=0.001,
         repeat=10,
-        depth=5,        
+        depth=5,
+        scale = 1.0,   
     )
 
     # load scores
