@@ -103,7 +103,9 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
                 selection_probabilities = np.array([abv_simple[i] / total_banzhaf for i in range(args.num_users)])
                 selection_probabilities /= selection_probabilities.sum()  # normalize
 
-        acc, loss = test_inference(model, test_dataset)
+        with torch.no_grad():
+            acc, loss = test_inference(model, test_dataset)
+        
         if early_stopping.check(epoch, acc, loss):
             print(f'Convergence Reached At Round {epoch + 1}')
             break
