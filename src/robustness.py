@@ -52,7 +52,7 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
         runtimes['abvs'] += time.time() - start_time
         runtimes['abvh'] += time.time() - start_time
 
-        # no randomization about this here
+        # no randomization
         idxs_users = range(args.num_users)
         
         train_client_partial = partial(train_client, args=args, global_weights=copy.deepcopy(global_weights), train_dataset=train_dataset, user_groups=user_groups, epoch=epoch, device=device, noise_transform=noise_transform)
