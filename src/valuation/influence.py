@@ -65,8 +65,10 @@ def compute_influence(args, global_weights, train_dataset, test_dataset, user_gr
     # load scores
     client_influences = defaultdict(float)
     for client_id, sample_indices in user_groups.items():
+        print(f"Computing Influence For Client: {client_id}")
+        sample_indices = np.random.choice(list(sample_indices), 1024, replace=False).tolist()
         test_indices = np.random.choice(len(test_dataset), 1024, replace=False).tolist()
-        client_influences[client_id] = module.influences(list(sample_indices), test_indices).sum().item()
+        client_influences[client_id] = module.influences(sample_indices, test_indices).sum().item()
 
     return client_influences
 
