@@ -1,20 +1,18 @@
 import re
-import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.stats import spearmanr
 import numpy as np
+
 
 def process_log(file_path):
     # read the log file
     with open(file_path, 'r') as file:
         logs = file.read()
 
-    # Regex patterns to match "ABV Simple i:" and "ABV Hessian i:" lines:
-    # The pattern captures the run index (i) and the dictionary content.
+    # regex pattern to match the dictionary content from each matched line
     dict_pattern = r"\{(.*?)\}"
 
-
-    # Function to parse the dictionary content from each matched line
+    # function to parse the dictionary content from each matched line
     def parse_dict(dict_str):
         # dict_str is like "0: 0.1595702888444066, 1: 0.169544268399477, ..."
         parsed = {}
@@ -24,14 +22,12 @@ def process_log(file_path):
             if e:
                 kv = e.split(':')
                 if len(kv) == 2:
-                    key = int(kv[0].strip())
-                    val = float(kv[1].strip())
+                    key, val = kv[0].strip(), float(kv[1].strip())
                     parsed[key] = val
         return parsed
 
-    # Extract all matches
+    # extract all matches
     dict_matches = re.findall(dict_pattern, logs)
-    print(parse_dict(dict_matches[0]))
 
     # store runs in a dictionary indexed by run_id
     abv_simple_values_dict = {}
@@ -43,17 +39,12 @@ def process_log(file_path):
         else:
             abv_hessian_values_dict[j] = parse_dict(dict_str)
 
-    print(abv_simple_values_dict)
-    print(abv_hessian_values_dict)
-    # if you have no runtimes or other metrics in the logs, just return empty or None.
-    # for simplicity, return empty lists for now.
     shapley_values = []
     influence_values = []
     runtimes = []
 
     return abv_simple_values_dict, abv_hessian_values_dict, shapley_values, influence_values, runtimes
     
-
 
 def plot_banzhaf_boxplots(values_dict, title_prefix="Data Banzhaf"):
     # values_dict structure: {run_idx: {data_idx: value}}
@@ -131,9 +122,11 @@ def plot_banzhaf_boxplots(values_dict, title_prefix="Data Banzhaf"):
     ax.set_xlabel("Data Index (sorted by value median)")
     ax.set_ylabel("Value")
     ax.set_title(f"{title_prefix} (SP={SP:.3f})")
-
+    # make logarithmic scale
+    ax.set_yscale('log')
     plt.tight_layout()
     plt.show()
+
 
 def process_and_graph_logs(log_file, plot=False):
     abv_simple_values_dict, abv_hessian_values_dict, shapley_values, influence_values, runtimes = process_log(log_file)
