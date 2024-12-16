@@ -27,26 +27,30 @@ def process_log(file_path):
     return approx_simple_values, approx_hessian_values, shapley_values, influence_values, runtimes
     
 
-def compute_rank_stability(runs):
+# def compute_rank_stability(runs):
+#     df = pd.DataFrame(runs)
+#     df = df.sort_index(axis=1)
+#     df = df.fillna(np.nan)
+#     ranked_df = df.rank(axis=1, method='average', ascending=False)
+#     ranked_df_T = ranked_df.transpose()
+#     correlations = spearmanr(ranked_df_T, nan_policy='omit')[0]
+#     print(correlations.mean())
+#     return correlations.mean()
+
+
+def compute_rank_stability2(runs):
     df = pd.DataFrame(runs)
     df = df.sort_index(axis=1)
     df = df.fillna(np.nan)
     ranked_df = df.rank(axis=1, method='average', ascending=False)
-    ranked_df_T = ranked_df.transpose()
-    correlations = spearmanr(ranked_df_T, nan_policy='omit')[0]
-    print(correlations.mean())
-    return correlations.mean()
-
-
-def compute_IIC(runs):
-    df = pd.DataFrame(runs)
-    df = df.sort_index(axis=1)
-    df = df.fillna(np.nan)
-    # columns: 'rater' (original row index), 'target' (original column), 'rating' (valuation)
-    df_melted = df.reset_index().melt(id_vars='index', var_name='target', value_name='rating')
-    df_melted.rename(columns={'index': 'rater'}, inplace=True)
-    icc_result = pg.intraclass_corr(data=df_melted, targets='target', raters='rater', ratings='rating')
-    return icc_result['ICC'].iloc[5]
+    median_ranks = ranked_df.median(axis=0)
+    corrs = []
+    for i in range(len(ranked_df)):
+        run_ranks = ranked_df.iloc[i, :]
+        corr, _ = spearmanr(run_ranks, median_ranks, nan_policy='omit')
+        corrs.append(corr)
+    print(np.mean(corrs))
+    return np.mean(corrs)
 
 
 def process_and_graph_logs(log_files, plot=False):
@@ -103,5 +107,5 @@ def process_and_graph_logs(log_files, plot=False):
 
         plt.savefig(f"robustness/graphs/robustness_{dataset}.png", dpi=300, bbox_inches='tight')
 
-# process_and_graph_logs(['robustness/cifar0.log', 'robustness/cifar1.log', 'robustness/cifar2.log', 'robustness/cifar3.log'], plot=True)
+process_and_graph_logs(['robustness/cifar2.log'], plot=True)
 process_and_graph_logs(['robustness/fmnist0.log', 'robustness/fmnist1.log', 'robustness/fmnist2.log', 'robustness/fmnist3.log'], plot=True)
