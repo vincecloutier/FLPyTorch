@@ -94,7 +94,7 @@ def train_subset(j, args, train_dataset, valid_dataset, test_dataset, user_group
 
 
 if __name__ == '__main__':
-    multiprocessing.set_start_method('spawn')
+    multiprocessing.set_start_method('fork')
     start_time = time.time()
     args = args_parser()
     logger = setup_logger(f'robustness2_{args.dataset}_{args.setting}')
