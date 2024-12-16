@@ -107,5 +107,5 @@ def process_and_graph_logs(log_files, plot=False):
 
         plt.savefig(f"robustness/graphs/robustness_{dataset}.png", dpi=300, bbox_inches='tight')
 
-process_and_graph_logs(['robustness/cifar2.log'], plot=True)
+process_and_graph_logs(['robustness/cifar1.log', 'robustness/cifar2.log', 'robustness/cifar3.log', 'robustness/cifar4.log'], plot=True)
 process_and_graph_logs(['robustness/fmnist0.log', 'robustness/fmnist1.log', 'robustness/fmnist2.log', 'robustness/fmnist3.log'], plot=True)
