@@ -41,7 +41,7 @@ def compute_influence(args, global_weights, train_dataset, test_dataset, user_gr
         t_dataset.data = [noise_transform(torch.tensor(data, dtype=torch.float32)) for data in t_dataset.data]
         noise_transform.to(device)
     
-    train_loader = DataLoader(t_dataset, batch_size=128, shuffle=True, num_workers=0)
+    train_loader = DataLoader(t_dataset.dataset, batch_size=128, shuffle=True, num_workers=0)
     test_loader = DataLoader(test_dataset, batch_size=128, shuffle=False, num_workers=0)
 
     # prepare the model
@@ -65,9 +65,10 @@ def compute_influence(args, global_weights, train_dataset, test_dataset, user_gr
     # load scores
     client_influences = defaultdict(float)
     for client_id, sample_indices in user_groups.items():
-        test_indices = np.random.choice(len(test_dataset), 1000, replace=False).tolist()
-        print(sample_indices, len(train_loader))
-        print(test_indices, len(test_loader))
+        sample_indices = np.random.choice(sample_indices, 512, replace=False).tolist()
+        test_indices = np.random.choice(len(test_dataset), 512, replace=False).tolist()
+        print(sample_indices)
+        print(test_indices)
         print(module.influences(sample_indices, test_indices))
         break
 
