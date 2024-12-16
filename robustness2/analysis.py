@@ -5,45 +5,127 @@ import numpy as np
 
 
 def process_log(file_path):
-    # read the log file
-    with open(file_path, 'r') as file:
-        logs = file.read()
-
-    # regex pattern to match the dictionary content from each matched line
+    # Regex to match the dictionary portion { ... }
     dict_pattern = r"\{(.*?)\}"
-
-    # function to parse the dictionary content from each matched line
+    
     def parse_dict(dict_str):
-        # dict_str is like "0: 0.1595702888444066, 1: 0.169544268399477, ..."
+        # This parser expects a dict string like "0: 0.1595, 1: 0.1695, ..."
+        # Extract key-value pairs separated by commas
         parsed = {}
+        if not dict_str.strip():
+            return parsed
         entries = dict_str.split(',')
         for e in entries:
             e = e.strip()
             if e:
-                kv = e.split(':')
+                kv = e.split(':', 1)
                 if len(kv) == 2:
-                    key, val = kv[0].strip(), float(kv[1].strip())
+                    key, val_str = kv[0].strip(), kv[1].strip()
+                    # Keys are often integers, but we can keep them as strings if needed
+                    # Attempt to convert both keys and values to floats if possible
+                    # If keys are always integers, we can convert them:
+                    try:
+                        key = int(key)
+                    except ValueError:
+                        pass
+                    try:
+                        val = float(val_str)
+                    except ValueError:
+                        # If for some reason it's not float, leave as string
+                        val = val_str
                     parsed[key] = val
         return parsed
+    
+    def parse_runtime_dict(dict_str):
+        # Runtimes have keys like 'abvs', 'abvh', 'sv', 'if' which are strings
+        parsed = {}
+        if not dict_str.strip():
+            return parsed
+        entries = dict_str.split(',')
+        for e in entries:
+            e = e.strip()
+            if e:
+                kv = e.split(':', 1)
+                if len(kv) == 2:
+                    key_str = kv[0].strip().strip("'").strip('"')
+                    val_str = kv[1].strip()
+                    try:
+                        val = float(val_str)
+                    except ValueError:
+                        val = val_str
+                    parsed[key_str] = val
+        return parsed
 
-    # extract all matches
-    dict_matches = re.findall(dict_pattern, logs)
-
-    # store runs in a dictionary indexed by run_id
+    # Initialize dictionaries to hold data from each run
     abv_simple_values_dict = {}
     abv_hessian_values_dict = {}
-    for i, dict_str in enumerate(dict_matches):
-        j = i // 2
-        if i % 2 == 0:
-            abv_simple_values_dict[j] = parse_dict(dict_str)
-        else:
-            abv_hessian_values_dict[j] = parse_dict(dict_str)
+    sv_dict = {}
+    iv_dict = {}
+    runtimes = {}
 
-    shapley_values = []
-    influence_values = []
-    runtimes = []
+    with open(file_path, 'r') as file:
+        for line in file:
+            line = line.strip()
+            
+            # Match ABV Simple
+            if "ABV Simple" in line:
+                # Extract the run ID
+                run_id_match = re.search(r"ABV Simple (\d+):", line)
+                if run_id_match:
+                    run_id = int(run_id_match.group(1))
+                    dict_match = re.search(dict_pattern, line)
+                    if dict_match:
+                        dict_str = dict_match.group(1)
+                        abv_simple_values_dict[run_id] = parse_dict(dict_str)
 
-    return abv_simple_values_dict, abv_hessian_values_dict, shapley_values, influence_values, runtimes
+            # Match ABV Hessian
+            elif "ABV Hessian" in line:
+                run_id_match = re.search(r"ABV Hessian (\d+):", line)
+                if run_id_match:
+                    run_id = int(run_id_match.group(1))
+                    dict_match = re.search(dict_pattern, line)
+                    if dict_match:
+                        dict_str = dict_match.group(1)
+                        abv_hessian_values_dict[run_id] = parse_dict(dict_str)
+
+            # Match Shapley Values
+            elif "Shapley Values" in line:
+                run_id_match = re.search(r"Shapley Values (\d+):", line)
+                if run_id_match:
+                    run_id = int(run_id_match.group(1))
+                    dict_match = re.search(dict_pattern, line)
+                    if dict_match:
+                        dict_str = dict_match.group(1)
+                        sv_dict[run_id] = parse_dict(dict_str)
+                    else:
+                        sv_dict[run_id] = {}
+
+            # Match Influence Values
+            elif "Influence Values" in line:
+                run_id_match = re.search(r"Influence Values (\d+):", line)
+                if run_id_match:
+                    run_id = int(run_id_match.group(1))
+                    dict_match = re.search(dict_pattern, line)
+                    if dict_match:
+                        dict_str = dict_match.group(1)
+                        iv_dict[run_id] = parse_dict(dict_str)
+                    else:
+                        iv_dict[run_id] = {}
+
+            # Match Runtimes
+            elif "Runtimes" in line:
+                run_id_match = re.search(r"Runtimes (\d+):", line)
+                if run_id_match:
+                    run_id = int(run_id_match.group(1))
+                    dict_match = re.search(dict_pattern, line)
+                    if dict_match:
+                        dict_str = dict_match.group(1)
+                        runtimes[run_id] = parse_runtime_dict(dict_str)
+                    else:
+                        runtimes[run_id] = {}
+
+    return abv_simple_values_dict, abv_hessian_values_dict, sv_dict, iv_dict, runtimes
+
     
 
 def plot_banzhaf_boxplots(values_dict, title_prefix="Data Banzhaf"):
@@ -105,41 +187,21 @@ def plot_banzhaf_boxplots(values_dict, title_prefix="Data Banzhaf"):
         spearman_values.append(sp)
     
     # Average Spearman correlation across runs
-    SP = np.mean(spearman_values)
+    return np.mean(spearman_values)
 
-    # Now create the boxplot
-    fig, ax = plt.subplots(figsize=(10, 5))
-    bplot = ax.boxplot(data_by_index_sorted, patch_artist=True, showfliers=True)
-    
-    # Color the boxes based on the median sign
-    for i, median_val in enumerate(sorted_medians):
-        color = 'red' if median_val < 0 else 'green'
-        bplot['boxes'][i].set_facecolor(color)
-    
-    # Set x-ticks to show data index in sorted order
-    ax.set_xticks(range(1, len(data_by_index_sorted) + 1))
-    ax.set_xticklabels(range(1, len(data_by_index_sorted) + 1))
-    ax.set_xlabel("Data Index (sorted by value median)")
-    ax.set_ylabel("Value")
-    ax.set_title(f"{title_prefix} (SP={SP:.3f})")
-    # make logarithmic scale
-    ax.set_yscale('log')
-    plt.tight_layout()
-    plt.show()
-
-
-def process_and_graph_logs(log_file, plot=False):
+def process_and_graph_logs(log_file):
     abv_simple_values_dict, abv_hessian_values_dict, shapley_values, influence_values, runtimes = process_log(log_file)
 
-    if plot:
-        # Plot the FBV Simple values
-        plot_banzhaf_boxplots(abv_simple_values_dict, title_prefix="Data Banzhaf (FBV-Simple)")
-
-        # Plot the FBV Hessian values
-        plot_banzhaf_boxplots(abv_hessian_values_dict, title_prefix="Data Banzhaf (FBV-Hessian)")
+    # Plot the FBV Simple values
+    print(log_file)
+    print(plot_banzhaf_boxplots(abv_simple_values_dict, title_prefix="Data Banzhaf (FBV-Simple)"))
+    print(plot_banzhaf_boxplots(abv_hessian_values_dict, title_prefix="Data Banzhaf (FBV-Hessian)"))
 
 # Example usage:
-process_and_graph_logs('robustness2/data.log', plot=True)
+process_and_graph_logs('robustness2/fmnist0.log')
+process_and_graph_logs('robustness2/fmnist1.log')
+process_and_graph_logs('robustness2/fmnist2.log')
+process_and_graph_logs('robustness2/fmnist3.log')
 
 # def process_and_graph_logs(log_files, plot=False):
 #     # lists to hold rank stability per setting
