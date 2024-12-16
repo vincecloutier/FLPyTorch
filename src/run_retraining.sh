@@ -57,4 +57,4 @@ done
 echo "All runs completed."
 
 # chmod +x run_retraining.sh
-# ./run_retraining.sh [processes] 
+# ./run_retraining.sh [processes] [lr] [dataset] [local_ep]
