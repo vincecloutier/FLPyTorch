@@ -196,65 +196,63 @@ def process_and_graph_logs(log_file):
     print(log_file)
     print(plot_banzhaf_boxplots(abv_simple_values_dict, title_prefix="Data Banzhaf (FBV-Simple)"))
     print(plot_banzhaf_boxplots(abv_hessian_values_dict, title_prefix="Data Banzhaf (FBV-Hessian)"))
-
-# Example usage:
-process_and_graph_logs('robustness2/fmnist0.log')
-process_and_graph_logs('robustness2/fmnist1.log')
-process_and_graph_logs('robustness2/fmnist2.log')
-process_and_graph_logs('robustness2/fmnist3.log')
-
-# def process_and_graph_logs(log_files, plot=False):
-#     # lists to hold rank stability per setting
-#     corr_metrics = {'FBVS': [], 'FBVH': []}
-
-#     # Since we no longer have shapley or influence from these logs, we won't compute them.
-#     # If you need them later, you can add them back similarly.
-
-#     # No runtimes in the given logs (as per original snippet), so skip them or set empty.
-#     runtime_metrics = {'FBVS': [], 'FBVH': []}
-
-#     approx_simple, approx_hessian, shapley, influence, runtimes = process_log(log_file)
+    # print(plot_banzhaf_boxplots(shapley_values, title_prefix="Data Banzhaf (Shapley)"))
+    print(plot_banzhaf_boxplots(influence_values, title_prefix="Data Banzhaf (Influence)"))
+    # print(plot_banzhaf_boxplots(runtimes, title_prefix="Data Banzhaf (Runtimes)"))
 
 
-#     # compute summary statistics across settings
-#     methods = ["FBVS", "FBVH"]
-#     avg_corrs = [np.mean(corr_metrics[m]) for m in methods]
-#     print(avg_corrs)
+def process_and_graph_logs(log_files, plot=False):
+    # lists to hold rank stability per setting
+    corr_metrics = {'FBVS': [], 'FBVH': []}
 
-#     if plot:
-#         # generate plots
-#         # Attempt to extract dataset name from the first file name
-#         match = re.search(r'/(.+)\d', log_files[0])
-#         if match:
-#             dataset = match.group(1)
-#         else:
-#             dataset = "dataset"
+    # Since we no longer have shapley or influence from these logs, we won't compute them.
+    # If you need them later, you can add them back similarly.
 
-#         colors = plt.get_cmap('tab10').colors
-#         # only two methods now, select two colors
-#         colors = [colors[0], colors[2]]
+    # No runtimes in the given logs (as per original snippet), so skip them or set empty.
+    runtime_metrics = {'FBVS': [], 'FBVH': []}
 
-#         plt.figure(figsize=(8, 4.5), layout="constrained")
-#         plt.subplot(1, 2, 1)
+    approx_simple, approx_hessian, shapley, influence, runtimes = process_log(log_file)
+
+
+    # compute summary statistics across settings
+    methods = ["FBVS", "FBVH"]
+    avg_corrs = [np.mean(corr_metrics[m]) for m in methods]
+    print(avg_corrs)
+
+    if plot:
+        # generate plots
+        # Attempt to extract dataset name from the first file name
+        match = re.search(r'/(.+)\d', log_files[0])
+        if match:
+            dataset = match.group(1)
+        else:
+            dataset = "dataset"
+
+        colors = plt.get_cmap('tab10').colors
+        # only two methods now, select two colors
+        colors = [colors[0], colors[2]]
+
+        plt.figure(figsize=(8, 4.5), layout="constrained")
+        plt.subplot(1, 2, 1)
         
-#         plt.bar(methods, avg_corrs, capsize=5, color=colors)
-#         for i, mean in enumerate(avg_corrs):
-#             plt.text(i, mean, f'{mean:.2f}', ha='center', va='bottom')
-#         plt.title("Average Spearman Rank Correlation")
-#         plt.xlabel("Data Valuation Method")
-#         plt.ylim(0, 1)
-#         plt.ylabel("Correlation")
+        plt.bar(methods, avg_corrs, capsize=5, color=colors)
+        for i, mean in enumerate(avg_corrs):
+            plt.text(i, mean, f'{mean:.2f}', ha='center', va='bottom')
+        plt.title("Average Spearman Rank Correlation")
+        plt.xlabel("Data Valuation Method")
+        plt.ylim(0, 1)
+        plt.ylabel("Correlation")
 
-#         # If you have no runtimes, you can skip the second plot
-#         # If you want to show an empty runtime plot or some placeholder:
-#         plt.subplot(1, 2, 2)
-#         # Just as a placeholder, we'll show no data
-#         plt.bar([], [])
-#         plt.title("No Runtimes Available")
-#         plt.xlabel("Data Valuation Method")
-#         plt.ylabel("Runtime (s)")
+        # If you have no runtimes, you can skip the second plot
+        # If you want to show an empty runtime plot or some placeholder:
+        plt.subplot(1, 2, 2)
+        # Just as a placeholder, we'll show no data
+        plt.bar([], [])
+        plt.title("No Runtimes Available")
+        plt.xlabel("Data Valuation Method")
+        plt.ylabel("Runtime (s)")
 
-#         plt.savefig(f"robustness/graphs/robustness_{dataset}.png", dpi=300, bbox_inches='tight')
+        plt.savefig(f"robustness/graphs/robustness_{dataset}.png", dpi=300, bbox_inches='tight')
 
 # # Example usage:
-# process_and_graph_logs('robustness2/data.log', plot=True)
+process_and_graph_logs('robustness2/data.log', plot=True)
