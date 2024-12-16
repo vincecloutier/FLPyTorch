@@ -90,7 +90,7 @@ def noisy(dataset, dataset_name, dict_users, badclient_prop, noisy_proportion):
         selected_indices = np.random.choice(indices_of_base_images, min(int(noisy_proportion * len(client_indices)), len(indices_of_base_images)), replace=False)
         indices_of_target_class = np.where(labels == c)[0]
         for idx in selected_indices:
-            target_idx = np.random.choice(indices_of_target_class)
+            target_idx = indices_of_target_class[0]
             base_image = data[idx]
             target_image = data[target_idx]
             noisy_image = l * base_image + (1-l) * target_image
