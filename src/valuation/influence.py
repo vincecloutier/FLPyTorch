@@ -28,7 +28,7 @@ class MyObjective(BaseObjective):
     # train_loss_on_outputs + train_regularization
 
     def test_loss(self, model, params, batch):
-        return F.cross_entropy(model(batch[0]), batch[1])  # no regularization in test loss
+        return F.cross_entropy(model(batch[0]), batch[1]) 
 
 
 def compute_influence(args, global_weights, train_dataset, test_dataset, user_groups, noise_transform = None):
@@ -66,9 +66,8 @@ def compute_influence(args, global_weights, train_dataset, test_dataset, user_gr
     client_influences = defaultdict(float)
     for client_id, sample_indices in user_groups.items():
         print(f"Computing Influence For Client: {client_id}")
-        sample_indices = np.random.choice(list(sample_indices), 1024, replace=False).tolist()
         test_indices = np.random.choice(len(test_dataset), 1024, replace=False).tolist()
-        client_influences[client_id] = module.influences(sample_indices, test_indices).sum().item()
+        client_influences[client_id] = module.influences(list(sample_indices), test_indices).sum().item()
 
     return client_influences
 
