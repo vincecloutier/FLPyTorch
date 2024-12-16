@@ -65,7 +65,7 @@ def compute_influence(args, global_weights, train_dataset, test_dataset, user_gr
     # load scores
     client_influences = defaultdict(float)
     for client_id, sample_indices in user_groups.items():
-        sample_indices = np.random.choice(sample_indices.tolist(), 512, replace=False).tolist()
+        sample_indices = np.random.choice(list(sample_indices), 512, replace=False).tolist()
         test_indices = np.random.choice(len(test_dataset), 512, replace=False).tolist()
         print(sample_indices)
         print(test_indices)
