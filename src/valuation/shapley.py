@@ -39,8 +39,7 @@ def compute_shapley(args, global_weights, client_weights, test_dataset, mp=True)
         pool.join()
     else:
         results = []
-        for arg in args_list:
-            print(f"Computing SV For {arg[0]}")
+        for arg in tqdm(args_list):
             results.append(compute_shapley_for_permutation(arg))
 
     for result in results:
