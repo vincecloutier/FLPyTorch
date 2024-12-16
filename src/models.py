@@ -56,28 +56,53 @@ class CNNFashion(nn.Module):
 #         return out
 
 
-class CNNFashion2(nn.Module):
-    def __init__(self, args):
-        super(CNNFashion2, self).__init__()
-        self.features = nn.Sequential(
-            nn.Conv2d(1, 16, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.Conv2d(16, 32, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2)
-        )
-        self.classifier = nn.Sequential(
-            nn.Linear(32 * 7 * 7, 128),
-            nn.ReLU(inplace=True),
-            nn.Linear(128, 10)
-        )
+# class CNNFashion2(nn.Module):
+#     def __init__(self, args):
+#         super(CNNFashion2, self).__init__()
+#         self.features = nn.Sequential(
+#             nn.Conv2d(1, 16, kernel_size=3, padding=1),
+#             nn.ReLU(inplace=True),
+#             nn.MaxPool2d(kernel_size=2, stride=2),
+#             nn.Conv2d(16, 32, kernel_size=3, padding=1),
+#             nn.ReLU(inplace=True),
+#             nn.MaxPool2d(kernel_size=2, stride=2)
+#         )
+#         self.classifier = nn.Sequential(
+#             nn.Linear(32 * 7 * 7, 128),
+#             nn.ReLU(inplace=True),
+#             nn.Linear(128, 10)
+#         )
 
-    def forward(self, x):
-        x = self.features(x)
-        x = x.view(x.size(0), -1)
-        x = self.classifier(x)
-        return x
+#     def forward(self, x):
+#         x = self.features(x)
+#         x = x.view(x.size(0), -1)
+#         x = self.classifier(x)
+#         return x
+
+
+# TODO: Rename
+# resnet9 for fmnist
+class CNNFashion2(nn.Module):
+    def __init__(self, args, in_channels = 1, num_classes = 10):
+        super().__init__()
+        self.conv1 = conv_block(in_channels, 64)
+        self.conv2 = conv_block(64, 128, pool=True)
+        self.res1 = nn.Sequential(conv_block(128, 128), conv_block(128, 128))
+        self.conv3 = conv_block(128, 256, pool=True)
+        self.conv4 = conv_block(256, 512, pool=True)
+        self.res2 = nn.Sequential(conv_block(512, 512), conv_block(512, 512))
+        self.classifier = nn.Sequential(nn.AdaptiveMaxPool2d((1,1)), nn.Flatten(), nn.Dropout(0.2), nn.Linear(512, num_classes))
+        
+    def forward(self, xb):
+        out = self.conv1(xb)
+        out = self.conv2(out)
+        out = self.res1(out) + out
+        out = self.conv3(out)
+        out = self.conv4(out)
+        out = self.res2(out) + out
+        out = self.classifier(out)
+        # return F.log_softmax(out, dim=1)
+        return out # for cross entropy loss
 
 
 class CNNCifar(nn.Module):
@@ -101,7 +126,6 @@ class CNNCifar(nn.Module):
         return x # for cross entropy loss
 
 
-#resnet9 for cifar
 def conv_block(in_channels, out_channels, pool=False):
     layers = [nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1), 
               nn.BatchNorm2d(out_channels), 
@@ -109,6 +133,7 @@ def conv_block(in_channels, out_channels, pool=False):
     if pool: layers.append(nn.MaxPool2d(2))
     return nn.Sequential(*layers)
 
+# resnet9 for cifar 
 class ResNet9(nn.Module):
     def __init__(self, args, in_channels = 3, num_classes = 10):
         super().__init__()
