@@ -7,6 +7,7 @@ import itertools
 import multiprocessing
 import torch
 from tqdm import tqdm
+from concurrent.futures import ThreadPoolExecutor
 
 def compute_shapley(args, global_weights, client_weights, test_dataset):
     """Estimate Shapley values for participants in a round using permutation sampling."""
@@ -29,11 +30,13 @@ def compute_shapley(args, global_weights, client_weights, test_dataset):
     else:
         t = fact(len(client_keys))
         args_list = [(perm, global_weights, client_weights, test_dataset, base_score, device, args) for perm in itertools.permutations(client_keys)]
-    pool = multiprocessing.Pool(processes=args.shapley_processes)
-    with tqdm(total=t) as pbar:
-        results = pool.map(compute_shapley_for_permutation, args_list)
-    pool.close()
-    pool.join()
+    # pool = multiprocessing.Pool(processes=args.shapley_processes)
+    # with tqdm(total=t) as pbar:
+    #     results = pool.map(compute_shapley_for_permutation, args_list)
+    # pool.close()
+    # pool.join()
+    with ThreadPoolExecutor(max_workers=args.shapley_processes) as executor:
+        results = list(tqdm(executor.map(compute_shapley_for_permutation, args_list), total=t))
 
     for result in results:
         for k, v in result.items():
