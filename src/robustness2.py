@@ -72,7 +72,7 @@ if __name__ == '__main__':
 
     pool = multiprocessing.Pool(processes=args.processes)
     train_subset_partial = partial(train_subset, args=args, train_dataset=train_dataset, valid_dataset=valid_dataset, test_dataset=test_dataset, user_groups=user_groups)
-    results_list = pool.map(train_subset_partial, range(10))
+    results_list = pool.map(train_subset_partial, range(5))
     pool.close()
     pool.join()
 
