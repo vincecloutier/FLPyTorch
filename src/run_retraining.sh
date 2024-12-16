@@ -33,7 +33,7 @@ do
     # python retraining.py --dataset resnet --setting 3 --processes $PROCESSES --badclient_prop $BAD_CLIENT_PROP --num_users 10 --local_ep 10 --retrain 1 --badsample_prop 0.6
 
     python retraining.py --dataset fmnist2 --setting 1 --processes $PROCESSES --badclient_prop $BAD_CLIENT_PROP --num_users 10 --local_ep 10 --retrain 1 --num_categories_per_client 4 --lr $LR
-    # python retraining.py --dataset fmnist2 --setting 2 --processes $PROCESSES --badclient_prop $BAD_CLIENT_PROP --num_users 10 --local_ep 10 --retrain 1 --badsample_prop 0.2 --lr $LR
+    # python retraining.py --dataset fmnist2 --setting 2 --processes $PROCESSES --badclient_prop $BAD_CLIENT_PROP --num_users 10 --local_ep 10 --retrain 1 --badsample_prop 0.6 --lr $LR
     python retraining.py --dataset fmnist2 --setting 3 --processes $PROCESSES --badclient_prop $BAD_CLIENT_PROP --num_users 10 --local_ep 10 --retrain 1 --badsample_prop 0.6 --lr $LR
 
     # python retraining.py --dataset resnet --setting 1 --processes $PROCESSES --badclient_prop $BAD_CLIENT_PROP --num_users 10 --local_ep 10 --retrain 1 --num_categories_per_client 6
@@ -49,7 +49,7 @@ do
     # python retraining.py --dataset resnet --setting 3 --processes $PROCESSES --badclient_prop $BAD_CLIENT_PROP --num_users 10 --local_ep 10 --retrain 1 --badsample_prop 0.2
 
     python retraining.py --dataset fmnist2 --setting 1 --processes $PROCESSES --badclient_prop $BAD_CLIENT_PROP --num_users 10 --local_ep 10 --retrain 1 --num_categories_per_client 8 --lr $LR
-    # python retraining.py --dataset fmnist2 --setting 2 --processes $PROCESSES --badclient_prop $BAD_CLIENT_PROP --num_users 10 --local_ep 10 --retrain 1 --badsample_prop 0.6 --lr $LR
+    # python retraining.py --dataset fmnist2 --setting 2 --processes $PROCESSES --badclient_prop $BAD_CLIENT_PROP --num_users 10 --local_ep 10 --retrain 1 --badsample_prop 0.2 --lr $LR
     python retraining.py --dataset fmnist2 --setting 3 --processes $PROCESSES --badclient_prop $BAD_CLIENT_PROP --num_users 10 --local_ep 10 --retrain 1 --badsample_prop 0.2 --lr $LR
 
 done
