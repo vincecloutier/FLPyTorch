@@ -45,7 +45,7 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
         
         # compute shapley values
         start_time = time.time()
-        shapley_updates = compute_shapley(args, global_weights, local_weights_dict, test_dataset)
+        shapley_updates = compute_shapley(args, global_weights, local_weights_dict, test_dataset, mp=False)
         for k, v in shapley_updates.items():
             shapley_values[k] += v  
         runtimes['sv'] += time.time() - start_time
