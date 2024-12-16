@@ -78,6 +78,7 @@ def mislabeled(dataset, dataset_name, dict_users, badclient_prop, mislabel_prop)
 
 def noisy(dataset, dataset_name, dict_users, badclient_prop, noisy_proportion):
     """Randomly select a proportion of clients and add noise to a proportion of their samples."""
+    l = 0.5 if dataset_name == "fmnist" else 0.9
     labels = dataset.targets 
     data = dataset.data 
     clients_to_noisy = np.random.choice(range(len(dict_users)), int(badclient_prop * len(dict_users)), replace=False)
@@ -90,7 +91,7 @@ def noisy(dataset, dataset_name, dict_users, badclient_prop, noisy_proportion):
             target_idx = np.random.choice(indices_of_target_class)
             base_image = data[idx]
             target_image = data[target_idx]
-            noisy_image = 0.9 * base_image + 0.1 * target_image
+            noisy_image = l * base_image + (1-l) * target_image
             data[idx] = noisy_image
             labels[idx] = labels[target_idx]
     dataset.targets = labels
