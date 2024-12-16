@@ -27,15 +27,15 @@ def process_log(file_path):
     return approx_simple_values, approx_hessian_values, shapley_values, influence_values, runtimes
     
 
-# def compute_rank_stability(runs):
-#     df = pd.DataFrame(runs)
-#     df = df.sort_index(axis=1)
-#     df = df.fillna(np.nan)
-#     ranked_df = df.rank(axis=1, method='average', ascending=False)
-#     ranked_df_T = ranked_df.transpose()
-#     correlations = spearmanr(ranked_df_T, nan_policy='omit')[0]
-#     print(correlations.mean())
-#     return correlations.mean()
+def compute_rank_stability(runs):
+    df = pd.DataFrame(runs)
+    df = df.sort_index(axis=1)
+    df = df.fillna(np.nan)
+    ranked_df = df.rank(axis=1, method='average', ascending=False)
+    ranked_df_T = ranked_df.transpose()
+    correlations = spearmanr(ranked_df_T, nan_policy='omit')[0]
+    print(correlations.mean())
+    return correlations.mean()
 
 
 def compute_rank_stability2(runs):
