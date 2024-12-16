@@ -71,7 +71,7 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
         shapley_updates = compute_shapley(args, global_weights, local_weights_dict, test_dataset)
         for k, v in shapley_updates.items():
             shapley_values[k] += v  
-        runtimes['sv'] += time.time() - start_time
+        runtimes['sv'] += (time.time() - start_time) * args.shapley_processes
 
         global_weights = average_weights(local_weights)
        
