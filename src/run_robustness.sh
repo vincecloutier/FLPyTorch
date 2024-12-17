@@ -25,12 +25,6 @@ else
     LOCAL_EP=$4
 fi
 
-if [ -z "$5" ]; then
-    STRATEGY=identity
-else
-    STRATEGY=$5
-fi
-
 if [ -z "$6" ]; then
     LR=0.01
 else
@@ -39,12 +33,12 @@ fi
 
 echo "Using $PROCESSES processes."
 
-python robustness.py --dataset $DATASET --setting 0 --processes $PROCESSES --num_users 10 --local_ep $LOCAL_EP --epochs 15 --shapley_processes $SHAPLEY_PROCESSES --strategy $STRATEGY --lr $LR
-python robustness.py --dataset $DATASET --setting 1 --processes $PROCESSES --num_users 10 --local_ep $LOCAL_EP --epochs 15 --shapley_processes $SHAPLEY_PROCESSES --strategy $STRATEGY --lr $LR
-python robustness.py --dataset $DATASET --setting 2 --processes $PROCESSES --num_users 10 --local_ep $LOCAL_EP --epochs 15 --shapley_processes $SHAPLEY_PROCESSES --strategy $STRATEGY --lr $LR
-python robustness.py --dataset $DATASET --setting 3 --processes $PROCESSES --num_users 10 --local_ep $LOCAL_EP --epochs 15 --shapley_processes $SHAPLEY_PROCESSES --strategy $STRATEGY --lr $LR
+python robustness.py --dataset $DATASET --setting 0 --processes $PROCESSES --num_users 10 --local_ep $LOCAL_EP --epochs 15 --shapley_processes $SHAPLEY_PROCESSES --lr $LR
+python robustness.py --dataset $DATASET --setting 1 --processes $PROCESSES --num_users 10 --local_ep $LOCAL_EP --epochs 15 --shapley_processes $SHAPLEY_PROCESSES --lr $LR
+python robustness.py --dataset $DATASET --setting 2 --processes $PROCESSES --num_users 10 --local_ep $LOCAL_EP --epochs 15 --shapley_processes $SHAPLEY_PROCESSES --lr $LR
+python robustness.py --dataset $DATASET --setting 3 --processes $PROCESSES --num_users 10 --local_ep $LOCAL_EP --epochs 15 --shapley_processes $SHAPLEY_PROCESSES --lr $LR
 
 echo "All runs completed."s
 
 # chmod +x run_robustness.sh
-# ./run_robustness.sh [processes] [shapley_processes] [dataset] [local_ep] [strategy] [lr]
+# ./run_robustness.sh [processes] [shapley_processes] [dataset] [local_ep] [lr]
