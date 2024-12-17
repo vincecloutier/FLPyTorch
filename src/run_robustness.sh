@@ -44,7 +44,7 @@ python robustness.py --dataset $DATASET --setting 1 --processes $PROCESSES --num
 python robustness.py --dataset $DATASET --setting 2 --processes $PROCESSES --num_users 10 --local_ep $LOCAL_EP --epochs 15 --shapley_processes $SHAPLEY_PROCESSES --strategy $STRATEGY --lr $LR
 python robustness.py --dataset $DATASET --setting 3 --processes $PROCESSES --num_users 10 --local_ep $LOCAL_EP --epochs 15 --shapley_processes $SHAPLEY_PROCESSES --strategy $STRATEGY --lr $LR
 
-echo "All runs completed."
+echo "All runs completed."s
 
 # chmod +x run_robustness.sh
 # ./run_robustness.sh [processes] [shapley_processes] [dataset] [local_ep] [strategy] [lr]
