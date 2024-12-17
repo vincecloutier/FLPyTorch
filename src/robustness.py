@@ -117,7 +117,7 @@ if __name__ == '__main__':
     global_params = global_model.state_dict()
 
 
-    for i in range(3):
+    for i in range(5):
         global_model.load_state_dict(global_params)
         logger.info(f'Run {i}')
 
