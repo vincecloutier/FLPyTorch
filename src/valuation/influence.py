@@ -23,15 +23,10 @@ class MyObjective(BaseObjective):
         return F.cross_entropy(model(batch[0]), batch[1]) 
 
 
-def compute_influence(args, global_weights, train_dataset, test_dataset, user_groups, noise_transform = None):
+def compute_influence(args, global_weights, train_dataset, test_dataset, user_groups):
     device = get_device()
     
     t_dataset = copy.deepcopy(train_dataset)
-    if noise_transform is not None:
-        # applying noise transform to train_dataset
-        noise_transform.to('cpu')
-        t_dataset.data = [noise_transform(torch.tensor(data, dtype=torch.float32)) for data in t_dataset.data]
-        noise_transform.to(device)
     
     train_loader = DataLoader(t_dataset.dataset, batch_size=128, shuffle=True, num_workers=0)
     test_loader = DataLoader(test_dataset, batch_size=128, shuffle=False, num_workers=0)

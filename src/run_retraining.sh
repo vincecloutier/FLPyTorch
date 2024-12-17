@@ -36,7 +36,7 @@ fi
 # loop to run each command nine times
 for i in {1..4}
 do
-    # calculate noise_std for this iteration
+    # calculate badclient_prop for this iteration
     BAD_CLIENT_PROP=$(echo "scale=1; 0.2 * $i" | bc)
 
     echo "Run $i with bad_client_prop=$BAD_CLIENT_PROP"

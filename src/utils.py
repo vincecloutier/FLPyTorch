@@ -53,29 +53,6 @@ class SubsetSplit(Dataset):
         label = self.targets[item]
         return torch.tensor(image, dtype=torch.float32), torch.tensor(label, dtype=torch.long)
 
-
-class AddGaussianNoise(object):
-    """Custom transform to add Gaussian noise to a tensor."""
-    def __init__(self, mean=0.0, std=0.0):
-        self.mean = mean
-        self.std = std
-        self.device = None
-    
-    def __call__(self, tensor):
-        if self.std > 0:
-            noise = torch.randn(tensor.size(), device=self.device) * self.std + self.mean
-            return tensor + noise
-        return tensor
-
-    def __repr__(self):
-        return f"{self.__class__.__name__}(mean={self.mean}, std={self.std})"
-
-    def set_std(self, std):
-        self.std = std
-
-    def to(self, device):
-        self.device = device
-
 def get_dataset(args):
     """Returns train, validation, and test datasets along with a user group,
     which is a dict where the keys are the user index and the values are the
@@ -237,27 +214,3 @@ def measure_accuracy(targets, predictions):
     TN = len(universe - (targets | predictions))
     return (TP + TN) / (TP + TN + FP + FN)
 
-def visualize_noise():
-    import matplotlib.pyplot as plt
-    from options import args_parser
-    args = args_parser()
-    noise_transform = AddGaussianNoise()
-    train_dataset, _, _, _, _ = get_dataset(args)
-
-    image, _ = train_dataset[0]
-
-    noise_levels = [0, 0.25, 0.5]
-    fig, axes = plt.subplots(1, 3, figsize=(12, 12))
-
-    for col, std in enumerate(noise_levels):
-        noise_transform.set_std(std)
-        noisy_image_1 = noise_transform(image.unsqueeze(0)).squeeze(0)
-        axes[col].imshow(noisy_image_1.permute(1, 2, 0).numpy())
-        axes[col].axis("off")
-
-    axes[0].set_title(f"No Noise", fontsize=18)
-    axes[1].set_title(f"Noise Drawn From N(0, 0.25)", fontsize=18)
-    axes[2].set_title(f"Noise Drawn From N(0, 0.5)", fontsize=18)    
-
-    plt.tight_layout()
-    plt.savefig("noise_visualization.png", dpi=300, bbox_inches='tight')

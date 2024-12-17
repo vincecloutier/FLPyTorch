@@ -6,7 +6,7 @@ from tqdm import tqdm
 from collections import defaultdict
 from options import args_parser
 from update import LocalUpdate, test_inference, gradient
-from utils import get_dataset, average_weights, setup_logger, get_device, initialize_model, AddGaussianNoise
+from utils import get_dataset, average_weights, setup_logger, get_device, initialize_model
 from valuation.banzhaf import compute_abv, compute_G_t, compute_G_minus_i_t
 from valuation.influence import compute_influence
 from valuation.shapley import compute_shapley
@@ -20,14 +20,14 @@ import os
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:128"
 
 
-def train_client(idx, args, global_weights, train_dataset, user_groups, epoch, device, noise_transform):
+def train_client(idx, args, global_weights, train_dataset, user_groups, epoch, device):
     model = initialize_model(args)
     model.load_state_dict(global_weights)
     model.to(device)
     model.train()
 
     local_model = LocalUpdate(args=args, dataset=train_dataset, idxs=user_groups[idx])
-    w, _ = local_model.update_weights(model=model, global_round=epoch, noise_transform=noise_transform)
+    w, _ = local_model.update_weights(model=model, global_round=epoch)
     delta = {key: (global_weights[key] - w[key]).to(device) for key in global_weights.keys()}
 
     del local_model, model
@@ -36,7 +36,7 @@ def train_client(idx, args, global_weights, train_dataset, user_groups, epoch, d
     return idx, w, delta
 
 
-def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, user_groups, device, noise_transform):
+def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, user_groups, device):
     global_weights = model.state_dict()
     abv_simple, abv_hessian, shapley_values, influence_values = defaultdict(float), defaultdict(float), defaultdict(float), defaultdict(float)
     delta_t, delta_g = defaultdict(dict), defaultdict(lambda: {key: torch.zeros_like(global_weights[key]) for key in global_weights.keys()})
@@ -55,7 +55,7 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
         # no randomization
         idxs_users = range(args.num_users)
         
-        train_client_partial = partial(train_client, args=args, global_weights=copy.deepcopy(global_weights), train_dataset=train_dataset, user_groups=user_groups, epoch=epoch, device=device, noise_transform=noise_transform)
+        train_client_partial = partial(train_client, args=args, global_weights=copy.deepcopy(global_weights), train_dataset=train_dataset, user_groups=user_groups, epoch=epoch, device=device)
         with multiprocessing.Pool(processes=args.processes) as pool:
             results = pool.map(train_client_partial, idxs_users)
         pool.close()
@@ -97,7 +97,7 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
     
     # compute influence values
     start_time = time.time()
-    influence_values = compute_influence(args, global_weights, train_dataset, test_dataset, user_groups, noise_transform)
+    influence_values = compute_influence(args, global_weights, train_dataset, test_dataset, user_groups)
     runtimes['if'] += time.time() - start_time
 
     return model, abv_simple, abv_hessian, shapley_values, influence_values, runtimes
@@ -116,16 +116,12 @@ if __name__ == '__main__':
     global_model.to(device)
     global_params = global_model.state_dict()
 
-    noise_transform = AddGaussianNoise()
-    noise_transform.to(device)
 
     for i in range(3):
         global_model.load_state_dict(global_params)
-        print(f'Run {i+1} with noise std {i*0.25}')
-        logger.info(f'Run {i}: Adding Gaussian noise with std={i*0.25}')
-        noise_transform.set_std(i*0.25)
+        logger.info(f'Run {i}')
 
-        global_model, abv_simple, abv_hessian, shapley_values, influence_values, runtimes = train_global_model(args, global_model, train_dataset, valid_dataset, test_dataset, user_groups, device, noise_transform)
+        global_model, abv_simple, abv_hessian, shapley_values, influence_values, runtimes = train_global_model(args, global_model, train_dataset, valid_dataset, test_dataset, user_groups, device)
         test_acc, test_loss = test_inference(global_model, test_dataset)
 
         # log results   

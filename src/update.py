@@ -26,13 +26,10 @@ class LocalUpdate(object):
         self.device = get_device()
         self.criterion = nn.CrossEntropyLoss().to(self.device)
 
-    def update_weights(self, model, global_round, noise_transform = None):
+    def update_weights(self, model, global_round):
         # set mode to train model
         model.train()
         epoch_loss = []
-        if noise_transform is None:
-            def noise_transform(x):
-                return x
 
         scaler = GradScaler()
         optimizer = torch.optim.Adam(model.parameters(), lr=self.args.lr, weight_decay=self.args.weight_decay)        
@@ -45,7 +42,7 @@ class LocalUpdate(object):
 
                 optimizer.zero_grad()
                 with autocast(device_type='cuda', dtype=torch.float16):
-                    output = model(noise_transform(images))
+                    output = model(images)
                     loss = self.criterion(output, labels)
                 scaler.scale(loss).backward()
 
