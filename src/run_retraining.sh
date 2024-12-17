@@ -42,15 +42,15 @@ do
     echo "Run $i with bad_client_prop=$BAD_CLIENT_PROP"
     # python retraining.py --dataset $DATASET --setting 1 --processes $PROCESSES --badclient_prop $BAD_CLIENT_PROP --num_users 10 --local_ep $LOCAL_EP --retrain 1 --num_categories_per_client 4 --lr $LR
     # python retraining.py --dataset $DATASET --setting 2 --processes $PROCESSES --badclient_prop $BAD_CLIENT_PROP --num_users 10 --local_ep $LOCAL_EP --retrain 1 --badsample_prop 0.6 --lr $LR
-    python retraining.py --dataset $DATASET --setting 3 --processes $PROCESSES --badclient_prop $BAD_CLIENT_PROP --num_users 10 --local_ep $LOCAL_EP --retrain 1 --badsample_prop 0.6 --lr $LR
+    python retraining.py --dataset $DATASET --setting 3 --processes $PROCESSES --badclient_prop $BAD_CLIENT_PROP --num_users 10 --local_ep $LOCAL_EP --retrain 1 --badsample_prop 1 --lr $LR
 
     # python retraining.py --dataset $DATASET --setting 1 --processes $PROCESSES --badclient_prop $BAD_CLIENT_PROP --num_users 10 --local_ep $LOCAL_EP --retrain 1 --num_categories_per_client 6 --lr $LR
     # python retraining.py --dataset $DATASET --setting 2 --processes $PROCESSES --badclient_prop $BAD_CLIENT_PROP --num_users 10 --local_ep $LOCAL_EP --retrain 1 --badsample_prop 0.4 --lr $LR
-    python retraining.py --dataset $DATASET --setting 3 --processes $PROCESSES --badclient_prop $BAD_CLIENT_PROP --num_users 10 --local_ep $LOCAL_EP --retrain 1 --badsample_prop 0.4 --lr $LR
+    python retraining.py --dataset $DATASET --setting 3 --processes $PROCESSES --badclient_prop $BAD_CLIENT_PROP --num_users 10 --local_ep $LOCAL_EP --retrain 1 --badsample_prop 0.875 --lr $LR
 
     # python retraining.py --dataset $DATASET --setting 1 --processes $PROCESSES --badclient_prop $BAD_CLIENT_PROP --num_users 10 --local_ep $LOCAL_EP --retrain 1 --num_categories_per_client 8 --lr $LR
     # python retraining.py --dataset $DATASET --setting 2 --processes $PROCESSES --badclient_prop $BAD_CLIENT_PROP --num_users 10 --local_ep $LOCAL_EP --retrain 1 --badsample_prop 0.2 --lr $LR
-    python retraining.py --dataset $DATASET --setting 3 --processes $PROCESSES --badclient_prop $BAD_CLIENT_PROP --num_users 10 --local_ep $LOCAL_EP --retrain 1 --badsample_prop 0.2 --lr $LR
+    python retraining.py --dataset $DATASET --setting 3 --processes $PROCESSES --badclient_prop $BAD_CLIENT_PROP --num_users 10 --local_ep $LOCAL_EP --retrain 1 --badsample_prop 0.75 --lr $LR
 
 done
 
