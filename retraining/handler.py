@@ -90,9 +90,9 @@ def graph_processed_log(log_file):
     elif "3" in log_file and "fmnist" in log_file:
         title = "Accuracy and Loss Before and After Retraining (Poisoned)"
         scenario_labels = [
-            "Number of Clients with Poisoned Sample Ratio 100%",
-            "Number of Clients with Poisoned Sample Ratio 87.5%",
-            "Number of Clients with Poisoned Sample Ratio 75%"
+            "Number of Clients with Poisoned Sample Ratio 90%",
+            "Number of Clients with Poisoned Sample Ratio 80%",
+            "Number of Clients with Poisoned Sample Ratio 70%"
         ]
     elif "3" in log_file:
         title = "Accuracy and Loss Before and After Retraining (Poisoned)"
