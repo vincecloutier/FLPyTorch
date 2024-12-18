@@ -38,7 +38,7 @@ def compute_rank_stability(runs):
     return correlations.mean()
 
 
-def compute_rank_stability2(runs):
+def compute_rank_stability_med(runs):
     df = pd.DataFrame(runs)
     df = df.sort_index(axis=1)
     df = df.fillna(np.nan)
@@ -62,10 +62,10 @@ def process_and_graph_logs(log_files, plot=False):
     for log_file in log_files:
         print(log_file)
         approx_simple, approx_hessian, shapley, influence, runtimes = process_log(log_file)
-        corr_metrics['FBVS'].append(compute_rank_stability(approx_simple))
-        corr_metrics['FBVH'].append(compute_rank_stability(approx_hessian))
-        corr_metrics['FSV'].append(compute_rank_stability(shapley))
-        corr_metrics['Influence'].append(compute_rank_stability(influence))
+        corr_metrics['FBVS'].append(compute_rank_stability_med(approx_simple))
+        corr_metrics['FBVH'].append(compute_rank_stability_med(approx_hessian))
+        corr_metrics['FSV'].append(compute_rank_stability_med(shapley))
+        corr_metrics['Influence'].append(compute_rank_stability_med(influence))
         for run in runtimes:
             runtime_metrics["FBVS"].append(run["abvs"])
             runtime_metrics["FBVH"].append(run["abvh"])
@@ -107,5 +107,5 @@ def process_and_graph_logs(log_files, plot=False):
 
         plt.savefig(f"robustness/graphs/robustness_{dataset}.png", dpi=300, bbox_inches='tight')
 
-process_and_graph_logs(['robustness/cifar1.log', 'robustness/cifar2.log', 'robustness/cifar3.log', 'robustness/cifar4.log'], plot=True)
+process_and_graph_logs(['robustness/cifar0.log', 'robustness/cifar1.log', 'robustness/cifar2.log', 'robustness/cifar3.log'], plot=True)
 process_and_graph_logs(['robustness/fmnist0.log', 'robustness/fmnist1.log', 'robustness/fmnist2.log', 'robustness/fmnist3.log'], plot=True)
