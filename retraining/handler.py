@@ -87,6 +87,13 @@ def graph_processed_log(log_file):
             "Number of Clients with Mislabelled Sample Ratio 40%",
             "Number of Clients with Mislabelled Sample Ratio 20%"
         ]
+    elif "3" in log_file and "fmnist" in log_file:
+        title = "Accuracy and Loss Before and After Retraining (Poisoned)"
+        scenario_labels = [
+            "Number of Clients with Poisoned Sample Ratio 100%",
+            "Number of Clients with Poisoned Sample Ratio 87.5%",
+            "Number of Clients with Poisoned Sample Ratio 75%"
+        ]
     elif "3" in log_file:
         title = "Accuracy and Loss Before and After Retraining (Poisoned)"
         scenario_labels = [
@@ -161,4 +168,4 @@ def graph_processed_log(log_file):
 
 graph_processed_log('retraining/fmnist1.log')
 graph_processed_log('retraining/fmnist2.log')
-graph_processed_log('retraining/fmnist32.log')
+graph_processed_log('retraining/fmnist3.log')
