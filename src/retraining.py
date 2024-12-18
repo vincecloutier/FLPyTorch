@@ -111,7 +111,6 @@ def train_global_model(args, model, train_dataset, valid_dataset, test_dataset, 
             break
 
         print(f'Epoch {epoch+1}/{args.epochs} - Test Accuracy: {acc}, Test Loss: {loss}, Runtimes: {runtimes}s')
-        print(torch.cuda.memory_summary(device=device, abbreviated=False))
         
     runtimes['total'] = time.time() - initial_start_time
     return model, abv_simple, abv_hessian, runtimes
