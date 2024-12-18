@@ -2,5 +2,3 @@
 data/
 src/__pycache__/
 *.png
-*.log
-**/*.log

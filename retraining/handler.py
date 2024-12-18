@@ -161,4 +161,4 @@ def graph_processed_log(log_file):
 
 graph_processed_log('retraining/fmnist1.log')
 graph_processed_log('retraining/fmnist2.log')
-graph_processed_log('retraining/fmnist3.log')
+graph_processed_log('retraining/fmnist32.log')
