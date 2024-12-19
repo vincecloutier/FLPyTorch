@@ -56,45 +56,21 @@ class CNNFashion(nn.Module):
 #         return out
 
 # mislabeled
-# class CNNFashion2(nn.Module):
-#     def __init__(self, args):
-#         super(CNNFashion2, self).__init__()
-#         self.features = nn.Sequential(
-#             nn.Conv2d(1, 16, kernel_size=3, padding=1),
-#             nn.ReLU(inplace=True),
-#             nn.MaxPool2d(kernel_size=2, stride=2),
-#             nn.Conv2d(16, 32, kernel_size=3, padding=1),
-#             nn.ReLU(inplace=True),
-#             nn.MaxPool2d(kernel_size=2, stride=2)
-#         )
-#         self.classifier = nn.Sequential(
-#             nn.Linear(32 * 7 * 7, 128),
-#             nn.ReLU(inplace=True),
-#             nn.Linear(128, 10)
-#         )
-
-#     def forward(self, x):
-#         x = self.features(x)
-#         x = x.view(x.size(0), -1)
-#         x = self.classifier(x)
-#         return x
-
-
 class CNNFashion2(nn.Module):
     def __init__(self, args):
         super(CNNFashion2, self).__init__()
         self.features = nn.Sequential(
-            nn.Conv2d(1, 8, kernel_size=3, padding=1),
+            nn.Conv2d(1, 16, kernel_size=3, padding=1),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.Conv2d(8, 16, kernel_size=3, padding=1),
+            nn.Conv2d(16, 32, kernel_size=3, padding=1),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=2, stride=2)
         )
         self.classifier = nn.Sequential(
-            nn.Linear(16 * 7 * 7, 64),
+            nn.Linear(32 * 7 * 7, 128),
             nn.ReLU(inplace=True),
-            nn.Linear(64, 10)
+            nn.Linear(128, 10)
         )
 
     def forward(self, x):
